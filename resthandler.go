@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -48,19 +47,12 @@ func (c PostTime) MarshalText() (result []byte, err error) {
 	return []byte(timS), nil
 }
 
-func newRestHandler(filename string) (s *restHandler, err error) {
+func newRestHandler(db *bolt.DB, historySize int) (s *restHandler) {
 	s = &restHandler{}
-	s.db, err = bolt.Open(filename, 0600, &bolt.Options{Timeout: 1 * time.Second})
 
-	s.historySize = 20
+	s.db = db
+	s.historySize = historySize
 	return
-}
-
-// itob returns an 8-byte big endian representation of v.
-func itob(v uint64) []byte {
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, v)
-	return b
 }
 
 func (s *restHandler) Post(post Post) (postId uint64, err error) {
@@ -145,8 +137,6 @@ func (s *restHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			lastAttr = 0
 		}
-
-		fmt.Println("last :", lastAttr)
 
 		posts, err := s.Get(lastAttr)
 		if err == nil {

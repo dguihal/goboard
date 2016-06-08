@@ -1,3 +1,5 @@
 ---
 
 listenport: 8080
+
+max_history_size: 20

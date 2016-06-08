@@ -1,25 +1,21 @@
-// Copyright 2010 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package main
 
 import (
-	//html/template"
-	//encoding/json"
 	"fmt"
 	"html"
 	"io/ioutil"
 	"log"
 	"net/http"
-	//	"regexp"
+	"time"
 
+	"github.com/boltdb/bolt"
 	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
-	ListenPort string
+	ListenPort       string
+	max_history_size int
 }
 
 func main() {
@@ -34,9 +30,19 @@ func main() {
 		log.Fatalf("error: %v", err)
 	}
 
-	restHandler, err := newRestHandler("my.db")
+	db, err := bolt.Open("my.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error: %v", err)
+	}
+
+	restHandler := newRestHandler(db, config.max_history_size)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+
+	userHandler := newUserHandler(db)
+	if err != nil {
+		log.Fatalf("error: %v", err)
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
@@ -44,6 +50,8 @@ func main() {
 	router.Handle("/backend", restHandler).Methods("GET")
 	router.Handle("/backend/{format}", restHandler).Methods("GET")
 	router.Handle("/post", restHandler).Methods("POST")
+	router.Handle("/user/add", userHandler).Methods("POST")
+	router.Handle("/user/login", userHandler).Methods("POST")
 
 	fmt.Println("GoBoard version 0.0.1 starting on port", config.ListenPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", config.ListenPort), router))
