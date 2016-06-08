@@ -63,15 +63,12 @@ func itob(v uint64) []byte {
 	return b
 }
 
-func (s *restHandler) Post(post Post) error {
-	return s.db.Update(func(tx *bolt.Tx) error {
+func (s *restHandler) Post(post Post) (postId uint64, err error) {
+	err = s.db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(postBucketName))
 		if err != nil {
 			return err
 		}
-
-		stats := b.Stats()
-		fmt.Println("POST :", stats.KeyN)
 
 		id, _ := b.NextSequence()
 		post.Id = uint64(id)
@@ -85,6 +82,8 @@ func (s *restHandler) Post(post Post) error {
 
 		return nil
 	})
+
+	return post.Id, err
 }
 
 func (s *restHandler) Get(last uint64) (posts []Post, err error) {
@@ -129,12 +128,13 @@ func (s *restHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Message: r.FormValue("message"),
 		}
 
-		err := s.Post(p)
+		postId, err := s.Post(p)
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 		} else {
+			w.Header().Set("X-Post-Id", strconv.FormatUint(postId, 10))
 			w.WriteHeader(http.StatusOK)
 		}
 	case "GET":
