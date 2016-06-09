@@ -132,6 +132,10 @@ func (u *userHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			errCode, err = u.AddUser(loginAttr, passwdAttr)
 		} else if strings.HasSuffix(r.URL.Path, "login") {
 			errCode, err = u.AuthUser(loginAttr, passwdAttr)
+			// TODO : Set the session cookie
+			// expiration := time.Now().Add(365 * 24 * time.Hour)
+			// cookie := http.Cookie{Name: "username", Value: "astaxie", Expires: expiration}
+			// http.SetCookie(w, &cookie)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 			return

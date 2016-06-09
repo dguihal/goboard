@@ -128,6 +128,9 @@ func (s *restHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		message := bP.Sanitize(r.FormValue("message"))
 		fmt.Println("POST", message)
 
+		// TODO : Get the session cookie and fetch the corresponding user
+		// cookie, _ := r.Cookie("username")
+
 		p := Post{
 			Time:    PostTime{time.Now()},
 			Login:   "",
