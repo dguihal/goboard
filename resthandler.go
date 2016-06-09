@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/mux"
+	"github.com/microcosm-cc/bluemonday"
 )
 
 const postBucketName string = "Posts"
@@ -53,6 +55,12 @@ func newRestHandler(db *bolt.DB, historySize int) (s *restHandler) {
 	s.db = db
 	s.historySize = historySize
 	return
+}
+
+func itob(v uint64) []byte {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, v)
+	return b
 }
 
 func (s *restHandler) Post(post Post) (postId uint64, err error) {
@@ -113,11 +121,25 @@ func (s *restHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("POST")
 		r.ParseForm()
 
+		bP := bluemonday.NewPolicy()
+		bP.AllowStandardURLs()
+		bP.AllowAttrs("href").OnElements("a")
+		bP.AllowElements("i")
+		bP.AllowElements("u")
+		bP.AllowElements("b")
+		bP.AllowElements("s")
+		bP.AllowElements("em")
+		bP.AllowElements("tt")
+
+		fmt.Println("POST", r.FormValue("message"))
+		message := bP.Sanitize(r.FormValue("message"))
+		fmt.Println("POST", message)
+
 		p := Post{
 			Time:    PostTime{time.Now()},
 			Login:   "",
 			Info:    r.Header.Get("User-Agent"),
-			Message: r.FormValue("message"),
+			Message: message,
 		}
 
 		postId, err := s.Post(p)

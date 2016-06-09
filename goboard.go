@@ -40,18 +40,18 @@ func main() {
 		log.Fatalf("error: %v", err)
 	}
 
-	userHandler := newUserHandler(db)
-	if err != nil {
-		log.Fatalf("error: %v", err)
-	}
+	//userHandler := newUserHandler(db)
+	//if err != nil {
+	//	log.Fatalf("error: %v", err)
+	//}
 
 	router := mux.NewRouter().StrictSlash(true)
 	//router.HandleFunc("/", Index)
 	router.Handle("/backend", restHandler).Methods("GET")
 	router.Handle("/backend/{format}", restHandler).Methods("GET")
 	router.Handle("/post", restHandler).Methods("POST")
-	router.Handle("/user/add", userHandler).Methods("POST")
-	router.Handle("/user/login", userHandler).Methods("POST")
+	//router.Handle("/user/add", userHandler).Methods("POST")
+	//router.Handle("/user/login", userHandler).Methods("POST")
 
 	fmt.Println("GoBoard version 0.0.1 starting on port", config.ListenPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", config.ListenPort), router))
