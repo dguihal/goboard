@@ -1,5 +1,10 @@
 ---
 
+# Listen port of the board server
 listenport: 8080
 
+# Maximum size of a backend returned by the board server
 max_history_size: 20
+
+# Cookies duration in days
+cookie_duration
