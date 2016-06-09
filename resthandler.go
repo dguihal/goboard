@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -55,12 +54,6 @@ func newRestHandler(db *bolt.DB, historySize int) (s *restHandler) {
 	s.db = db
 	s.historySize = historySize
 	return
-}
-
-func itob(v uint64) []byte {
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, v)
-	return b
 }
 
 func (s *restHandler) Post(post Post) (postId uint64, err error) {
