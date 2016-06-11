@@ -14,8 +14,9 @@ import (
 )
 
 type Config struct {
-	ListenPort       string
-	max_history_size int
+	ListenPort     string `yaml:"ListenPort"`
+	MaxHistorySize int    `yaml:"MaxHistorySize"`
+	CookieDuration int    `yaml:"CookieDuration"`
 }
 
 func main() {
@@ -35,7 +36,7 @@ func main() {
 		log.Fatalf("error: %v", err)
 	}
 
-	restHandler := newRestHandler(db, config.max_history_size)
+	restHandler := newRestHandler(db, config.MaxHistorySize)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
