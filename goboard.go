@@ -13,6 +13,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const goboard_cookie_name string = "goboard_id"
+
+const postBucketName string = "Posts"
+const usersBucketName string = "Users"
+const usersCookieBucketName string = "UsersCookie"
+
 type Config struct {
 	ListenPort     string `yaml:"ListenPort"`
 	MaxHistorySize int    `yaml:"MaxHistorySize"`
@@ -41,7 +47,7 @@ func main() {
 		log.Fatalf("error: %v", err)
 	}
 
-	userHandler := newUserHandler(db)
+	userHandler := newUserHandler(db, config.CookieDuration)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}

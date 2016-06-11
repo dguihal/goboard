@@ -14,8 +14,6 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 )
 
-const postBucketName string = "Posts"
-
 type restHandler struct {
 	db *bolt.DB
 

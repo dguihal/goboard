@@ -6,18 +6,23 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/dchest/uniuri"
 	"golang.org/x/crypto/bcrypt"
 )
-
-const usersBucketName string = "Users"
 
 type User struct {
 	Id             uint64
 	Login          string
 	HashedPassword []byte
 	salt           []byte
+}
+
+type UserCookie struct {
+	Login  string
+	Cookie http.Cookie
 }
 
 const (
@@ -31,18 +36,23 @@ const (
 
 type userHandler struct {
 	db *bolt.DB
+
+	cookieDuration_d int
 }
 
-func newUserHandler(db *bolt.DB) (u *userHandler) {
+func newUserHandler(db *bolt.DB, cookieDuration int) (u *userHandler) {
 	u = &userHandler{}
 	u.db = db
+	u.cookieDuration_d = cookieDuration
 
 	return
 }
 
-func (u *userHandler) AddUser(login string, password string) (errCode uint, err error) {
+func (u *userHandler) AddUser(w http.ResponseWriter, login string, password string) {
 
-	err = u.db.Batch(func(tx *bolt.Tx) error {
+	var errCode int = noError
+
+	err := u.db.Batch(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(usersBucketName))
 		if err != nil {
 			errCode = internalDbError
@@ -85,13 +95,22 @@ func (u *userHandler) AddUser(login string, password string) (errCode uint, err 
 		return nil
 	})
 
+	if errCode != noError {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
+
 	return
 }
 
-func (u *userHandler) AuthUser(login string, password string) (errCode uint, err error) {
+func (u *userHandler) AuthUser(w http.ResponseWriter, login string, password string) {
 
-	err = u.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(usersBucketName))
+	var errCode int = noError
+
+	err := u.db.Batch(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(usersCookieBucketName))
 
 		c := b.Cursor()
 		user := User{}
@@ -100,7 +119,7 @@ func (u *userHandler) AuthUser(login string, password string) (errCode uint, err
 			json.Unmarshal(v, &user)
 
 			if user.Login == login {
-				err = bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
+				err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
 				if err != nil {
 					errCode = wrongPassword
 				}
@@ -108,8 +127,30 @@ func (u *userHandler) AuthUser(login string, password string) (errCode uint, err
 			}
 		}
 
+		expiration := time.Now().Add(time.Duration(u.cookieDuration_d) * 24 * time.Hour)
+		cookie := http.Cookie{Name: goboard_cookie_name, Value: uniuri.NewLen(64), Expires: expiration}
+
+		userCookie := UserCookie{user.Login, cookie}
+		buf, err := json.Marshal(userCookie)
+		if err != nil {
+			errCode = internalError
+			return err
+		}
+
+		err = b.Put([]byte(user.Login), buf)
+
 		return nil
 	})
+
+	if errCode != noError {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	} else {
+		expiration := time.Now().Add(time.Duration(u.cookieDuration_d) * 24 * time.Hour)
+		cookie := http.Cookie{Name: goboard_cookie_name, Value: uniuri.NewLen(64), Expires: expiration}
+		http.SetCookie(w, &cookie)
+		w.WriteHeader(http.StatusOK)
+	}
 
 	return
 }
@@ -125,27 +166,13 @@ func (u *userHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println("POST", loginAttr, passwdAttr)
 
-		var errCode uint = noError
-		err := errors.New("")
-
 		if strings.HasSuffix(r.URL.Path, "add") {
-			errCode, err = u.AddUser(loginAttr, passwdAttr)
+			u.AddUser(w, loginAttr, passwdAttr)
 		} else if strings.HasSuffix(r.URL.Path, "login") {
-			errCode, err = u.AuthUser(loginAttr, passwdAttr)
-			// TODO : Set the session cookie
-			// expiration := time.Now().Add(365 * 24 * time.Hour)
-			// cookie := http.Cookie{Name: "username", Value: "astaxie", Expires: expiration}
-			// http.SetCookie(w, &cookie)
+			u.AuthUser(w, loginAttr, passwdAttr)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 			return
-		}
-
-		if errCode != noError {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-		} else {
-			w.WriteHeader(http.StatusOK)
 		}
 	}
 }
