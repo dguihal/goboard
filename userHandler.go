@@ -25,15 +25,6 @@ type UserCookie struct {
 	Cookie http.Cookie
 }
 
-const (
-	noError           = iota
-	internalDbError   = iota
-	internalError     = iota
-	userAlreadyExists = iota
-	userDoesNotExists = iota
-	wrongPassword     = iota
-)
-
 type userHandler struct {
 	db *bolt.DB
 
@@ -50,12 +41,13 @@ func newUserHandler(db *bolt.DB, cookieDuration int) (u *userHandler) {
 
 func (u *userHandler) AddUser(w http.ResponseWriter, login string, password string) {
 
-	var errCode int = noError
+	var cookie http.Cookie
 
 	err := u.db.Batch(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(usersBucketName))
 		if err != nil {
-			errCode = internalDbError
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
 			return err
 		}
 
@@ -66,8 +58,9 @@ func (u *userHandler) AddUser(w http.ResponseWriter, login string, password stri
 			json.Unmarshal(v, &user)
 
 			if user.Login == login {
-				errCode = userAlreadyExists
+				w.WriteHeader(http.StatusConflict)
 				err := errors.New("User already exists")
+				w.Write([]byte(err.Error()))
 				return err
 			}
 		}
@@ -75,9 +68,9 @@ func (u *userHandler) AddUser(w http.ResponseWriter, login string, password stri
 		// Else we have a really new user
 		id, _ := b.NextSequence()
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-		fmt.Println("AddUser", password, hashedPassword)
 		if err != nil {
-			errCode = internalError
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
 			return err
 		}
 
@@ -85,20 +78,37 @@ func (u *userHandler) AddUser(w http.ResponseWriter, login string, password stri
 
 		buf, err := json.Marshal(user)
 		if err != nil {
-			errCode = internalError
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
 			return err
 		}
 
 		err = b.Put(itob(user.Id), buf)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return err
+		}
 
-		errCode = noError
+		b, err = tx.CreateBucketIfNotExists([]byte(usersCookieBucketName))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return err
+		}
+
+		cookie, err = createAndStoreCookie(b, login, u.cookieDuration_d)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return err
+		}
+
 		return nil
 	})
 
-	if errCode != noError {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-	} else {
+	if err == nil {
+		http.SetCookie(w, &cookie)
 		w.WriteHeader(http.StatusOK)
 	}
 
@@ -107,10 +117,15 @@ func (u *userHandler) AddUser(w http.ResponseWriter, login string, password stri
 
 func (u *userHandler) AuthUser(w http.ResponseWriter, login string, password string) {
 
-	var errCode int = noError
+	var cookie http.Cookie
 
 	err := u.db.Batch(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(usersCookieBucketName))
+		b, err := tx.CreateBucketIfNotExists([]byte(usersBucketName))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return err
+		}
 
 		c := b.Cursor()
 		user := User{}
@@ -121,36 +136,80 @@ func (u *userHandler) AuthUser(w http.ResponseWriter, login string, password str
 			if user.Login == login {
 				err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
 				if err != nil {
-					errCode = wrongPassword
+					w.WriteHeader(http.StatusUnauthorized)
+					w.Write([]byte(err.Error()))
+					return err
 				}
-				return err
+
+				// Find if non expired cookie already exists
+				b, err := tx.CreateBucketIfNotExists([]byte(usersCookieBucketName))
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Write([]byte(err.Error()))
+					return err
+				}
+				c := b.Cursor()
+				userCookie := UserCookie{}
+				for k, v := c.First(); k != nil; k, v = c.Next() {
+					json.Unmarshal(v, &userCookie)
+
+					if userCookie.Login == login {
+						if userCookie.Cookie.Expires.Before(time.Now()) {
+							b.Delete(k)
+						} else {
+							cookie = userCookie.Cookie
+							return nil
+						}
+					}
+				}
+
+				// No Valid cookie found, create one
+				cookie, err = createAndStoreCookie(b, login, u.cookieDuration_d)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Write([]byte(err.Error()))
+					return err
+				}
 			}
 		}
-
-		expiration := time.Now().Add(time.Duration(u.cookieDuration_d) * 24 * time.Hour)
-		cookie := http.Cookie{Name: goboard_cookie_name, Value: uniuri.NewLen(64), Expires: expiration}
-
-		userCookie := UserCookie{user.Login, cookie}
-		buf, err := json.Marshal(userCookie)
-		if err != nil {
-			errCode = internalError
-			return err
-		}
-
-		err = b.Put([]byte(user.Login), buf)
-
 		return nil
 	})
 
-	if errCode != noError {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-	} else {
-		expiration := time.Now().Add(time.Duration(u.cookieDuration_d) * 24 * time.Hour)
-		cookie := http.Cookie{Name: goboard_cookie_name, Value: uniuri.NewLen(64), Expires: expiration}
+	if err == nil {
 		http.SetCookie(w, &cookie)
 		w.WriteHeader(http.StatusOK)
 	}
+
+	return
+}
+
+func createAndStoreCookie(b *bolt.Bucket, login string, cookieDuration_d int) (cookie http.Cookie, err error) {
+
+	expiration := time.Now().Add(time.Duration(cookieDuration_d) * 24 * time.Hour)
+	cookie = http.Cookie{Name: goboard_cookie_name, Value: uniuri.NewLen(64), Expires: expiration}
+
+	uc := UserCookie{login, cookie}
+
+	buf, err := json.Marshal(uc)
+	if err != nil {
+		return
+	}
+
+	err = b.Put([]byte(cookie.Value), buf)
+	return
+}
+
+func (u *userHandler) GetUser(cookie string) (login string) {
+
+	u.db.View(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte(usersCookieBucketName))
+		if b == nil {
+			return nil
+		}
+
+		return nil
+	})
 
 	return
 }
@@ -164,15 +223,12 @@ func (u *userHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		loginAttr := r.FormValue("login")
 		passwdAttr := r.FormValue("password")
 
-		fmt.Println("POST", loginAttr, passwdAttr)
-
 		if strings.HasSuffix(r.URL.Path, "add") {
 			u.AddUser(w, loginAttr, passwdAttr)
 		} else if strings.HasSuffix(r.URL.Path, "login") {
 			u.AuthUser(w, loginAttr, passwdAttr)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
-			return
 		}
 	}
 }

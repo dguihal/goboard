@@ -106,6 +106,41 @@ func (s *restHandler) Get(last uint64) (posts []Post, err error) {
 	return
 }
 
+func (s *restHandler) LoginForCookie(cookieValue string) (login string, err error) {
+	var uc = UserCookie{}
+
+	err = s.db.View(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte(usersCookieBucketName))
+		if b == nil {
+			return nil
+		}
+
+		v := b.Get([]byte(cookieValue))
+		if v == nil {
+			json.Unmarshal(v, &uc)
+		}
+
+		return nil
+	})
+
+	login = uc.Login
+
+	if err == nil && login != "" && uc.Cookie.Expires.Before(time.Now()) {
+		err = s.db.Update(func(tx *bolt.Tx) error {
+			b := tx.Bucket([]byte(usersCookieBucketName))
+			if b == nil {
+				return nil
+			}
+
+			b.Delete([]byte(cookieValue))
+
+			return nil
+		})
+	}
+	return
+}
+
 func (s *restHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
