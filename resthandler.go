@@ -157,14 +157,11 @@ func (r *restHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 		bP.AllowElements("em")
 		bP.AllowElements("tt")
 
-		fmt.Println("POST", rq.FormValue("message"))
 		message := bP.Sanitize(rq.FormValue("message"))
-		fmt.Println("POST", message)
 
 		// TODO : Get the session cookie and fetch the corresponding user
 		cookies := rq.Cookies()
 
-		fmt.Println(cookies[0], cookies[0].Value)
 		login, err := r.LoginForCookie(cookies[0].Value)
 		if err != nil {
 		fmt.Println("POST :", err.Error())
@@ -205,10 +202,13 @@ func (r *restHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 
 			if format == "" || format == "xml" {
 				data = postsToXml(posts)
+				w.Header().Set("Content-Type", "application/xml")
 			} else if format == "json" {
 				data = postsToJson(posts)
+				w.Header().Set("Content-Type", "application/json")
 			} else if format == "tsv" {
 				data = postsToTsv(posts)
+				w.Header().Set("Content-Type", "text/tab-separated-values")
 			}
 
 			w.WriteHeader(http.StatusOK)
