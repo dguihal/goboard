@@ -46,16 +46,16 @@ func (c PostTime) MarshalText() (result []byte, err error) {
 	return []byte(timS), nil
 }
 
-func newRestHandler(db *bolt.DB, historySize int) (s *restHandler) {
-	s = &restHandler{}
+func newRestHandler(db *bolt.DB, historySize int) (r *restHandler) {
+	r = &restHandler{}
 
-	s.db = db
-	s.historySize = historySize
+	r.db = db
+	r.historySize = historySize
 	return
 }
 
-func (s *restHandler) Post(post Post) (postId uint64, err error) {
-	err = s.db.Update(func(tx *bolt.Tx) error {
+func (r *restHandler) Post(post Post) (postId uint64, err error) {
+	err = r.db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(postBucketName))
 		if err != nil {
 			return err
@@ -77,10 +77,10 @@ func (s *restHandler) Post(post Post) (postId uint64, err error) {
 	return post.Id, err
 }
 
-func (s *restHandler) Get(last uint64) (posts []Post, err error) {
-	s.db.View(func(tx *bolt.Tx) error {
+func (r *restHandler) Get(last uint64) (posts []Post, err error) {
+	r.db.View(func(tx *bolt.Tx) error {
 
-		posts = make([]Post, s.historySize)
+		posts = make([]Post, r.historySize)
 
 		b := tx.Bucket([]byte(postBucketName))
 		if b == nil {
@@ -90,7 +90,7 @@ func (s *restHandler) Get(last uint64) (posts []Post, err error) {
 		c := b.Cursor()
 		var count int = 0
 
-		for k, v := c.Last(); k != nil && count < s.historySize; k, v = c.Prev() {
+		for k, v := c.Last(); k != nil && count < r.historySize; k, v = c.Prev() {
 			var p Post
 			json.Unmarshal(v, &p)
 
@@ -106,10 +106,11 @@ func (s *restHandler) Get(last uint64) (posts []Post, err error) {
 	return
 }
 
-func (s *restHandler) LoginForCookie(cookieValue string) (login string, err error) {
+func (r *restHandler) LoginForCookie(cookieValue string) (login string, err error) {
 	var uc = UserCookie{}
+	login = ""
 
-	err = s.db.View(func(tx *bolt.Tx) error {
+	err = r.db.View(func(tx *bolt.Tx) error {
 
 		b := tx.Bucket([]byte(usersCookieBucketName))
 		if b == nil {
@@ -117,17 +118,16 @@ func (s *restHandler) LoginForCookie(cookieValue string) (login string, err erro
 		}
 
 		v := b.Get([]byte(cookieValue))
-		if v == nil {
+		if v != nil {
 			json.Unmarshal(v, &uc)
 		}
-
 		return nil
 	})
 
 	login = uc.Login
 
 	if err == nil && login != "" && uc.Cookie.Expires.Before(time.Now()) {
-		err = s.db.Update(func(tx *bolt.Tx) error {
+		err = r.db.Update(func(tx *bolt.Tx) error {
 			b := tx.Bucket([]byte(usersCookieBucketName))
 			if b == nil {
 				return nil
@@ -141,11 +141,11 @@ func (s *restHandler) LoginForCookie(cookieValue string) (login string, err erro
 	return
 }
 
-func (s *restHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
+func (r *restHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
+	switch rq.Method {
 	case "POST":
 		fmt.Println("POST")
-		r.ParseForm()
+		rq.ParseForm()
 
 		bP := bluemonday.NewPolicy()
 		bP.AllowStandardURLs()
@@ -157,21 +157,28 @@ func (s *restHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		bP.AllowElements("em")
 		bP.AllowElements("tt")
 
-		fmt.Println("POST", r.FormValue("message"))
-		message := bP.Sanitize(r.FormValue("message"))
+		fmt.Println("POST", rq.FormValue("message"))
+		message := bP.Sanitize(rq.FormValue("message"))
 		fmt.Println("POST", message)
 
 		// TODO : Get the session cookie and fetch the corresponding user
-		// cookie, _ := r.Cookie("username")
+		cookies := rq.Cookies()
+
+		fmt.Println(cookies[0], cookies[0].Value)
+		login, err := r.LoginForCookie(cookies[0].Value)
+		if err != nil {
+		fmt.Println("POST :", err.Error())
+			login = ""
+		}
 
 		p := Post{
 			Time:    PostTime{time.Now()},
-			Login:   "",
-			Info:    r.Header.Get("User-Agent"),
+			Login:   login,
+			Info:    rq.Header.Get("User-Agent"),
 			Message: message,
 		}
 
-		postId, err := s.Post(p)
+		postId, err := r.Post(p)
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -183,15 +190,15 @@ func (s *restHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		fmt.Println("GET")
 
-		lastAttrStr := r.URL.Query().Get("last")
+		lastAttrStr := rq.URL.Query().Get("last")
 		lastAttr, err := strconv.ParseUint(lastAttrStr, 10, 64)
 		if err != nil {
 			lastAttr = 0
 		}
 
-		posts, err := s.Get(lastAttr)
+		posts, err := r.Get(lastAttr)
 		if err == nil {
-			vars := mux.Vars(r)
+			vars := mux.Vars(rq)
 			format := vars["format"]
 
 			var data []byte
