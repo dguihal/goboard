@@ -213,6 +213,7 @@ func (r *restHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(data))
+			w.Write([]byte("\n"))
 
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
