@@ -42,7 +42,7 @@ func main() {
 		log.Fatalf("error: %v", err)
 	}
 
-	restHandler := newRestHandler(db, config.MaxHistorySize)
+	backendHandler := newBackendHandler(db, config.MaxHistorySize)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
@@ -54,9 +54,9 @@ func main() {
 
 	router := mux.NewRouter().StrictSlash(true)
 	//router.HandleFunc("/", Index)
-	router.Handle("/backend", restHandler).Methods("GET")
-	router.Handle("/backend/{format}", restHandler).Methods("GET")
-	router.Handle("/post", restHandler).Methods("POST")
+	router.Handle("/backend", backendHandler).Methods("GET")
+	router.Handle("/backend/{format}", backendHandler).Methods("GET")
+	router.Handle("/post", backendHandler).Methods("POST")
 	router.Handle("/user/add", userHandler).Methods("POST")
 	router.Handle("/user/login", userHandler).Methods("POST")
 

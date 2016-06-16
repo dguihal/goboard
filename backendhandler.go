@@ -14,7 +14,7 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 )
 
-type restHandler struct {
+type backendHandler struct {
 	db *bolt.DB
 
 	historySize int
@@ -46,15 +46,15 @@ func (c PostTime) MarshalText() (result []byte, err error) {
 	return []byte(timS), nil
 }
 
-func newRestHandler(db *bolt.DB, historySize int) (r *restHandler) {
-	r = &restHandler{}
+func newBackendHandler(db *bolt.DB, historySize int) (r *backendHandler) {
+	r = &backendHandler{}
 
 	r.db = db
 	r.historySize = historySize
 	return
 }
 
-func (r *restHandler) Post(post Post) (postId uint64, err error) {
+func (r *backendHandler) Post(post Post) (postId uint64, err error) {
 	err = r.db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(postBucketName))
 		if err != nil {
@@ -77,7 +77,7 @@ func (r *restHandler) Post(post Post) (postId uint64, err error) {
 	return post.Id, err
 }
 
-func (r *restHandler) Get(last uint64) (posts []Post, err error) {
+func (r *backendHandler) Get(last uint64) (posts []Post, err error) {
 	r.db.View(func(tx *bolt.Tx) error {
 
 		posts = make([]Post, r.historySize)
@@ -106,7 +106,7 @@ func (r *restHandler) Get(last uint64) (posts []Post, err error) {
 	return
 }
 
-func (r *restHandler) LoginForCookie(cookieValue string) (login string, err error) {
+func (r *backendHandler) LoginForCookie(cookieValue string) (login string, err error) {
 	var uc = UserCookie{}
 	login = ""
 
@@ -141,7 +141,7 @@ func (r *restHandler) LoginForCookie(cookieValue string) (login string, err erro
 	return
 }
 
-func (r *restHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
+func (r *backendHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 	switch rq.Method {
 	case "POST":
 		fmt.Println("POST")
