@@ -12,8 +12,6 @@
 
 `cd $GOPATH/src/github.com/dguihal/goboard`
 
-`go get`
-
 `go build`
 
 ### Configure
