@@ -26,7 +26,7 @@ type UserCookie struct {
 }
 
 type userHandler struct {
-	db *bolt.DB
+	GoboardHandler
 
 	cookieDuration_d int
 }
@@ -34,6 +34,12 @@ type userHandler struct {
 func newUserHandler(db *bolt.DB, cookieDuration int) (u *userHandler) {
 	u = &userHandler{}
 	u.db = db
+
+	u.supportedOps = []SupportedOp{
+		{"/user/add", "POST"},   // Add a user
+		{"/user/login", "POST"}, // Sign in a user
+	}
+
 	u.cookieDuration_d = cookieDuration
 
 	return

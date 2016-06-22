@@ -25,6 +25,16 @@ type Config struct {
 	CookieDuration int    `yaml:"CookieDuration"`
 }
 
+type SupportedOp struct {
+	path   string
+	method string
+}
+
+type GoboardHandler struct {
+	db           *bolt.DB
+	supportedOps []SupportedOp
+}
+
 func main() {
 	configData, err := ioutil.ReadFile("goboard.yaml")
 	if err != nil {
@@ -47,28 +57,21 @@ func main() {
 
 	// Backend operations
 	backendHandler := newBackendHandler(db, config.MaxHistorySize)
-	if err != nil {
-		log.Fatalf("error: %v", err)
+	for _, op := range backendHandler.supportedOps {
+		router.Handle(op.path, backendHandler).Methods(op.method)
 	}
-	router.Handle("/backend", backendHandler).Methods("GET") // Get backend (in xml)
-	router.Handle("/backend/{format}", backendHandler).Methods("GET") //Get backend (in specific format)
-	router.Handle("/post", backendHandler).Methods("POST") // Post new message
 
 	// User operations
 	userHandler := newUserHandler(db, config.CookieDuration)
-	if err != nil {
-		log.Fatalf("error: %v", err)
+	for _, op := range userHandler.supportedOps {
+		router.Handle(op.path, userHandler).Methods(op.method)
 	}
-	router.Handle("/user/add", userHandler).Methods("POST") // Add a user
-	router.Handle("/user/login", userHandler).Methods("POST") // Sign in a user
 
 	// Admin operations
 	adminHandler := newAdminHandler(db)
-	if err != nil {
-		log.Fatalf("error: %v", err)
+	for _, op := range adminHandler.supportedOps {
+		router.Handle(op.path, adminHandler).Methods(op.method)
 	}
-	router.Handle("/admin/user", adminHandler).Methods("DELETE") // Delete a user
-	router.Handle("/admin/post", adminHandler).Methods("POST") // Delete a post
 
 	fmt.Println("GoBoard version 0.0.1 starting on port", config.ListenPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", config.ListenPort), router))
@@ -82,6 +85,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 //http://stevenwhite.com/building-a-rest-service-with-golang-1/
 //http://stevenwhite.com/building-a-rest-service-with-golang-2/
 //http://stevenwhite.com/building-a-rest-service-with-golang-3/
+//https://github.com/golang/go/wiki/LearnServerProgramming
 //https://astaxie.gitbooks.io/build-web-application-with-golang/
 
 //https://github.com/boltdb/bolt : Backend

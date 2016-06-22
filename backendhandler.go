@@ -15,7 +15,7 @@ import (
 )
 
 type backendHandler struct {
-	db *bolt.DB
+	GoboardHandler
 
 	historySize int
 }
@@ -50,6 +50,13 @@ func newBackendHandler(db *bolt.DB, historySize int) (r *backendHandler) {
 	r = &backendHandler{}
 
 	r.db = db
+
+	r.supportedOps = []SupportedOp{
+		{"/backend", "GET"},          // Get backend (in xml)
+		{"/backend/{format}", "GET"}, //Get backend (in specific format)
+		{"/post", "POST"},            // Post new message
+	}
+
 	r.historySize = historySize
 	return
 }
@@ -164,7 +171,7 @@ func (r *backendHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 
 		login, err := r.LoginForCookie(cookies[0].Value)
 		if err != nil {
-		fmt.Println("POST :", err.Error())
+			fmt.Println("POST :", err.Error())
 			login = ""
 		}
 
