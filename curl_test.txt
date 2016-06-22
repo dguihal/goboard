@@ -1,0 +1,16 @@
+
+Add a user :
+curl -v  'http://localhost:8080/user/add' --data 'login=test&password=plop'
+
+Auth a user :
+curl -v  'http://localhost:8080/user/login' --data 'login=test&password=plop'
+
+Post a message :
+curl -X POST 'http://localhost:8080/post' --data 'message=plop'
+
+Fetch backend :
+curl -v  'http://localhost:8080/backend/json'
+curl -v  'http://localhost:8080/backend/tsv'
+curl -v  'http://localhost:8080/backend/xml'
+curl -v  'http://localhost:8080/backend/xml&last=1'
+
