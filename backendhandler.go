@@ -14,7 +14,7 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 )
 
-type backendHandler struct {
+type BackendHandler struct {
 	GoboardHandler
 
 	historySize int
@@ -46,8 +46,8 @@ func (c PostTime) MarshalText() (result []byte, err error) {
 	return []byte(timS), nil
 }
 
-func newBackendHandler(db *bolt.DB, historySize int) (r *backendHandler) {
-	r = &backendHandler{}
+func NewBackendHandler(db *bolt.DB, historySize int) (r *BackendHandler) {
+	r = &BackendHandler{}
 
 	r.db = db
 
@@ -61,7 +61,7 @@ func newBackendHandler(db *bolt.DB, historySize int) (r *backendHandler) {
 	return
 }
 
-func (r *backendHandler) Post(post Post) (postId uint64, err error) {
+func (r *BackendHandler) Post(post Post) (postId uint64, err error) {
 	err = r.db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(postBucketName))
 		if err != nil {
@@ -84,7 +84,7 @@ func (r *backendHandler) Post(post Post) (postId uint64, err error) {
 	return post.Id, err
 }
 
-func (r *backendHandler) Get(last uint64) (posts []Post, err error) {
+func (r *BackendHandler) Get(last uint64) (posts []Post, err error) {
 	r.db.View(func(tx *bolt.Tx) error {
 
 		posts = make([]Post, r.historySize)
@@ -113,42 +113,7 @@ func (r *backendHandler) Get(last uint64) (posts []Post, err error) {
 	return
 }
 
-func (r *backendHandler) LoginForCookie(cookieValue string) (login string, err error) {
-	var uc = UserCookie{}
-	login = ""
-
-	err = r.db.View(func(tx *bolt.Tx) error {
-
-		b := tx.Bucket([]byte(usersCookieBucketName))
-		if b == nil {
-			return nil
-		}
-
-		v := b.Get([]byte(cookieValue))
-		if v != nil {
-			json.Unmarshal(v, &uc)
-		}
-		return nil
-	})
-
-	login = uc.Login
-
-	if err == nil && login != "" && uc.Cookie.Expires.Before(time.Now()) {
-		err = r.db.Update(func(tx *bolt.Tx) error {
-			b := tx.Bucket([]byte(usersCookieBucketName))
-			if b == nil {
-				return nil
-			}
-
-			b.Delete([]byte(cookieValue))
-
-			return nil
-		})
-	}
-	return
-}
-
-func (r *backendHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
+func (r *BackendHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 	switch rq.Method {
 	case "POST":
 		fmt.Println("POST")
@@ -169,7 +134,7 @@ func (r *backendHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 		// TODO : Get the session cookie and fetch the corresponding user
 		cookies := rq.Cookies()
 
-		login, err := r.LoginForCookie(cookies[0].Value)
+		login, err := LoginForCookie(r.db, cookies[0].Value)
 		if err != nil {
 			fmt.Println("POST :", err.Error())
 			login = ""

@@ -6,14 +6,14 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-type adminHandler struct {
+type AdminHandler struct {
 	GoboardHandler
 
 	adminToken string
 }
 
-func newAdminHandler(db *bolt.DB) (a *adminHandler) {
-	a = &adminHandler{}
+func NewAdminHandler(db *bolt.DB) (a *AdminHandler) {
+	a = &AdminHandler{}
 
 	a.db = db
 
@@ -26,5 +26,5 @@ func newAdminHandler(db *bolt.DB) (a *adminHandler) {
 	return
 }
 
-func (a *adminHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
+func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 }

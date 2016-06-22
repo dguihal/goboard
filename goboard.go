@@ -13,11 +13,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const goboard_cookie_name string = "goboard_id"
-
 const postBucketName string = "Posts"
-const usersBucketName string = "Users"
-const usersCookieBucketName string = "UsersCookie"
 
 type Config struct {
 	ListenPort     string `yaml:"ListenPort"`
@@ -56,19 +52,19 @@ func main() {
 	//router.HandleFunc("/", Index)c
 
 	// Backend operations
-	backendHandler := newBackendHandler(db, config.MaxHistorySize)
+	backendHandler := NewBackendHandler(db, config.MaxHistorySize)
 	for _, op := range backendHandler.supportedOps {
 		router.Handle(op.path, backendHandler).Methods(op.method)
 	}
 
 	// User operations
-	userHandler := newUserHandler(db, config.CookieDuration)
+	userHandler := NewUserHandler(db, config.CookieDuration)
 	for _, op := range userHandler.supportedOps {
 		router.Handle(op.path, userHandler).Methods(op.method)
 	}
 
 	// Admin operations
-	adminHandler := newAdminHandler(db)
+	adminHandler := NewAdminHandler(db)
 	for _, op := range adminHandler.supportedOps {
 		router.Handle(op.path, adminHandler).Methods(op.method)
 	}
@@ -90,3 +86,5 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 //https://github.com/boltdb/bolt : Backend
 //https://github.com/skyec/boltdb-server/blob/master/server.go
+
+//https://blog.golang.org/error-handling-and-go
