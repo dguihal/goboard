@@ -1,8 +1,9 @@
 // cookie.go
-package main
+package cookie
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -17,6 +18,12 @@ type UserCookie struct {
 	Login  string
 	Cookie http.Cookie
 }
+
+const (
+	NoError       = iota
+	DatabaseError = iota
+	NoCookieFound = iota
+)
 
 type UserCookieError struct {
 	error
@@ -49,16 +56,69 @@ func CreateAndStoreCookie(db *bolt.DB, login string, cookieDuration_d int) (cook
 
 	buf, err := json.Marshal(uc)
 	if err != nil {
-		return
+		ucerr := &UserCookieError{error: err, ErrCode: DatabaseError}
+		cookie = http.Cookie{}
+		fmt.Println(err.Error())
+		return cookie, ucerr
 	}
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(usersCookieBucketName))
-		if b == nil {
-			return nil
+		b, err := tx.CreateBucketIfNotExists([]byte(usersCookieBucketName))
+		if err != nil {
+			ucerr := &UserCookieError{error: err, ErrCode: DatabaseError}
+			cookie = http.Cookie{}
+			fmt.Println(err.Error())
+			return ucerr
 		}
 
 		err = b.Put([]byte(cookie.Value), buf)
+
+		return nil
+	})
+
+	return
+}
+
+func CookieForUser(db *bolt.DB, login string) (cookie http.Cookie, err error) {
+
+	cookie = http.Cookie{}
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		// Find if non expired cookie already exists
+		b, err := tx.CreateBucketIfNotExists([]byte(usersCookieBucketName))
+		if err != nil {
+			ucerr := &UserCookieError{error: err, ErrCode: DatabaseError}
+			return ucerr
+		}
+
+		c := b.Cursor()
+		userCookie := UserCookie{}
+		cookieFound := false
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			json.Unmarshal(v, &userCookie)
+
+			if userCookie.Login == login {
+				if userCookie.Cookie.Expires.Before(time.Now()) {
+					// Delete expired cookie
+					b.Delete(k)
+				} else {
+					if !cookieFound {
+						// Pick up valid cookie
+						cookie = userCookie.Cookie
+						cookieFound = true
+					} else {
+						// Remove duplicates
+						b.Delete(k)
+					}
+					return nil
+				}
+			}
+		}
+
+		if !cookieFound {
+			ucerr := &UserCookieError{error: fmt.Errorf("No cookie found"), ErrCode: NoCookieFound}
+			return ucerr
+		}
 
 		return nil
 	})
@@ -73,9 +133,6 @@ func LoginForCookie(db *bolt.DB, cookieValue string) (login string, err error) {
 	err = db.View(func(tx *bolt.Tx) error {
 
 		b := tx.Bucket([]byte(usersCookieBucketName))
-		if b == nil {
-			return nil
-		}
 
 		v := b.Get([]byte(cookieValue))
 		if v != nil {
@@ -90,7 +147,8 @@ func LoginForCookie(db *bolt.DB, cookieValue string) (login string, err error) {
 		err = db.Update(func(tx *bolt.Tx) error {
 			b := tx.Bucket([]byte(usersCookieBucketName))
 			if b == nil {
-				return nil
+				ucerr := &UserCookieError{error: err, ErrCode: DatabaseError}
+				return ucerr
 			}
 
 			b.Delete([]byte(cookieValue))

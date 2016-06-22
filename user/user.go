@@ -1,13 +1,13 @@
 // user.go
-package main
+package user
 
 import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/boltdb/bolt"
+	goboardutils "github.com/dguihal/goboard/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -72,7 +72,7 @@ func AddUser(db *bolt.DB, login string, password string) (cookie http.Cookie, ue
 			return err
 		}
 
-		err = b.Put(itob(user.Id), buf)
+		err = b.Put(goboardutils.IToB(user.Id), buf)
 		if err != nil {
 			uerr = &UserError{error: err, ErrCode: DatabaseError}
 			return err
@@ -84,14 +84,10 @@ func AddUser(db *bolt.DB, login string, password string) (cookie http.Cookie, ue
 	return
 }
 
-func AuthUser(db *bolt.DB, login string, password string) (cookie http.Cookie, uerr error) {
+func AuthUser(db *bolt.DB, login string, password string) (uerr error) {
 
-	db.Batch(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(usersBucketName))
-		if err != nil {
-			uerr = &UserError{error: err, ErrCode: DatabaseError}
-			return err
-		}
+	db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(usersBucketName))
 
 		c := b.Cursor()
 		user := User{}
@@ -105,27 +101,6 @@ func AuthUser(db *bolt.DB, login string, password string) (cookie http.Cookie, u
 					uerr = &UserError{error: err, ErrCode: AuthenticationFailed}
 					return err
 				}
-
-				// Find if non expired cookie already exists
-				b, err := tx.CreateBucketIfNotExists([]byte(usersCookieBucketName))
-				if err != nil {
-					uerr := &UserError{error: err, ErrCode: DatabaseError}
-					return uerr
-				}
-				c := b.Cursor()
-				userCookie := UserCookie{}
-				for k, v := c.First(); k != nil; k, v = c.Next() {
-					json.Unmarshal(v, &userCookie)
-
-					if userCookie.Login == login {
-						if userCookie.Cookie.Expires.Before(time.Now()) {
-							b.Delete(k)
-						} else {
-							cookie = userCookie.Cookie
-							return nil
-						}
-					}
-				}
 			}
 		}
 		return nil
@@ -134,6 +109,6 @@ func AuthUser(db *bolt.DB, login string, password string) (cookie http.Cookie, u
 	return
 }
 
-func (u *UserHandler) DeleteUser(login string, password string) (err error) {
+func DeleteUser(db *bolt.DB, login string, password string) (err error) {
 	return
 }

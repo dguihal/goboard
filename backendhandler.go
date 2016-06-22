@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/dguihal/goboard/cookie"
+	"github.com/dguihal/goboard/utils"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
 )
@@ -76,7 +78,7 @@ func (r *BackendHandler) Post(post Post) (postId uint64, err error) {
 			return err
 		}
 
-		err = b.Put(itob(post.Id), buf)
+		err = b.Put(utils.IToB(post.Id), buf)
 
 		return nil
 	})
@@ -134,7 +136,7 @@ func (r *BackendHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 		// TODO : Get the session cookie and fetch the corresponding user
 		cookies := rq.Cookies()
 
-		login, err := LoginForCookie(r.db, cookies[0].Value)
+		login, err := cookie.LoginForCookie(r.db, cookies[0].Value)
 		if err != nil {
 			fmt.Println("POST :", err.Error())
 			login = ""
