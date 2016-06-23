@@ -132,14 +132,18 @@ func (r *BackendHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 		bP.AllowElements("tt")
 
 		message := bP.Sanitize(rq.FormValue("message"))
+		login := ""
 
 		// TODO : Get the session cookie and fetch the corresponding user
 		cookies := rq.Cookies()
 
-		login, err := cookie.LoginForCookie(r.db, cookies[0].Value)
-		if err != nil {
-			fmt.Println("POST :", err.Error())
-			login = ""
+		if len(cookies) > 0 {
+			var err error
+
+			if login, err = cookie.LoginForCookie(r.db, cookies[0].Value); err != nil {
+				fmt.Println("POST :", err.Error())
+				login = ""
+			}
 		}
 
 		p := Post{
