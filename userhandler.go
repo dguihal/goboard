@@ -51,13 +51,20 @@ func (u *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserHandler) AddUser(w http.ResponseWriter, login string, passwd string) {
-	cookie, err := goboarduser.AddUser(u.db, login, passwd)
+	err := goboarduser.AddUser(u.db, login, passwd)
 
 	if err == nil {
-		http.SetCookie(w, &cookie)
-		w.WriteHeader(http.StatusOK)
+		// User created : Send him a cookie
+		if cookie, err := goboardcookie.CookieForUser(u.db, login, u.cookieDuration_d); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println(err.Error())
+		} else {
+			http.SetCookie(w, &cookie)
+			w.WriteHeader(http.StatusOK)
+		}
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Println(err.Error())
 	}
 }
 
@@ -79,28 +86,13 @@ func (u *UserHandler) AuthUser(w http.ResponseWriter, login string, passwd strin
 			fmt.Println(err.Error())
 		}
 	} else {
-		cookie := http.Cookie{}
-
 		// User authenticated : Send him a cookie
-		if cookie, err = goboardcookie.CookieForUser(u.db, login); err != nil {
-			if ucerr, ok := err.(*goboardcookie.UserCookieError); ok {
-				if ucerr.ErrCode == goboardcookie.NoCookieFound {
-					// No existing valid cookie found, create one
-					if cookie, err = goboardcookie.CreateAndStoreCookie(u.db, login, u.cookieDuration_d); err != nil {
-						w.WriteHeader(http.StatusInternalServerError)
-						fmt.Println(err.Error())
-					} else {
-						w.WriteHeader(http.StatusInternalServerError)
-						fmt.Println(err.Error())
-					}
-				}
-			} else {
-				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Println(err.Error())
-			}
+		if cookie, err := goboardcookie.CookieForUser(u.db, login, u.cookieDuration_d); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println(err.Error())
+		} else {
+			http.SetCookie(w, &cookie)
+			w.WriteHeader(http.StatusOK)
 		}
-
-		http.SetCookie(w, &cookie)
-		w.WriteHeader(http.StatusOK)
 	}
 }

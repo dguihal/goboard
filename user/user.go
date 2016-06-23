@@ -4,7 +4,6 @@ package user
 import (
 	"encoding/json"
 	"errors"
-	"net/http"
 
 	"github.com/boltdb/bolt"
 	goboardutils "github.com/dguihal/goboard/utils"
@@ -34,7 +33,7 @@ type User struct {
 	salt           []byte
 }
 
-func AddUser(db *bolt.DB, login string, password string) (cookie http.Cookie, uerr error) {
+func AddUser(db *bolt.DB, login string, password string) (uerr error) {
 
 	db.Batch(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(usersBucketName))

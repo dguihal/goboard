@@ -47,6 +47,20 @@ func (e *UserCookieError) Error() string { return e.error.Error() }
 	}
 */
 
+func CookieForUser(db *bolt.DB, login string, cookieDuration_d int) (cookie http.Cookie, err error) {
+
+	if cookie, err = FetchCookieForUser(db, login); err != nil {
+		if ucerr, ok := err.(*UserCookieError); ok {
+			if ucerr.ErrCode == NoCookieFound {
+				// No existing valid cookie found, create one
+				cookie, err = CreateAndStoreCookie(db, login, cookieDuration_d)
+			}
+		}
+	}
+
+	return
+}
+
 func CreateAndStoreCookie(db *bolt.DB, login string, cookieDuration_d int) (cookie http.Cookie, err error) {
 
 	expiration := time.Now().Add(time.Duration(cookieDuration_d) * 24 * time.Hour)
@@ -79,7 +93,7 @@ func CreateAndStoreCookie(db *bolt.DB, login string, cookieDuration_d int) (cook
 	return
 }
 
-func CookieForUser(db *bolt.DB, login string) (cookie http.Cookie, err error) {
+func FetchCookieForUser(db *bolt.DB, login string) (cookie http.Cookie, err error) {
 
 	cookie = http.Cookie{}
 
