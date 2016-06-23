@@ -15,3 +15,6 @@ curl -v 'http://localhost:8080/backend/tsv'
 curl -v 'http://localhost:8080/backend/xml'
 curl -v 'http://localhost:8080/backend/xml&last=1'
 
+Admin commands
+curl -v -X DELETE 'http://localhost:8080/admin/user'
+curl -v -X DELETE 'http://localhost:8080/admin/user' -H "Token-Id: plop"
