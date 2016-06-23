@@ -108,6 +108,31 @@ func AuthUser(db *bolt.DB, login string, password string) (uerr error) {
 	return
 }
 
-func DeleteUser(db *bolt.DB, login string, password string) (err error) {
+func DeleteUser(db *bolt.DB, login string) (err error) {
+
+	err = db.Batch(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(usersBucketName))
+		if err != nil {
+			uerr := &UserError{error: err, ErrCode: DatabaseError}
+			return uerr
+		}
+
+		c := b.Cursor()
+		user := User{}
+
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			json.Unmarshal(v, &user)
+
+			if user.Login == login {
+				if err = b.Delete(k); err != nil {
+					uerr := &UserError{error: err, ErrCode: DatabaseError}
+					return uerr
+				}
+			}
+		}
+
+		return nil
+	})
+
 	return
 }

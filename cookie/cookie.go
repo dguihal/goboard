@@ -93,6 +93,35 @@ func CreateAndStoreCookie(db *bolt.DB, login string, cookieDuration_d int) (cook
 	return
 }
 
+func DeleteCookiesForUser(db *bolt.DB, login string) (err error) {
+
+	err = db.Batch(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(usersCookieBucketName))
+		if err != nil {
+			uerr := &UserCookieError{error: err, ErrCode: DatabaseError}
+			return uerr
+		}
+
+		c := b.Cursor()
+		userCookie := UserCookie{}
+
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			json.Unmarshal(v, &userCookie)
+
+			if userCookie.Login == login {
+				if err = b.Delete(k); err != nil {
+					uerr := &UserCookieError{error: err, ErrCode: DatabaseError}
+					return uerr
+				}
+			}
+		}
+
+		return nil
+	})
+
+	return
+}
+
 func FetchCookieForUser(db *bolt.DB, login string) (cookie http.Cookie, err error) {
 
 	cookie = http.Cookie{}
