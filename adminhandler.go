@@ -34,8 +34,7 @@ func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	reqAdminToken := r.Header.Get("Token-Id")
 	if !a.checkAdminToken(reqAdminToken) {
 		w.WriteHeader(http.StatusUnauthorized)
-	} else {
-		w.WriteHeader(http.StatusOK)
+		return
 	}
 
 	switch r.Method {
