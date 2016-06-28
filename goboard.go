@@ -69,6 +69,12 @@ func main() {
 		router.Handle(op.path, adminHandler).Methods(op.method)
 	}
 
+	// Swagger operations
+	swaggerHandler := NewSwaggerHandler()
+	for _, op := range swaggerHandler.supportedOps {
+		router.Handle(op.path, swaggerHandler).Methods(op.method)
+	}
+
 	fmt.Println("GoBoard version 0.0.1 starting on port", config.ListenPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", config.ListenPort), router))
 }
