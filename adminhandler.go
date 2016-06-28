@@ -42,6 +42,9 @@ func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "user") {
 			loginAttr := r.FormValue("login")
 			a.DeleteUser(w, loginAttr)
+		} else if strings.HasSuffix(r.URL.Path, "post") {
+			postId := r.FormValue("post")
+			a.DeletePost(w, postId)
 		}
 	}
 }
@@ -58,6 +61,13 @@ func (a *AdminHandler) DeleteUser(w http.ResponseWriter, login string) {
 		fmt.Println(err.Error())
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+
+}
+
+func (a *AdminHandler) DeletePost(w http.ResponseWriter, postId string) {
 
 	w.WriteHeader(http.StatusOK)
 	return
