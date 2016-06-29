@@ -10,7 +10,7 @@ import (
 	goboardutils "github.com/dguihal/goboard/utils"
 )
 
-const postBucketName string = "Posts"
+const backendBucketName string = "Backend"
 
 type Post struct {
 	XMLName xml.Name `xml:"post"`
@@ -41,7 +41,7 @@ type Board struct {
 func DeletePost(db *bolt.DB, id uint64) (err error) {
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(postBucketName))
+		b, err := tx.CreateBucketIfNotExists([]byte(backendBucketName))
 		if err != nil {
 			return err
 		}
@@ -57,7 +57,7 @@ func GetBackend(db *bolt.DB, historySize int, last uint64) (posts []Post, err er
 
 	err = db.View(func(tx *bolt.Tx) error {
 
-		b := tx.Bucket([]byte(postBucketName))
+		b := tx.Bucket([]byte(backendBucketName))
 		if b == nil {
 			return nil
 		}
@@ -84,7 +84,7 @@ func GetBackend(db *bolt.DB, historySize int, last uint64) (posts []Post, err er
 func PostMessage(db *bolt.DB, post Post) (postId uint64, err error) {
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(postBucketName))
+		b, err := tx.CreateBucketIfNotExists([]byte(backendBucketName))
 		if err != nil {
 			return err
 		}
