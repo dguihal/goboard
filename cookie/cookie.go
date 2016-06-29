@@ -32,21 +32,6 @@ type UserCookieError struct {
 
 func (e *UserCookieError) Error() string { return e.error.Error() }
 
-/*
-
-	b, err = tx.CreateBucketIfNotExists([]byte(usersCookieBucketName))
-	if err != nil {
-		userError := UserError{Msg: err.Error(), ErrCode: DatabaseError}
-		return err
-	}
-
-	cookie, err = createAndStoreCookie(b, login, u.cookieDuration_d)
-	if err != nil {
-		userError := UserError{Msg: err.Error(), ErrCode: DatabaseError}
-		return err
-	}
-*/
-
 func CookieForUser(db *bolt.DB, login string, cookieDuration_d int) (cookie http.Cookie, err error) {
 
 	if cookie, err = FetchCookieForUser(db, login); err != nil {

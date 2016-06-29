@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"net/http"
@@ -10,8 +9,8 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
+	goboardbackend "github.com/dguihal/goboard/backend"
 	"github.com/dguihal/goboard/cookie"
-	"github.com/dguihal/goboard/utils"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
 )
@@ -20,32 +19,6 @@ type BackendHandler struct {
 	GoboardHandler
 
 	historySize int
-}
-
-type Board struct {
-	XMLName xml.Name `xml:"board" json:"board"`
-	Site    string   `xml:"site,attr" json:"site"`
-	Posts   []Post   `xml:"" `
-}
-
-type Post struct {
-	XMLName xml.Name `xml:"post"`
-	Id      uint64   `xml:"id,attr" json:"id"`
-	Time    PostTime `xml:"time,attr" json:"time"`
-	Login   string   `xml:"login" json:"login"`
-	Info    string   `xml:"info" json:"info"`
-	Message string   `xml:"message" json:"message"`
-}
-
-type PostTime struct {
-	time.Time
-}
-
-const PostTimeFormat = "20060102150405"
-
-func (c PostTime) MarshalText() (result []byte, err error) {
-	timS := c.Format(PostTimeFormat)
-	return []byte(timS), nil
 }
 
 func NewBackendHandler(db *bolt.DB, historySize int) (r *BackendHandler) {
@@ -63,55 +36,13 @@ func NewBackendHandler(db *bolt.DB, historySize int) (r *BackendHandler) {
 	return
 }
 
-func (r *BackendHandler) Post(post Post) (postId uint64, err error) {
-	err = r.db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(postBucketName))
-		if err != nil {
-			return err
-		}
-
-		id, _ := b.NextSequence()
-		post.Id = uint64(id)
-
-		buf, err := json.Marshal(post)
-		if err != nil {
-			return err
-		}
-
-		err = b.Put(utils.IToB(post.Id), buf)
-
-		return nil
-	})
-
-	return post.Id, err
+func (r *BackendHandler) Post(post goboardbackend.Post) (postId uint64, err error) {
+	postId, err = goboardbackend.PostMessage(r.db, post)
+	return
 }
 
-func (r *BackendHandler) Get(last uint64) (posts []Post, err error) {
-	r.db.View(func(tx *bolt.Tx) error {
-
-		posts = make([]Post, r.historySize)
-
-		b := tx.Bucket([]byte(postBucketName))
-		if b == nil {
-			return nil
-		}
-
-		c := b.Cursor()
-		var count int = 0
-
-		for k, v := c.Last(); k != nil && count < r.historySize; k, v = c.Prev() {
-			var p Post
-			json.Unmarshal(v, &p)
-
-			if p.Id <= last {
-				break
-			}
-			posts[count] = p
-			count++
-		}
-
-		return nil
-	})
+func (r *BackendHandler) Get(last uint64) (posts []goboardbackend.Post, err error) {
+	posts, err = goboardbackend.GetBackend(r.db, r.historySize, last)
 	return
 }
 
@@ -146,8 +77,8 @@ func (r *BackendHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 			}
 		}
 
-		p := Post{
-			Time:    PostTime{time.Now()},
+		p := goboardbackend.Post{
+			Time:    goboardbackend.PostTime{time.Now()},
 			Login:   login,
 			Info:    rq.Header.Get("User-Agent"),
 			Message: message,
@@ -200,8 +131,8 @@ func (r *BackendHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 	}
 }
 
-func postsToXml(posts []Post) []byte {
-	var b = Board{}
+func postsToXml(posts []goboardbackend.Post) []byte {
+	var b = goboardbackend.Board{}
 	b.Site = "http://localhost"
 
 	var index int = 0
@@ -212,7 +143,7 @@ func postsToXml(posts []Post) []byte {
 		index++
 	}
 
-	var pmin = make([]Post, index)
+	var pmin = make([]goboardbackend.Post, index)
 	copy(pmin, posts)
 	b.Posts = pmin
 
@@ -223,11 +154,11 @@ func postsToXml(posts []Post) []byte {
 	return s
 }
 
-func postsToJson(posts []Post) []byte {
+func postsToJson(posts []goboardbackend.Post) []byte {
 	return []byte("")
 }
 
-func postsToTsv(posts []Post) []byte {
+func postsToTsv(posts []goboardbackend.Post) []byte {
 	var b bytes.Buffer
 
 	for _, post := range posts {
@@ -235,7 +166,7 @@ func postsToTsv(posts []Post) []byte {
 			break
 		}
 		fmt.Fprintf(&b, "%d\t%s\t%s\t%s\t%s\n",
-			post.Id, post.Time.Format(PostTimeFormat), post.Info, post.Login, post.Message)
+			post.Id, post.Time.Format(goboardbackend.PostTimeFormat), post.Info, post.Login, post.Message)
 	}
 	return b.Bytes()
 }

@@ -13,8 +13,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const postBucketName string = "Posts"
-
 type Config struct {
 	ListenPort     string `yaml:"ListenPort"`
 	MaxHistorySize int    `yaml:"MaxHistorySize"`

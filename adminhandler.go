@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/boltdb/bolt"
+	goboardbackend "github.com/dguihal/goboard/backend"
 	goboardcookie "github.com/dguihal/goboard/cookie"
 	goboarduser "github.com/dguihal/goboard/user"
 )
@@ -68,6 +70,18 @@ func (a *AdminHandler) DeleteUser(w http.ResponseWriter, login string) {
 }
 
 func (a *AdminHandler) DeletePost(w http.ResponseWriter, postId string) {
+
+	id, err := strconv.ParseUint(postId, 10, 64)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+	}
+
+	if err := goboardbackend.DeletePost(a.db, id); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Println(err.Error())
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	return
