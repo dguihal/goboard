@@ -91,6 +91,7 @@ func PostMessage(db *bolt.DB, post Post) (postId uint64, err error) {
 
 		id, _ := b.NextSequence()
 		postId = uint64(id)
+		post.Id = postId
 
 		buf, err := json.Marshal(post)
 		if err != nil {

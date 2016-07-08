@@ -5,7 +5,9 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -41,8 +43,33 @@ func (r *BackendHandler) Post(post goboardbackend.Post) (postId uint64, err erro
 	return
 }
 
-func (r *BackendHandler) Get(last uint64) (posts []goboardbackend.Post, err error) {
-	posts, err = goboardbackend.GetBackend(r.db, r.historySize, last)
+func (r *BackendHandler) GetBackend(w http.ResponseWriter, last uint64, format string) {
+	posts, err := goboardbackend.GetBackend(r.db, r.historySize, last)
+
+	if err == nil {
+
+		var data []byte
+
+		if format == "xml" {
+			data = postsToXml(posts)
+			w.Header().Set("Content-Type", "application/xml")
+		} else if format == "json" {
+			data = postsToJson(posts)
+			w.Header().Set("Content-Type", "application/json")
+		} else if format == "tsv" {
+			data = postsToTsv(posts)
+			w.Header().Set("Content-Type", "text/tab-separated-values")
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(data))
+		w.Write([]byte("\n"))
+
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
+
 	return
 }
 
@@ -102,33 +129,49 @@ func (r *BackendHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 			lastAttr = 0
 		}
 
-		posts, err := r.Get(lastAttr)
-		if err == nil {
-			vars := mux.Vars(rq)
-			format := vars["format"]
+		vars := mux.Vars(rq)
+		formatAttr := vars["format"]
 
-			var data []byte
+		format := guessFormat(formatAttr, rq.Header.Get("Accept"))
 
-			if format == "" || format == "xml" {
-				data = postsToXml(posts)
-				w.Header().Set("Content-Type", "application/xml")
-			} else if format == "json" {
-				data = postsToJson(posts)
-				w.Header().Set("Content-Type", "application/json")
-			} else if format == "tsv" {
-				data = postsToTsv(posts)
-				w.Header().Set("Content-Type", "text/tab-separated-values")
+		r.GetBackend(w, lastAttr, format)
+	}
+}
+
+func guessFormat(formatAttr string, acceptHeader string) (format string) {
+	format = "xml"
+
+	if formatAttr == "xml" || formatAttr == "json" || formatAttr == "tsv" {
+		format = formatAttr
+	} else {
+		i1 := strings.Index(acceptHeader, "application/xml")
+		i2 := strings.Index(acceptHeader, "text/xml")
+		i3 := strings.Index(acceptHeader, "application/json")
+		i4 := strings.Index(acceptHeader, "text/tab-separated-values")
+
+		indexes := []int{i1, i2, i3, i4}
+
+		sort.Ints(indexes)
+
+		i := 0
+
+		for i < len(indexes) && indexes[i] < 0 {
+			i++
+		}
+
+		if i < len(indexes) {
+			switch indexes[i] {
+			case i1, i2:
+				format = "xml"
+			case i3:
+				format = "json"
+			case i4:
+				format = "tsv"
 			}
-
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(data))
-			w.Write([]byte("\n"))
-
-		} else {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
 		}
 	}
+
+	return format
 }
 
 func postsToXml(posts []goboardbackend.Post) []byte {
