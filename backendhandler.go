@@ -179,17 +179,15 @@ func postsToXml(posts []goboardbackend.Post) []byte {
 	var b = goboardbackend.Board{}
 	b.Site = "http://localhost"
 
-	var index int = 0
-	for _, post := range posts {
-		if post.Id == 0 {
+	var i int = 0
+	var p goboardbackend.Post
+	for i, p = range posts {
+		if p.Id == 0 {
 			break
 		}
-		index++
 	}
 
-	var pmin = make([]goboardbackend.Post, index)
-	copy(pmin, posts)
-	b.Posts = pmin
+	b.Posts = posts[:i]
 
 	s, err := xml.Marshal(b)
 	if err != nil {
@@ -199,23 +197,24 @@ func postsToXml(posts []goboardbackend.Post) []byte {
 }
 
 func postsToJson(posts []goboardbackend.Post) []byte {
-	var i int
-	var post goboardbackend.Post
+	var b = goboardbackend.Board{}
+	b.Site = "http://localhost"
 
-	for i, post = range posts {
-		if post.Id == 0 {
+	var i int = 0
+	var p goboardbackend.Post
+	for i, p = range posts {
+		if p.Id == 0 {
 			break
 		}
 	}
 
-	b, err := json.Marshal(posts[:i])
+	b.Posts = posts[:i]
 
-	if err == nil {
-		return b
+	s, err := json.Marshal(b)
+	if err != nil {
+		return []byte(err.Error())
 	}
-
-	fmt.Println(err.Error())
-	return []byte("")
+	return s
 }
 
 func postsToTsv(posts []goboardbackend.Post) []byte {

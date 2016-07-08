@@ -33,7 +33,7 @@ func (c PostTime) MarshalText() (result []byte, err error) {
 const PostTimeFormat = "20060102150405"
 
 type Board struct {
-	XMLName xml.Name `xml:"board" json:"board"`
+	XMLName xml.Name `xml:"board" json:"-"`
 	Site    string   `xml:"site,attr" json:"site"`
 	Posts   []Post   `xml:"" `
 }
