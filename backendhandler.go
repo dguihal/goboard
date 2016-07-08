@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"net/http"
@@ -198,6 +199,22 @@ func postsToXml(posts []goboardbackend.Post) []byte {
 }
 
 func postsToJson(posts []goboardbackend.Post) []byte {
+	var i int
+	var post goboardbackend.Post
+
+	for i, post = range posts {
+		if post.Id == 0 {
+			break
+		}
+	}
+
+	b, err := json.Marshal(posts[:i])
+
+	if err == nil {
+		return b
+	}
+
+	fmt.Println(err.Error())
 	return []byte("")
 }
 

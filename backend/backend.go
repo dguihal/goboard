@@ -13,7 +13,7 @@ import (
 const backendBucketName string = "Backend"
 
 type Post struct {
-	XMLName xml.Name `xml:"post"`
+	XMLName xml.Name `xml:"post" json:"-"`
 	Id      uint64   `xml:"id,attr" json:"id"`
 	Time    PostTime `xml:"time,attr" json:"time"`
 	Login   string   `xml:"login" json:"login"`
