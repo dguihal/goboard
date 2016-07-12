@@ -1,6 +1,6 @@
 .PHONY: all check-go clean build install
 
-GO=/usr/lib/go-1.5/bin/go
+GO=/usr/bin/go
 
 all: install
 

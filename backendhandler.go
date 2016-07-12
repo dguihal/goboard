@@ -6,7 +6,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +16,21 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
 )
+
+const defaultFormat string = "xml"
+
+var allowedFormats = map[string]bool{
+	"xml":  true,
+	"csv":  true,
+	"json": true,
+}
+
+var knownHeaders = map[string]string{
+	"application/xml":  "xml",
+	"text/xml":         "xml",
+	"application/json": "json",
+	"text/csv":         "csv",
+}
 
 type BackendHandler struct {
 	GoboardHandler
@@ -51,7 +65,7 @@ func (r *BackendHandler) GetBackend(w http.ResponseWriter, last uint64, format s
 
 		var data []byte
 
-		if format == "xml" {
+		if format == "" || format == "xml" {
 			data = postsToXml(posts)
 			w.Header().Set("Content-Type", "application/xml")
 		} else if format == "json" {
@@ -139,40 +153,43 @@ func (r *BackendHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 	}
 }
 
+// Guess backend format to deliver based on :
+// - 1/ Explicit format by url parameter
+// - 2/ Accept HTTP header : Simplified version
+// - 3/ xml by default
 func guessFormat(formatAttr string, acceptHeader string) (format string) {
 	format = "xml"
 
-	if formatAttr == "xml" || formatAttr == "json" || formatAttr == "tsv" {
+	if allowedFormats[formatAttr] {
 		format = formatAttr
 	} else {
-		i1 := strings.Index(acceptHeader, "application/xml")
-		i2 := strings.Index(acceptHeader, "text/xml")
-		i3 := strings.Index(acceptHeader, "application/json")
-		i4 := strings.Index(acceptHeader, "text/tab-separated-values")
-
-		indexes := []int{i1, i2, i3, i4}
-
-		sort.Ints(indexes)
+		var indexes = make([]int, len(knownHeaders))
+		var keys = make([]string, len(knownHeaders))
 
 		i := 0
-
-		for i < len(indexes) && indexes[i] < 0 {
+		for k, _ := range knownHeaders {
+			indexes[i] = strings.Index(acceptHeader, k)
+			keys[i] = k
 			i++
 		}
 
-		if i < len(indexes) {
-			switch indexes[i] {
-			case i1, i2:
-				format = "xml"
-			case i3:
-				format = "json"
-			case i4:
-				format = "tsv"
+		// Find lowest non null
+		min_index := 0
+		min_val := indexes[0]
+
+		for i = 1; i < len(indexes); i++ {
+			if indexes[i] >= 0 && (min_val < 0 || indexes[i] < min_val) {
+				min_val = indexes[i]
+				min_index = i
 			}
+		}
+
+		if min_val >= 0 { // At least one match found
+			format = knownHeaders[keys[min_index]]
 		}
 	}
 
-	return format
+	return
 }
 
 func postsToXml(posts []goboardbackend.Post) []byte {
