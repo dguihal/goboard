@@ -1,0 +1,128 @@
+swagger: '2.0'
+info:
+  title: Goboard  
+  description: Goboard API
+  version: "1.0.0"
+# the domain of the service
+host: localhost:8080
+# array of all schemes that your API supports
+schemes:
+  - http
+# will be prefixed to all paths
+basePath: /
+produces:
+  - application/json
+paths:
+  /backend:
+    get:
+      summary: Returns the backend
+      description: |
+        Returns the backend (the post history)
+      produces:
+        - text/xml
+        - application/xml
+        - application/json
+        - text/tsv
+      parameters:
+        - name: last
+          in: query
+          description: Last id known by the client.
+          required: false
+          type: number
+          format: int
+      tags:
+        - Backend
+      responses:
+        200:
+          description: An XML document with backend data
+          schema:
+            $ref: '#/definitions/board'
+        default:
+          description: Unexpected error
+  /backend/{format}:
+    get:
+      summary: Returns the backend in specified format
+      description: |
+        Returns the backend (the post history)
+      produces:
+        - text/xml
+        - application/xml
+        - application/json
+        - text/tsv
+      parameters:
+        - name: last
+          in: query
+          description: Last id known by the client.
+          required: false
+          type: number
+          format: int
+        - name: format
+          in: path
+          description: Desired output format.
+          required: true
+          type: string
+      tags:
+        - Backend
+      responses:
+        200:
+          description: An XML document with backend data
+        default:
+          description: Unexpected error
+  /post:
+    post:
+      summary: Post a new message
+      description: |
+        Post a new message
+      consumes: 
+        - text/plain
+      parameters:
+        - name: message
+          in: body
+          description: Message to post.
+          required: true
+          format: string
+          type: string
+      tags:
+        - Backend
+      responses:
+        200:
+          description: Message stored
+          headers:
+            x-post-id:
+              type: integer
+              format: int64
+              description: id of the message
+        default:
+          description: Unexpected error
+definitions:
+  board:
+    type: object
+  properties:
+    site:
+      type: string
+    format: url
+    xml:
+          attribute: true
+    posts:
+      type: array
+    items:
+      type: post
+  post:
+    type: object
+    properties:
+      time:
+        type: integer
+        format: int64
+        xml:
+          attribute: true
+      id:
+        type: integer
+        format: int64
+        xml:
+          attribute: true
+      info:
+        type: string
+      message:
+        type: string
+      login:
+        type: string
