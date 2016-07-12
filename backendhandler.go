@@ -21,7 +21,7 @@ const defaultFormat string = "xml"
 
 var allowedFormats = map[string]bool{
 	"xml":  true,
-	"csv":  true,
+	"tsv":  true,
 	"json": true,
 }
 
@@ -29,7 +29,7 @@ var knownHeaders = map[string]string{
 	"application/xml":  "xml",
 	"text/xml":         "xml",
 	"application/json": "json",
-	"text/csv":         "csv",
+	"text/tsv":         "tsv",
 }
 
 type BackendHandler struct {
