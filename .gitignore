@@ -1,4 +1,5 @@
 goboard
 *.db
+*.log
 .project
 .settings

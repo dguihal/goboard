@@ -6,9 +6,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v2"
 )
@@ -17,6 +19,7 @@ type Config struct {
 	ListenPort     string `yaml:"ListenPort"`
 	MaxHistorySize int    `yaml:"MaxHistorySize"`
 	CookieDuration int    `yaml:"CookieDuration"`
+	AccessLogFile  string `yaml:"AccessLogFile"`
 }
 
 type SupportedOp struct {
@@ -41,40 +44,59 @@ func main() {
 		log.Fatalf("error: %v", err)
 	}
 
+	// Manage access log file
+	var fiAccessLog *os.File = nil
+	if len(config.AccessLogFile) > 0 {
+		fiAccessLog, err = os.OpenFile(config.AccessLogFile, os.O_RDWR|os.O_APPEND, 0666);
+		if err != nil {
+			fiAccessLog, err = os.Create(config.AccessLogFile)
+			if err != nil {
+				log.Fatalf("error: %v", err)
+			}
+		}
+	}
+
 	db, err := bolt.Open("my.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
 
-	router := mux.NewRouter().StrictSlash(true)
+	muxRouter := mux.NewRouter().StrictSlash(true)
 	//router.HandleFunc("/", Index)c
 
 	// Backend operations
 	backendHandler := NewBackendHandler(db, config.MaxHistorySize)
 	for _, op := range backendHandler.supportedOps {
-		router.Handle(op.path, backendHandler).Methods(op.method)
+		muxRouter.Handle(op.path, backendHandler).Methods(op.method)
 	}
 
 	// User operations
 	userHandler := NewUserHandler(db, config.CookieDuration)
 	for _, op := range userHandler.supportedOps {
-		router.Handle(op.path, userHandler).Methods(op.method)
+		muxRouter.Handle(op.path, userHandler).Methods(op.method)
 	}
 
 	// Admin operations
 	adminHandler := NewAdminHandler(db)
 	for _, op := range adminHandler.supportedOps {
-		router.Handle(op.path, adminHandler).Methods(op.method)
+		muxRouter.Handle(op.path, adminHandler).Methods(op.method)
 	}
 
 	// Swagger operations
 	swaggerHandler := NewSwaggerHandler()
 	for _, op := range swaggerHandler.supportedOps {
-		router.Handle(op.path, swaggerHandler).Methods(op.method)
+		muxRouter.Handle(op.path, swaggerHandler).Methods(op.method)
 	}
 
 	fmt.Println("GoBoard version 0.0.1 starting on port", config.ListenPort)
-	log.Fatal(http.ListenAndServe(fmt.Sprint(":", config.ListenPort), router))
+
+	var handler http.Handler
+	if fiAccessLog != nil {
+		handler = handlers.LoggingHandler(fiAccessLog, muxRouter)
+	} else {
+		handler = muxRouter
+	}
+	log.Fatal(http.ListenAndServe(fmt.Sprint(":", config.ListenPort), handler))
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {

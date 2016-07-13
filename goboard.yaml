@@ -8,3 +8,6 @@ MaxHistorySize: 5
 
 # Cookies duration in days
 CookieDuration: 365
+
+#Leave empty or remove if you don't want access log file
+AccessLogFile: access.log
