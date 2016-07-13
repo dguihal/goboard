@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -23,6 +24,7 @@ type Config struct {
 	GoBoardDBFileMode os.FileMode `yaml:"GoBoardDBFileMode"`
 	AccessLogFile     string      `yaml:"AccessLogFile"`
 	AccessLogFileMode os.FileMode `yaml:"AccessLogFileMode"`
+	SwaggerPath       string      `yaml:"SwaggerPath"`
 }
 
 type SupportedOp struct {
@@ -92,9 +94,16 @@ func main() {
 	}
 
 	// Swagger operations
-	swaggerHandler := NewSwaggerHandler()
-	for _, op := range swaggerHandler.supportedOps {
-		muxRouter.Handle(op.path, swaggerHandler).Methods(op.method)
+	if len(config.SwaggerPath) > 0 {
+		realPath := os.ExpandEnv(config.SwaggerPath)
+		if _, err := os.Stat(strings.Join([]string{realPath, "/index.html"}, "")); os.IsNotExist(err) {
+			log.Println(strings.Join([]string{realPath, "/index.html"}, ""), "Not found: Disabling swagger capabilities")
+		} else {
+			swaggerHandler := NewSwaggerHandler(realPath)
+			for _, op := range swaggerHandler.supportedOps {
+				muxRouter.Handle(op.path, swaggerHandler).Methods(op.method)
+			}
+		}
 	}
 
 	fmt.Println("GoBoard version 0.0.1 starting on port", config.ListenPort)

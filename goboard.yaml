@@ -20,3 +20,5 @@ AccessLogFile: access.log
 
 #Access Log File permissions (octal notation)
 AccessLogFileMode: 0660
+
+SwaggerPath: $HOME/swaggerui

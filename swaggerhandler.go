@@ -9,22 +9,20 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const SwaggerBaseDir = "/tmp/swagger-ui/"
-
 type SwaggerHandler struct {
 	GoboardHandler
 
 	baseDir http.Dir
 }
 
-func NewSwaggerHandler() (s *SwaggerHandler) {
+func NewSwaggerHandler(swaggerBaseDir string) (s *SwaggerHandler) {
 	s = &SwaggerHandler{}
 
-	s.baseDir = http.Dir(SwaggerBaseDir)
+	s.baseDir = http.Dir(swaggerBaseDir)
 
 	s.supportedOps = []SupportedOp{
-		{"/swagger/", "GET"}, // GET swagger content
-		{"/swagger/{file}", "GET"}, // GET swagger content
+		{"/swagger/", "GET"},                // GET swagger content
+		{"/swagger/{file}", "GET"},          // GET swagger content
 		{"/swagger/{subdir}/{file}", "GET"}, // GET swagger subdir content
 	}
 	return
