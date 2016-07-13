@@ -16,10 +16,13 @@ import (
 )
 
 type Config struct {
-	ListenPort     string `yaml:"ListenPort"`
-	MaxHistorySize int    `yaml:"MaxHistorySize"`
-	CookieDuration int    `yaml:"CookieDuration"`
-	AccessLogFile  string `yaml:"AccessLogFile"`
+	ListenPort        string      `yaml:"ListenPort"`
+	MaxHistorySize    int         `yaml:"MaxHistorySize"`
+	CookieDuration    int         `yaml:"CookieDuration"`
+	GoBoardDBFile     string      `yaml:"GoBoardDBFile"`
+	GoBoardDBFileMode os.FileMode `yaml:"GoBoardDBFileMode"`
+	AccessLogFile     string      `yaml:"AccessLogFile"`
+	AccessLogFileMode os.FileMode `yaml:"AccessLogFileMode"`
 }
 
 type SupportedOp struct {
@@ -45,9 +48,12 @@ func main() {
 	}
 
 	// Manage access log file
+	if config.AccessLogFileMode == 0 {
+		config.AccessLogFileMode = 0660
+	}
 	var fiAccessLog *os.File = nil
 	if len(config.AccessLogFile) > 0 {
-		fiAccessLog, err = os.OpenFile(config.AccessLogFile, os.O_RDWR|os.O_APPEND, 0666);
+		fiAccessLog, err = os.OpenFile(config.AccessLogFile, os.O_RDWR|os.O_APPEND, config.AccessLogFileMode)
 		if err != nil {
 			fiAccessLog, err = os.Create(config.AccessLogFile)
 			if err != nil {
@@ -56,7 +62,10 @@ func main() {
 		}
 	}
 
-	db, err := bolt.Open("my.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
+	if config.GoBoardDBFileMode == 0 {
+		config.GoBoardDBFileMode = 0600
+	}
+	db, err := bolt.Open(config.GoBoardDBFile, config.GoBoardDBFileMode, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}

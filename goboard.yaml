@@ -10,4 +10,13 @@ MaxHistorySize: 5
 CookieDuration: 365
 
 #Leave empty or remove if you don't want access log file
+GoBoardDBFile: goboard.db
+
+#GoBoard DB File permissions (octal notation)
+GoBoardDBFileMode: 0600
+
+#Leave empty or remove if you don't want access log file
 AccessLogFile: access.log
+
+#Access Log File permissions (octal notation)
+AccessLogFileMode: 0660
