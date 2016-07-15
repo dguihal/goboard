@@ -40,6 +40,15 @@ func (u *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		loginAttr := r.FormValue("login")
 		passwdAttr := r.FormValue("password")
 
+		if len(loginAttr) == 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("Login can't be null"))
+			return
+		} else if len(passwdAttr) == 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("Password can't be null"))
+		}
+
 		if strings.HasSuffix(r.URL.Path, "add") {
 			u.AddUser(w, loginAttr, passwdAttr)
 		} else if strings.HasSuffix(r.URL.Path, "login") {
@@ -55,17 +64,24 @@ func (u *UserHandler) AddUser(w http.ResponseWriter, login string, passwd string
 
 	if err == nil {
 		// User created : Send him a cookie
-		if cookie, err := goboardcookie.CookieForUser(u.db, login, u.cookieDuration_d); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Println(err.Error())
-		} else {
+		if cookie, err := goboardcookie.CookieForUser(u.db, login, u.cookieDuration_d); err == nil {
 			http.SetCookie(w, &cookie)
 			w.WriteHeader(http.StatusOK)
+			return
 		}
 	} else {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Println(err.Error())
+		if uerr, ok := err.(*goboarduser.UserError); ok {
+			if uerr.ErrCode == goboarduser.UserAlreadyExistsError {
+				w.WriteHeader(http.StatusConflict)
+				w.Write([]byte("User login already exists"))
+				return
+			}
+		}
 	}
+	w.WriteHeader(http.StatusInternalServerError)
+	fmt.Println(err.Error())
+
+	return
 }
 
 func (u *UserHandler) AuthUser(w http.ResponseWriter, login string, passwd string) {
