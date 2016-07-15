@@ -50,8 +50,8 @@ func AddUser(db *bolt.DB, login string, password string) (uerr error) {
 
 			if user.Login == login {
 				e := errors.New("User already exists")
-				uerr = &UserError{error: err, ErrCode: UserAlreadyExistsError}
-				return e
+				uerr = &UserError{error: e, ErrCode: UserAlreadyExistsError}
+				return uerr
 			}
 		}
 
@@ -60,7 +60,7 @@ func AddUser(db *bolt.DB, login string, password string) (uerr error) {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
 			uerr = &UserError{error: err, ErrCode: DatabaseError}
-			return err
+			return uerr
 		}
 
 		user = User{Id: uint64(id), Login: login, HashedPassword: hashedPassword}
@@ -68,13 +68,13 @@ func AddUser(db *bolt.DB, login string, password string) (uerr error) {
 		buf, err := json.Marshal(user)
 		if err != nil {
 			uerr = &UserError{error: err, ErrCode: DatabaseError}
-			return err
+			return uerr
 		}
 
 		err = b.Put(goboardutils.IToB(user.Id), buf)
 		if err != nil {
 			uerr = &UserError{error: err, ErrCode: DatabaseError}
-			return err
+			return uerr
 		}
 
 		return nil
