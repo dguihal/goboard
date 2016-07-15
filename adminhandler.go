@@ -10,6 +10,7 @@ import (
 	goboardbackend "github.com/dguihal/goboard/backend"
 	goboardcookie "github.com/dguihal/goboard/cookie"
 	goboarduser "github.com/dguihal/goboard/user"
+	"github.com/gorilla/mux"
 )
 
 type AdminHandler struct {
@@ -24,28 +25,29 @@ func NewAdminHandler(db *bolt.DB) (a *AdminHandler) {
 	a.db = db
 
 	a.supportedOps = []SupportedOp{
-		{"/admin/user", "DELETE"}, // Delete a user
-		{"/admin/post", "DELETE"}, // Delete a post
+		{"/admin/user/{login}", "DELETE"}, // Delete a user
+		{"/admin/post/{id}", "DELETE"},    // Delete a post
 	}
 
 	a.adminToken = "plop"
 	return
 }
 
-func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	reqAdminToken := r.Header.Get("Token-Id")
+func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
+	reqAdminToken := rq.Header.Get("Token-Id")
 	if !a.checkAdminToken(reqAdminToken) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	switch r.Method {
+	vars := mux.Vars(rq)
+	switch rq.Method {
 	case "DELETE":
-		if strings.HasSuffix(r.URL.Path, "user") {
-			loginAttr := r.FormValue("login")
-			a.DeleteUser(w, loginAttr)
-		} else if strings.HasSuffix(r.URL.Path, "post") {
-			postId := r.FormValue("post")
+		if strings.HasSuffix(rq.URL.Path, "user") {
+			login := vars["login"]
+			a.DeleteUser(w, login)
+		} else if strings.HasSuffix(rq.URL.Path, "post") {
+			postId := vars["postId"]
 			a.DeletePost(w, postId)
 		}
 	}
