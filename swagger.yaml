@@ -129,6 +129,11 @@ paths:
       responses:
         '200':
           description: User created
+          headers:
+            Set-Cookie:
+              type: string
+              format: string
+              description: Authenticated user's cookie
         default:
           description: Unexpected error
   /user/login:
