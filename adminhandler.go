@@ -41,22 +41,40 @@ func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 	}
 
 	vars := mux.Vars(rq)
+
 	switch rq.Method {
 	case "DELETE":
-		if strings.HasSuffix(rq.URL.Path, "user") {
+		if strings.HasPrefix(rq.URL.Path, "/admin/user/") {
 			login := vars["login"]
 			a.DeleteUser(w, login)
-		} else if strings.HasSuffix(rq.URL.Path, "post") {
+		} else if strings.HasPrefix(rq.URL.Path, "/admin/post/") {
 			postId := vars["postId"]
 			a.DeletePost(w, postId)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			return
 		}
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
 	}
 }
 
 func (a *AdminHandler) DeleteUser(w http.ResponseWriter, login string) {
+
 	if err := goboarduser.DeleteUser(a.db, login); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Println(err.Error())
+		if uerr, ok := err.(*goboarduser.UserError); ok {
+			if uerr.ErrCode == goboarduser.UserDoesNotExistsError {
+				w.WriteHeader(http.StatusNotFound)
+				w.Write([]byte(fmt.Sprintf("User %s Not found", login)))
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Println(err.Error())
+			}
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
