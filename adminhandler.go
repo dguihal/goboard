@@ -67,6 +67,7 @@ func (a *AdminHandler) DeleteUser(w http.ResponseWriter, login string) {
 			if uerr.ErrCode == goboarduser.UserDoesNotExistsError {
 				w.WriteHeader(http.StatusNotFound)
 				w.Write([]byte(fmt.Sprintf("User %s Not found", login)))
+				return
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)
 				fmt.Println(err.Error())
@@ -75,7 +76,6 @@ func (a *AdminHandler) DeleteUser(w http.ResponseWriter, login string) {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Println(err.Error())
 		}
-		return
 	}
 
 	if err := goboardcookie.DeleteCookiesForUser(a.db, login); err != nil {
