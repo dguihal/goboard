@@ -21,9 +21,9 @@ func NewSwaggerHandler(swaggerBaseDir string) (s *SwaggerHandler) {
 	s.baseDir = http.Dir(swaggerBaseDir)
 
 	s.supportedOps = []SupportedOp{
-		{"/swagger/", "GET"},                // GET swagger content
-		{"/swagger/{file}", "GET"},          // GET swagger content
-		{"/swagger/{subdir}/{file}", "GET"}, // GET swagger subdir content
+		{"/swagger/", "/swagger/", "GET", s.ServeHTTP},                // GET swagger content
+		{"/swagger/", "/swagger/{file}", "GET", s.ServeHTTP},          // GET swagger file content
+		{"/swagger/", "/swagger/{subdir}/{file}", "GET", s.ServeHTTP}, // GET swagger subdir file content
 	}
 	return
 }

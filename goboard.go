@@ -27,9 +27,13 @@ type Config struct {
 	SwaggerPath       string      `yaml:"SwaggerPath"`
 }
 
+type RestEndpointHandler func(http.ResponseWriter, *http.Request)
+
 type SupportedOp struct {
-	path   string
-	method string
+	PathBase string
+	RestPath string
+	Method   string
+	handler  RestEndpointHandler
 }
 
 type GoboardHandler struct {
@@ -78,19 +82,19 @@ func main() {
 	// Backend operations
 	backendHandler := NewBackendHandler(db, config.MaxHistorySize)
 	for _, op := range backendHandler.supportedOps {
-		muxRouter.Handle(op.path, backendHandler).Methods(op.method)
+		muxRouter.Handle(op.RestPath, backendHandler).Methods(op.Method)
 	}
 
 	// User operations
 	userHandler := NewUserHandler(db, config.CookieDuration)
 	for _, op := range userHandler.supportedOps {
-		muxRouter.Handle(op.path, userHandler).Methods(op.method)
+		muxRouter.Handle(op.RestPath, userHandler).Methods(op.Method)
 	}
 
 	// Admin operations
 	adminHandler := NewAdminHandler(db)
 	for _, op := range adminHandler.supportedOps {
-		muxRouter.Handle(op.path, adminHandler).Methods(op.method)
+		muxRouter.Handle(op.RestPath, adminHandler).Methods(op.Method)
 	}
 
 	// Swagger operations
@@ -101,7 +105,7 @@ func main() {
 		} else {
 			swaggerHandler := NewSwaggerHandler(realPath)
 			for _, op := range swaggerHandler.supportedOps {
-				muxRouter.Handle(op.path, swaggerHandler).Methods(op.method)
+				muxRouter.Handle(op.RestPath, swaggerHandler).Methods(op.Method)
 			}
 		}
 	}

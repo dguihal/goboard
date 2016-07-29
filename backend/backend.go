@@ -81,6 +81,27 @@ func GetBackend(db *bolt.DB, historySize int, last uint64) (posts []Post, err er
 	return
 }
 
+func GetPost(db *bolt.DB, id uint64) (post Post, err error) {
+
+	post = Post{}
+
+	err = db.View(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte(backendBucketName))
+		if b == nil {
+			return nil
+		}
+
+		v := b.Get(goboardutils.IToB(id))
+		if v != nil {
+			json.Unmarshal(v, &post)
+		}
+
+		return nil
+	})
+	return
+}
+
 func PostMessage(db *bolt.DB, post Post) (postId uint64, err error) {
 
 	err = db.Update(func(tx *bolt.Tx) error {

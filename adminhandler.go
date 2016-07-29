@@ -25,42 +25,38 @@ func NewAdminHandler(db *bolt.DB) (a *AdminHandler) {
 	a.db = db
 
 	a.supportedOps = []SupportedOp{
-		{"/admin/user/{login}", "DELETE"}, // Delete a user
-		{"/admin/post/{id}", "DELETE"},    // Delete a post
+		{"/admin/user/", "/admin/user/{login}", "DELETE", a.deleteUser}, // Delete a user
+		{"/admin/post/", "/admin/post/{id}", "DELETE", a.deletePost},    // Delete a post
 	}
 
 	a.adminToken = "plop"
 	return
 }
 
-func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
-	reqAdminToken := rq.Header.Get("Token-Id")
+func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	reqAdminToken := r.Header.Get("Token-Id")
 	if !a.checkAdminToken(reqAdminToken) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	vars := mux.Vars(rq)
-
-	switch rq.Method {
-	case "DELETE":
-		if strings.HasPrefix(rq.URL.Path, "/admin/user/") {
-			login := vars["login"]
-			a.DeleteUser(w, login)
-		} else if strings.HasPrefix(rq.URL.Path, "/admin/post/") {
-			postId := vars["postId"]
-			a.DeletePost(w, postId)
-		} else {
-			w.WriteHeader(http.StatusNotFound)
+	for _, op := range a.supportedOps {
+		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, op.PathBase) {
+			// Call specific handling method
+			op.handler(w, r)
 			return
 		}
-	default:
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
 	}
+
+	// If we are here : not methods has been found (shouldn't happen)
+	w.WriteHeader(http.StatusNotFound)
+	return
 }
 
-func (a *AdminHandler) DeleteUser(w http.ResponseWriter, login string) {
+func (a *AdminHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
+
+	login := (mux.Vars(r))["login"]
 
 	if err := goboarduser.DeleteUser(a.db, login); err != nil {
 		if uerr, ok := err.(*goboarduser.UserError); ok {
@@ -89,7 +85,9 @@ func (a *AdminHandler) DeleteUser(w http.ResponseWriter, login string) {
 
 }
 
-func (a *AdminHandler) DeletePost(w http.ResponseWriter, postId string) {
+func (a *AdminHandler) deletePost(w http.ResponseWriter, rq *http.Request) {
+
+	postId := (mux.Vars(rq))["id"]
 
 	id, err := strconv.ParseUint(postId, 10, 64)
 	if err != nil {

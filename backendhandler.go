@@ -38,30 +38,53 @@ type BackendHandler struct {
 	historySize int
 }
 
-func NewBackendHandler(db *bolt.DB, historySize int) (r *BackendHandler) {
-	r = &BackendHandler{}
+func NewBackendHandler(db *bolt.DB, historySize int) (b *BackendHandler) {
+	b = &BackendHandler{}
 
-	r.db = db
+	b.db = db
 
-	r.supportedOps = []SupportedOp{
-		{"/backend", "GET"},          // Get backend (in xml)
-		{"/backend/{format}", "GET"}, //Get backend (in specific format)
-		{"/post", "POST"},            // Post new message
+	b.supportedOps = []SupportedOp{
+		{"/backend", "/backend", "GET", b.getBackend},          // Get backend (in xml)
+		{"/backend", "/backend/{format}", "GET", b.getBackend}, // Get backend (in specific format)
+		{"/post", "/post", "POST", b.post},                     // Post new message
+		{"/post/", "/post/{id}", "GET", b.getPost},             // Get a specific message
 	}
 
-	r.historySize = historySize
+	b.historySize = historySize
 	return
 }
 
-func (r *BackendHandler) Post(post goboardbackend.Post) (postId uint64, err error) {
-	postId, err = goboardbackend.PostMessage(r.db, post)
+func (b *BackendHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	for _, op := range b.supportedOps {
+		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, op.PathBase) {
+			// Call specific handling method
+			op.handler(w, r)
+			return
+		}
+	}
+
+	// If we are here : not methods has been found (shouldn't happen)
+	w.WriteHeader(http.StatusNotFound)
 	return
 }
 
-func (r *BackendHandler) GetBackend(w http.ResponseWriter, last uint64, format string) {
-	posts, err := goboardbackend.GetBackend(r.db, r.historySize, last)
+func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
+
+	lastStr := r.URL.Query().Get("last")
+	last, err := strconv.ParseUint(lastStr, 10, 64)
+	if err != nil {
+		last = 0
+	}
+
+	posts, err := goboardbackend.GetBackend(b.db, b.historySize, last)
 
 	if err == nil {
+
+		vars := mux.Vars(r)
+		formatAttr := vars["format"]
+
+		format := guessFormat(formatAttr, r.Header.Get("Accept"))
 
 		var data []byte
 
@@ -88,69 +111,84 @@ func (r *BackendHandler) GetBackend(w http.ResponseWriter, last uint64, format s
 	return
 }
 
-func (r *BackendHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
-	switch rq.Method {
-	case "POST":
-		fmt.Println("POST")
-		rq.ParseForm()
+func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 
-		bP := bluemonday.NewPolicy()
-		bP.AllowStandardURLs()
-		bP.AllowAttrs("href").OnElements("a")
-		bP.AllowElements("i")
-		bP.AllowElements("u")
-		bP.AllowElements("b")
-		bP.AllowElements("s")
-		bP.AllowElements("em")
-		bP.AllowElements("tt")
+	id := r.URL.Query().Get("id")
 
-		message := bP.Sanitize(rq.FormValue("message"))
-		login := ""
+	postId, err := strconv.ParseUint(id, 10, 64)
 
-		// TODO : Get the session cookie and fetch the corresponding user
-		cookies := rq.Cookies()
-
-		if len(cookies) > 0 {
-			var err error
-
-			if login, err = cookie.LoginForCookie(r.db, cookies[0].Value); err != nil {
-				fmt.Println("POST :", err.Error())
-				login = ""
-			}
-		}
-
-		p := goboardbackend.Post{
-			Time:    goboardbackend.PostTime{time.Now()},
-			Login:   login,
-			Info:    rq.Header.Get("User-Agent"),
-			Message: message,
-		}
-
-		postId, err := r.Post(p)
-
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-		} else {
-			w.Header().Set("X-Post-Id", strconv.FormatUint(postId, 10))
-			w.WriteHeader(http.StatusOK)
-		}
-	case "GET":
-		fmt.Println("GET")
-
-		lastAttrStr := rq.URL.Query().Get("last")
-		lastAttr, err := strconv.ParseUint(lastAttrStr, 10, 64)
-		if err != nil {
-			lastAttr = 0
-		}
-
-		vars := mux.Vars(rq)
-		formatAttr := vars["format"]
-
-		format := guessFormat(formatAttr, rq.Header.Get("Accept"))
-
-		r.GetBackend(w, lastAttr, format)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Missing required post id as unsigned int PATH variable"))
+		return
 	}
+
+	post, err := goboardbackend.GetPost(b.db, postId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if post.Id == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	s, err := xml.Marshal(post)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(s)
+
+	return
+}
+
+func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+
+	bP := bluemonday.NewPolicy()
+	bP.AllowStandardURLs()
+	bP.AllowAttrs("href").OnElements("a")
+	bP.AllowElements("i")
+	bP.AllowElements("u")
+	bP.AllowElements("b")
+	bP.AllowElements("s")
+	bP.AllowElements("em")
+	bP.AllowElements("tt")
+
+	message := bP.Sanitize(r.FormValue("message"))
+	login := ""
+
+	if cookies := r.Cookies(); len(cookies) > 0 {
+		var err error
+
+		if login, err = cookie.LoginForCookie(b.db, cookies[0].Value); err != nil {
+			fmt.Println("POST :", err.Error())
+			login = ""
+		}
+	}
+
+	// Build Post object to store
+	p := goboardbackend.Post{
+		Time:    goboardbackend.PostTime{time.Now()},
+		Login:   login,
+		Info:    r.Header.Get("User-Agent"),
+		Message: message,
+	}
+
+	// Try to store it
+	if postId, err := goboardbackend.PostMessage(b.db, p); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	} else {
+		w.Header().Set("X-Post-Id", strconv.FormatUint(postId, 10))
+		w.WriteHeader(http.StatusOK)
+	}
+
+	return
 }
 
 // Guess backend format to deliver based on :

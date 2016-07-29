@@ -21,8 +21,8 @@ func NewUserHandler(db *bolt.DB, cookieDuration int) (u *UserHandler) {
 	u.db = db
 
 	u.supportedOps = []SupportedOp{
-		{"/user/add", "POST"},   // Add a user
-		{"/user/login", "POST"}, // Sign in a user
+		{"/user/add", "/user/add", "POST", u.addUser},      // Add a user
+		{"/user/login", "/user/login", "POST", u.authUser}, // Authenticate a user
 	}
 
 	u.cookieDuration_d = cookieDuration
@@ -32,34 +32,30 @@ func NewUserHandler(db *bolt.DB, cookieDuration int) (u *UserHandler) {
 
 func (u *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	switch r.Method {
-	case "POST":
-		fmt.Println("POST")
-		r.ParseForm()
-
-		loginAttr := r.FormValue("login")
-		passwdAttr := r.FormValue("password")
-
-		if len(loginAttr) == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Login can't be null"))
+	for _, op := range u.supportedOps {
+		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, op.PathBase) {
+			// Call specific handling method
+			op.handler(w, r)
 			return
-		} else if len(passwdAttr) == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Password can't be null"))
-		}
-
-		if strings.HasSuffix(r.URL.Path, "add") {
-			u.AddUser(w, loginAttr, passwdAttr)
-		} else if strings.HasSuffix(r.URL.Path, "login") {
-			u.AuthUser(w, loginAttr, passwdAttr)
-		} else {
-			w.WriteHeader(http.StatusNotFound)
 		}
 	}
 }
 
-func (u *UserHandler) AddUser(w http.ResponseWriter, login string, passwd string) {
+func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+
+	var login, passwd string = "", ""
+	if login = r.FormValue("login"); len(login) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Login can't be empty"))
+		return
+	}
+
+	if passwd := r.FormValue("password"); len(passwd) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Password can't be empty"))
+	}
+
 	err := goboarduser.AddUser(u.db, login, passwd)
 
 	if err == nil {
@@ -84,7 +80,20 @@ func (u *UserHandler) AddUser(w http.ResponseWriter, login string, passwd string
 	return
 }
 
-func (u *UserHandler) AuthUser(w http.ResponseWriter, login string, passwd string) {
+func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+
+	var login, passwd string = "", ""
+	if login = r.FormValue("login"); len(login) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Login can't be empty"))
+		return
+	}
+
+	if passwd := r.FormValue("password"); len(passwd) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Password can't be empty"))
+	}
 
 	if err := goboarduser.AuthUser(u.db, login, passwd); err != nil {
 		fmt.Println("goboarduser.AuthUser : ", err.Error())
