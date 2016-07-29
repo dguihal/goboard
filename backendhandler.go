@@ -47,7 +47,8 @@ func NewBackendHandler(db *bolt.DB, historySize int) (b *BackendHandler) {
 		{"/backend", "/backend", "GET", b.getBackend},          // Get backend (in xml)
 		{"/backend", "/backend/{format}", "GET", b.getBackend}, // Get backend (in specific format)
 		{"/post", "/post", "POST", b.post},                     // Post new message
-		{"/post/", "/post/{id}", "GET", b.getPost},             // Get a specific message
+		{"/post/", "/post/{id}", "GET", b.getPost},             // Get a specific message (in xml)
+		{"/post/", "/post/{id}/{format}", "GET", b.getPost},    // Get a specific message (in specific format)
 	}
 
 	b.historySize = historySize
@@ -82,9 +83,7 @@ func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 
 		vars := mux.Vars(r)
-		formatAttr := vars["format"]
-
-		format := guessFormat(formatAttr, r.Header.Get("Accept"))
+		format := guessFormat(vars["format"], r.Header.Get("Accept"))
 
 		var data []byte
 
@@ -113,9 +112,10 @@ func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
 
 func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 
-	id := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	idStr := vars["id"]
 
-	postId, err := strconv.ParseUint(id, 10, 64)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -123,7 +123,7 @@ func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := goboardbackend.GetPost(b.db, postId)
+	post, err := goboardbackend.GetPost(b.db, id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -134,14 +134,29 @@ func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s, err := xml.Marshal(post)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	var data []byte
+	format := guessFormat(vars["format"], r.Header.Get("Accept"))
+	switch format {
+	case "json":
+		data, err = json.Marshal(post)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	case "tsv":
+		str := fmt.Sprintf("%d\t%s\t%s\t%s\t%s\n",
+			post.Id, post.Time.Format(goboardbackend.PostTimeFormat), post.Info, post.Login, post.Message)
+		data = []byte(str)
+	default:
+		data, err = xml.Marshal(post)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(s)
+	w.Write(data)
 
 	return
 }
