@@ -25,6 +25,7 @@ type Config struct {
 	AccessLogFile     string      `yaml:"AccessLogFile"`
 	AccessLogFileMode os.FileMode `yaml:"AccessLogFileMode"`
 	SwaggerPath       string      `yaml:"SwaggerPath"`
+	AdminToken        string      `yaml:"AdminToken"`
 }
 
 type RestEndpointHandler func(http.ResponseWriter, *http.Request)
@@ -92,7 +93,7 @@ func main() {
 	}
 
 	// Admin operations
-	adminHandler := NewAdminHandler(db)
+	adminHandler := NewAdminHandler(db, config.AdminToken)
 	for _, op := range adminHandler.supportedOps {
 		muxRouter.Handle(op.RestPath, adminHandler).Methods(op.Method)
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,13 +14,16 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const tokenMinLen int = 0
+const tokenWarnLen int = 12
+
 type AdminHandler struct {
 	GoboardHandler
 
 	adminToken string
 }
 
-func NewAdminHandler(db *bolt.DB) (a *AdminHandler) {
+func NewAdminHandler(db *bolt.DB, adminToken string) (a *AdminHandler) {
 	a = &AdminHandler{}
 
 	a.db = db
@@ -29,7 +33,12 @@ func NewAdminHandler(db *bolt.DB) (a *AdminHandler) {
 		{"/admin/post/", "/admin/post/{id}", "DELETE", a.deletePost},    // Delete a post
 	}
 
-	a.adminToken = "plop"
+	if len(adminToken) <= tokenMinLen {
+		log.Println("Admin token empty : for security reasongs, this means that no admin operations will be authorized")
+	} else if len(adminToken) < tokenWarnLen {
+		log.Println("Admin token len <", tokenWarnLen, ": Come on I'm sure you can do a lot better")
+	}
+	a.adminToken = adminToken
 	return
 }
 
@@ -107,5 +116,5 @@ func (a *AdminHandler) deletePost(w http.ResponseWriter, rq *http.Request) {
 }
 
 func (a *AdminHandler) checkAdminToken(token string) bool {
-	return token == a.adminToken
+	return len(a.adminToken) > tokenMinLen && token == a.adminToken
 }
