@@ -13,12 +13,13 @@ import (
 const backendBucketName string = "Backend"
 
 type Post struct {
-	XMLName xml.Name `xml:"post" json:"-"`
-	Id      uint64   `xml:"id,attr" json:"id"`
-	Time    PostTime `xml:"time,attr" json:"time"`
-	Login   string   `xml:"login" json:"login"`
-	Info    string   `xml:"info" json:"info"`
-	Message string   `xml:"message" json:"message"`
+	XMLName       xml.Name `xml:"post" json:"-"`
+	Id            uint64   `xml:"id,attr" json:"id"`
+	Time          PostTime `xml:"time,attr" json:"time"`
+	Login         string   `xml:"login" json:"login"`
+	Info          string   `xml:"info" json:"info"`
+	Message       string   `xml:"message" json:"message"`
+	OriginMessage string   `xml:"origin_message" json:"origin_message"`
 }
 
 type PostTime struct {
