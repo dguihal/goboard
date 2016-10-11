@@ -113,6 +113,8 @@ func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// TODO : Manage returning an original posted data for a specific id as text
+//        Maybe consider allowing this only for admins (not sure it is relevant)
 func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
