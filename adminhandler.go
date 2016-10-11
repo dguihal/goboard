@@ -49,7 +49,7 @@ func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// If we are here : not methods has been found (shouldn't happen)
+	// If we are here : no methods has been found (shouldn't happen)
 	w.WriteHeader(http.StatusNotFound)
 	return
 }
