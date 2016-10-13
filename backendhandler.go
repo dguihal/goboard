@@ -26,6 +26,7 @@ var allowedFormats = map[string]bool{
 	"xml":  true,
 	"tsv":  true,
 	"json": true,
+	"raw":  true,
 }
 
 var knownHeaders = map[string]string{
@@ -143,21 +144,30 @@ func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 	format := guessFormat(vars["format"], r.Header.Get("Accept"))
 	switch format {
 	case "json":
+		post.RawMessage = ""
 		data, err = json.Marshal(post)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 	case "tsv":
 		str := fmt.Sprintf("%d\t%s\t%s\t%s\t%s\n",
 			post.Id, post.Time.Format(goboardbackend.PostTimeFormat), post.Info, post.Login, post.Message)
 		data = []byte(str)
+		w.Header().Set("Content-Type", "text/tab-separated-values")
+	case "raw":
+		data = []byte(post.RawMessage)
+		w.Header().Set("Content-Type", "text/plain")
+
 	default:
+		post.RawMessage = ""
 		data, err = xml.Marshal(post)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/xml")
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -195,11 +205,11 @@ func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
 
 	// Build Post object to store
 	p := goboardbackend.Post{
-		Time:          goboardbackend.PostTime{time.Now()},
-		Login:         login,
-		Info:          r.Header.Get("User-Agent"),
-		Message:       message,
-		OriginMessage: r.FormValue("message"),
+		Time:       goboardbackend.PostTime{time.Now()},
+		Login:      login,
+		Info:       r.Header.Get("User-Agent"),
+		Message:    message,
+		RawMessage: r.FormValue("message"),
 	}
 
 	// Try to store it
@@ -263,6 +273,7 @@ func postsToXml(posts []goboardbackend.Post) []byte {
 		if p.Id == 0 {
 			break
 		}
+		posts[i].RawMessage = "" // Don't print rawData field
 	}
 
 	b.Posts = posts[:i]
@@ -284,6 +295,7 @@ func postsToJson(posts []goboardbackend.Post) []byte {
 		if p.Id == 0 {
 			break
 		}
+		posts[i].RawMessage = "" // Don't print rawData field
 	}
 
 	b.Posts = posts[:i]
@@ -298,12 +310,12 @@ func postsToJson(posts []goboardbackend.Post) []byte {
 func postsToTsv(posts []goboardbackend.Post) []byte {
 	var b bytes.Buffer
 
-	for _, post := range posts {
-		if post.Id == 0 {
+	for _, p := range posts {
+		if p.Id == 0 {
 			break
 		}
 		fmt.Fprintf(&b, "%d\t%s\t%s\t%s\t%s\n",
-			post.Id, post.Time.Format(goboardbackend.PostTimeFormat), post.Info, post.Login, post.Message)
+			p.Id, p.Time.Format(goboardbackend.PostTimeFormat), p.Info, p.Login, p.Message)
 	}
 	return b.Bytes()
 }
