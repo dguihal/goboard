@@ -25,6 +25,7 @@ type Config struct {
 	AccessLogFile     string      `yaml:"AccessLogFile"`
 	AccessLogFileMode os.FileMode `yaml:"AccessLogFileMode"`
 	SwaggerPath       string      `yaml:"SwaggerPath"`
+	WebuiPath         string      `yaml:"WebuiPath"`
 	AdminToken        string      `yaml:"AdminToken"`
 }
 
@@ -107,6 +108,19 @@ func main() {
 			swaggerHandler := NewSwaggerHandler(realPath)
 			for _, op := range swaggerHandler.supportedOps {
 				muxRouter.Handle(op.RestPath, swaggerHandler).Methods(op.Method)
+			}
+		}
+	}
+
+	// Webui operations
+	if len(config.WebuiPath) > 0 {
+		realPath := os.ExpandEnv(config.WebuiPath)
+		if _, err := os.Stat(strings.Join([]string{realPath, "/index.html"}, "")); os.IsNotExist(err) {
+			log.Println(strings.Join([]string{realPath, "/index.html"}, ""), "Not found: Disabling webui capabilities")
+		} else {
+			webuiHandler := NewWebuiHandler(realPath)
+			for _, op := range webuiHandler.supportedOps {
+				muxRouter.Handle(op.RestPath, webuiHandler).Methods(op.Method)
 			}
 		}
 	}

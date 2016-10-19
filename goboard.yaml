@@ -23,5 +23,7 @@ AccessLogFileMode: 0660
 
 SwaggerPath: $HOME/swaggerui
 
+WebuiPath: $HOME/webui
+
 #No minimum length is enforced, but you are strongly encouraged to set it long and complex
 AdminToken: fkjqskfdhfudqgfvcgvxmomiqo324siufhdqgfyuqmosjcmjdcisq

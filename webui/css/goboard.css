@@ -1,0 +1,58 @@
+div#pini {
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+span.post_clock {
+    display: inline-block;
+    font-weight: bold;
+    vertical-align: middle;
+    padding-right: 5px;
+}
+span.post_clock:before {
+  content: "[";
+}
+span.post_clock:after {
+  content: "]";
+}
+
+span.post_login {
+    color: lightcoral;
+    display: inline-block;
+    max-width: 15%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    white-space: nowrap;
+    padding-right: 5px;
+}
+span.post_ua {
+    color: brown;
+    display: inline-block;
+    max-width: 20%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    white-space: nowrap;
+    padding-right: 5px;
+}
+span.post_message {
+    white-space: normal;
+}
+
+/* Palmi css */
+
+div#palmi {
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+input#palmiSubmit {
+    float: right;
+}
+
+div#palmi span {
+    display: block;
+    overflow: hidden;
+    padding-right: 5px;
+}

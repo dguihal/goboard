@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>Goboard</title>
+  <meta name="description" content="Simple web ui for the goboard">
+  <meta name="author" content="dguihal">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- FONT
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/skeleton.css">
+  <link rel="stylesheet" href="css/goboard.css">
+
+  <!-- JS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <script src="js/zepto.js"></script>
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="icon" type="image/png" href="images/favicon.png">
+
+</head>
+<body>
+
+  <!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <div class="container">
+    <div class="row">
+      <div class="u-full-width" style="margin-top: 25px">
+        <h4>Welcome to the goboard</h4><!--
+        <p>This index.html page is a placeholder with the CSS, font and favicon. It's just waiting for you to add some content! If you need some help hit up the <a href="http://www.getskeleton.com">Skeleton documentation</a>.</p> -->
+      </div>
+    </div>
+	<div class="row">
+      <div class="u-full-width" id="pini">
+	  </div>
+	</div>
+    <div class="row" id="palmi">
+      <form id="palmiForm">
+        <input class="button-primary" value="Post" type="submit" id="palmiSubmit">
+        <span>
+          <input class="u-full-width" placeholder="coin ! coin !" id="palmiInput" type="text">
+		</span>
+	  </form>
+	</div>
+  </div>
+
+<!-- End Document
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <script>
+
+///////////////////////////////////////////
+/// TO BE LOADED FROM EXTERNAL JSON
+var MAX_POSTS = 50;
+var PINI_REFRESH_MS = 5000;
+
+///////////////////////////////////////////
+var maxId = 0;
+var intervalID;
+
+Zepto(function($){
+    $("#palmiForm").submit(function(e) {
+        post_msg(e);
+        e.preventDefault();
+	});
+    
+    $("#pini").on("click", ".post_clock", function(e) {
+        insertPalmi(e.target.id);
+    });
+	
+	update_pini();
+	// Launch pini periodic refresh
+	intervalID = setInterval(update_pini, PINI_REFRESH_MS);
+})
+
+function post_msg() {
+    var postData = "message=" + encodeURIComponent($("#palmiInput").val());
+    
+    $.ajax({
+        type: 'POST',
+        url: '//localhost:8080/post',
+        contentType: 'application/x-www-form-urlencoded',
+        // data to be added to query string:
+        data: postData,
+        // type of data we are expecting in return:
+        dataType: 'json',
+        timeout: 300,
+        context: $('body'),
+        success: function(data){
+            $("#palmiInput").val("");
+            // Stop pini refresh
+            clearInterval(intervalID);
+            update_pini();
+            // Relaunch pini periodic refresh
+            intervalID = setInterval(update_pini, PINI_REFRESH_MS);
+        },
+        error: function(xhr, type){
+            alert('Ajax error!')
+        }
+    });
+}
+      
+function update_pini() {
+
+    $.ajax({
+        type: 'GET',
+        url: 'http://localhost:8080/backend/json',
+        // type of data we are expecting in return:
+        dataType: 'json',
+        timeout: 300,
+        context: $('body'),
+        success: function(data) {
+            
+            data.Posts = data.Posts.filter(function(item) {
+                return item.id > maxId;
+            });
+            
+            if(data.Posts.length > 1 &&
+              data.Posts[0].id > data.Posts[1].id) {
+                
+                data.Posts.sort(function(a, b) {
+                    return a.id - b.id;
+                })
+            }
+            
+            var pini = $("#pini");            
+            $.each(data.Posts, function(index, item) {
+                maxId = item.id > maxId ? item.id : maxId;
+    
+                let d = document.createElement("div");
+                d.className = "u-full-width";
+                d.id = "post_" + item.id
+                
+                let d2 = document.createElement("div");
+                d2.className = "post";
+
+                let s = document.createElement("span");
+                let formatedDate = formatPostClock(new Date(item.time));
+                s.className = "post_clock";
+                s.id = formatedDate;
+                s.title = item.id;
+                s.innerHTML = formatedDate;
+                d2.appendChild(s);
+                
+                s = document.createElement("span");
+                s.className = item.login.length > 0 ? "post_login" : "post_ua";
+                s.title = item.info;
+                s.innerHTML = item.login.length > 0 ? item.login : item.info;
+                d2.appendChild(s);
+                
+                s = document.createElement("span");
+                s.className = "post_message";
+                s.innerHTML = item.message;
+                d2.appendChild(s);
+                
+                d.appendChild(d2);                
+                pini.append(d);
+
+                //Purge too olds posts    
+                while(pini.children().length > MAX_POSTS) {
+                    pini.children(':first-child').remove();
+                }
+            });
+        },
+        error: function(xhr, type){
+            alert('Ajax error!')
+        }
+    });
+}
+
+function postClockClicked(clicked_id){
+    insertPalmi(clicked_id);
+}
+
+//By now only appends, should take care of caret position
+function insertPalmi(string) {
+    $("#palmiInput").val( function(index, val) {
+        return val + string;
+    });
+}
+
+function formatPostClock(date) {
+    let h = date.getHours() > 9 ? date.getHours() : "0" + date.getHours();
+    let m = date.getMinutes() > 9 ? date.getMinutes() : "0" + date.getMinutes();
+    let s = date.getSeconds() > 9 ? date.getSeconds() : "0" + date.getSeconds();
+    return h + ":" + m + ":" + s;
+}
+
+  </script>
+</body>
+</html>
