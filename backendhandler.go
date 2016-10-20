@@ -458,7 +458,7 @@ L:
 			}
 
 		default:
-			re := regexp.MustCompile("(?i)https?://[\\da-z\\.-]+(?:/[^\\s\"]*)/?")
+			re := regexp.MustCompile("(?i)https?://[\\da-z\\.-]+(?:/[^\\s\"]*)*/?")
 			raw := string(z.Raw())
 			if matches := re.FindAllStringIndex(raw, -1); matches != nil {
 				start := 0
