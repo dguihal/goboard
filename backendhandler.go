@@ -83,6 +83,7 @@ func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
 	}
 
 	posts, err := goboardbackend.GetBackend(b.db, b.historySize, last)
+	fmt.Println(len(posts))
 
 	if err == nil {
 
@@ -293,12 +294,15 @@ func postsToJson(posts []goboardbackend.Post) []byte {
 	var p goboardbackend.Post
 	for i, p = range posts {
 		if p.Id == 0 {
+			i--
 			break
 		}
 		posts[i].RawMessage = "" // Don't print rawData field
 	}
+	fmt.Println(i, len(posts))
 
-	b.Posts = posts[:i]
+	b.Posts = posts[:(i + 1)]
+	fmt.Println(len(b.Posts))
 
 	s, err := json.Marshal(b)
 	if err != nil {
