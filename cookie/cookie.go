@@ -49,7 +49,7 @@ func CookieForUser(db *bolt.DB, login string, cookieDuration_d int) (cookie http
 func CreateAndStoreCookie(db *bolt.DB, login string, cookieDuration_d int) (cookie http.Cookie, err error) {
 
 	expiration := time.Now().Add(time.Duration(cookieDuration_d) * 24 * time.Hour)
-	cookie = http.Cookie{Name: goboard_cookie_name, Value: uniuri.NewLen(64), Expires: expiration}
+	cookie = http.Cookie{Name: goboard_cookie_name, Value: uniuri.NewLen(64), Expires: expiration, Path: "/"}
 
 	uc := UserCookie{login, cookie}
 
