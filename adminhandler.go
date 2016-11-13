@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -30,6 +31,7 @@ func NewAdminHandler(db *bolt.DB, adminToken string) (a *AdminHandler) {
 
 	a.supportedOps = []SupportedOp{
 		{"/admin/user/", "/admin/user/{login}", "DELETE", a.deleteUser}, // Delete a user
+		{"/admin/user/", "/admin/user/{login}", "GET", a.getUser},       // Get a user info
 		{"/admin/post/", "/admin/post/{id}", "DELETE", a.deletePost},    // Delete a post
 	}
 
@@ -113,6 +115,24 @@ func (a *AdminHandler) deletePost(w http.ResponseWriter, rq *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	return
 
+}
+
+func (a *AdminHandler) getUser(w http.ResponseWriter, r *http.Request) {
+
+	login := (mux.Vars(r))["login"]
+
+	if user, err := goboarduser.GetUser(a.db, login); err != nil {
+		w.WriteHeader(http.StatusNotFound)
+	} else {
+		data, err := json.Marshal(user)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println(err.Error())
+		} else {
+			w.WriteHeader(http.StatusOK)
+			w.Write(data)
+		}
+	}
 }
 
 func (a *AdminHandler) checkAdminToken(token string) bool {

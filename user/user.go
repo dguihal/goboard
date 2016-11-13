@@ -4,6 +4,7 @@ package user
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"golang.org/x/crypto/bcrypt"
@@ -28,8 +29,8 @@ func (e *UserError) Error() string { return e.error.Error() }
 
 type User struct {
 	Login          string
-	HashedPassword []byte
-	salt           []byte
+	CreationDate   time.Time
+	HashedPassword []byte `json:"HashedPassword,omitempty"`
 }
 
 func AddUser(db *bolt.DB, login string, password string) (uerr error) {
@@ -54,7 +55,7 @@ func AddUser(db *bolt.DB, login string, password string) (uerr error) {
 			return uerr
 		}
 
-		user := User{Login: login, HashedPassword: hashedPassword}
+		user := User{Login: login, HashedPassword: hashedPassword, CreationDate: time.Now()}
 
 		buf, err := json.Marshal(user)
 		if err != nil {
@@ -77,9 +78,13 @@ func AddUser(db *bolt.DB, login string, password string) (uerr error) {
 func AuthUser(db *bolt.DB, login string, password string) (uerr error) {
 
 	db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(usersBucketName))
 
-		v := b.Get([]byte(login))
+		b := tx.Bucket([]byte(usersBucketName))
+		var v []byte
+
+		if b != nil {
+			v = b.Get([]byte(login))
+		}
 
 		if v == nil { // User does not exists
 			uerr = &UserError{error: fmt.Errorf("Authentification failed"), ErrCode: AuthenticationFailed}
@@ -87,6 +92,7 @@ func AuthUser(db *bolt.DB, login string, password string) (uerr error) {
 		} else {
 			user := User{}
 			json.Unmarshal(v, &user)
+			fmt.Println()
 
 			if user.Login == login {
 				err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
@@ -103,25 +109,49 @@ func AuthUser(db *bolt.DB, login string, password string) (uerr error) {
 	return
 }
 
-func DeleteUser(db *bolt.DB, login string) (err error) {
+func DeleteUser(db *bolt.DB, login string) (uerr error) {
 
-	err = db.Batch(func(tx *bolt.Tx) error {
+	db.Batch(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(usersBucketName))
 		if err != nil {
-			uerr := &UserError{error: err, ErrCode: DatabaseError}
-			return uerr
+			uerr = &UserError{error: err, ErrCode: DatabaseError}
+			return err
 		}
 
 		v := b.Get([]byte(login))
 
 		if v == nil { // User does not exists
-			uerr := &UserError{error: fmt.Errorf("User does not exists"), ErrCode: UserDoesNotExistsError}
+			uerr = &UserError{error: fmt.Errorf("User does not exists"), ErrCode: UserDoesNotExistsError}
 			return uerr
 		} else {
 			if err = b.Delete([]byte(login)); err != nil {
-				uerr := &UserError{error: err, ErrCode: DatabaseError}
-				return uerr
+				uerr = &UserError{error: err, ErrCode: DatabaseError}
+				return err
 			}
+		}
+
+		return nil
+	})
+
+	return
+}
+
+func GetUser(db *bolt.DB, login string) (user User, uerr error) {
+
+	db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(usersBucketName))
+		var v []byte
+
+		if b != nil {
+			v = b.Get([]byte(login))
+		}
+
+		if v == nil {
+			uerr = &UserError{error: fmt.Errorf("User does not exists"), ErrCode: UserDoesNotExistsError}
+			return uerr
+		} else {
+			json.Unmarshal(v, &user)
+			user.HashedPassword = nil
 		}
 
 		return nil
