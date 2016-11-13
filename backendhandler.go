@@ -219,7 +219,7 @@ func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 	} else {
 		w.Header().Set("X-Post-Id", strconv.FormatUint(postId, 10))
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusNoContent)
 	}
 
 	return
