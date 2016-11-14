@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -23,6 +24,7 @@ func NewUserHandler(db *bolt.DB, cookieDuration int) (u *UserHandler) {
 	u.supportedOps = []SupportedOp{
 		{"/user/add", "/user/add", "POST", u.addUser},      // Add a user
 		{"/user/login", "/user/login", "POST", u.authUser}, // Authenticate a user
+		{"/user/whoami", "/user/whoami", "GET", u.whoAmI},  // Get self account infos
 	}
 
 	u.cookieDuration_d = cookieDuration
@@ -120,4 +122,32 @@ func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		}
 	}
+}
+
+func (u *UserHandler) whoAmI(w http.ResponseWriter, r *http.Request) {
+
+	if cookies := r.Cookies(); len(cookies) > 0 {
+		if login, err := goboardcookie.LoginForCookie(u.db, cookies[0].Value); err == nil && len(login) > 0 {
+			var err error
+			var user goboarduser.User
+
+			if user, err = goboarduser.GetUser(u.db, login); err == nil {
+				var data []byte
+
+				if data, err = json.Marshal(user); err == nil {
+					w.WriteHeader(http.StatusOK)
+					w.Write(data)
+					return
+				}
+			}
+
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println(err.Error())
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusForbidden)
+	w.Write([]byte("You need to be authenticated"))
+	return
 }
