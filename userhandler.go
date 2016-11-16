@@ -26,9 +26,10 @@ func NewUserHandler(db *bolt.DB, cookieDuration int) (u *UserHandler) {
 	u.logger = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	u.supportedOps = []SupportedOp{
-		{"/user/add", "/user/add", "POST", u.addUser},      // Add a user
-		{"/user/login", "/user/login", "POST", u.authUser}, // Authenticate a user
-		{"/user/whoami", "/user/whoami", "GET", u.whoAmI},  // Get self account infos
+		{"/user/add", "/user/add", "POST", u.addUser},         // Add a user
+		{"/user/login", "/user/login", "POST", u.authUser},    // Authenticate a user
+		{"/user/logout", "/user/logout", "GET", u.unAuthUser}, // Unauthenticate a user
+		{"/user/whoami", "/user/whoami", "GET", u.whoAmI},     // Get self account infos
 	}
 
 	u.cookieDuration_d = cookieDuration
@@ -130,15 +131,28 @@ func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		u.logger.Println(cookie)
+		u.logger.Println(err)
 		if err == nil {
-			w.WriteHeader(http.StatusOK)
 			http.SetCookie(w, &cookie)
+			w.WriteHeader(http.StatusOK)
 			w.Write(userJSON)
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 			u.logger.Println(err.Error())
 		}
 	}
+}
+
+func (u *UserHandler) unAuthUser(w http.ResponseWriter, r *http.Request) {
+
+	for _, cookie := range r.Cookies() {
+		cookie.MaxAge = 0
+		cookie.Value = ""
+		cookie.Path = "/"
+		http.SetCookie(w, cookie)
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (u *UserHandler) whoAmI(w http.ResponseWriter, r *http.Request) {
