@@ -92,7 +92,6 @@ func AuthUser(db *bolt.DB, login string, password string) (uerr error) {
 		} else {
 			user := User{}
 			json.Unmarshal(v, &user)
-			fmt.Println()
 
 			if user.Login == login {
 				err := bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(password))
