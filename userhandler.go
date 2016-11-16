@@ -2,8 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/boltdb/bolt"
@@ -15,11 +16,14 @@ type UserHandler struct {
 	GoboardHandler
 
 	cookieDuration_d int
+	logger           *log.Logger
 }
 
 func NewUserHandler(db *bolt.DB, cookieDuration int) (u *UserHandler) {
 	u = &UserHandler{}
 	u.db = db
+
+	u.logger = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	u.supportedOps = []SupportedOp{
 		{"/user/add", "/user/add", "POST", u.addUser},      // Add a user
@@ -53,9 +57,10 @@ func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if passwd := r.FormValue("password"); len(passwd) == 0 {
+	if passwd = r.FormValue("password"); len(passwd) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Password can't be empty"))
+		return
 	}
 
 	err := goboarduser.AddUser(u.db, login, passwd)
@@ -77,7 +82,7 @@ func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(http.StatusInternalServerError)
-	fmt.Println(err.Error())
+	u.logger.Println(err.Error())
 
 	return
 }
@@ -92,34 +97,46 @@ func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if passwd := r.FormValue("password"); len(passwd) == 0 {
+	if passwd = r.FormValue("password"); len(passwd) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Password can't be empty"))
+		return
 	}
 
 	if err := goboarduser.AuthUser(u.db, login, passwd); err != nil {
-		fmt.Println("goboarduser.AuthUser : ", err.Error())
+		u.logger.Println(err.Error())
 		if uerr, ok := err.(*goboarduser.UserError); ok {
 			switch uerr.ErrCode {
 			case goboarduser.AuthenticationFailed:
 				w.WriteHeader(http.StatusUnauthorized)
 			case goboarduser.DatabaseError:
 				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Println(err.Error())
+				u.logger.Println(err.Error())
 			}
-			return
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Println(err.Error())
+			u.logger.Println(err.Error())
 		}
 	} else {
+		var cookie http.Cookie
+		var user goboarduser.User
+		var userJSON []byte
+		var err error
+
 		// User authenticated : Send him a cookie
-		if cookie, err := goboardcookie.CookieForUser(u.db, login, u.cookieDuration_d); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Println(err.Error())
-		} else {
-			http.SetCookie(w, &cookie)
+		if cookie, err = goboardcookie.CookieForUser(u.db, login, u.cookieDuration_d); err == nil {
+			if user, err = goboarduser.GetUser(u.db, login); err == nil {
+				userJSON, err = json.Marshal(user)
+			}
+		}
+
+		if err == nil {
 			w.WriteHeader(http.StatusOK)
+			http.SetCookie(w, &cookie)
+			w.Write(userJSON)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			u.logger.Println(err.Error())
 		}
 	}
 }
@@ -142,7 +159,7 @@ func (u *UserHandler) whoAmI(w http.ResponseWriter, r *http.Request) {
 			}
 
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Println(err.Error())
+			u.logger.Println(err.Error())
 			return
 		}
 	}
