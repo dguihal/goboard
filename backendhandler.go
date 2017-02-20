@@ -193,6 +193,11 @@ func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
 		message := bP.Sanitize(r.FormValue("message"))
 	*/
 	message := sanitize(r.FormValue("message"))
+	rawInfo := r.FormValue("info")
+	if len(rawInfo) == 0 {
+		rawInfo = r.Header.Get("User-Agent")
+	}
+	info := sanitize(rawInfo)
 	login := ""
 
 	if cookies := r.Cookies(); len(cookies) > 0 {
@@ -208,7 +213,7 @@ func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
 	p := goboardbackend.Post{
 		Time:       goboardbackend.PostTime{time.Now()},
 		Login:      login,
-		Info:       r.Header.Get("User-Agent"),
+		Info:       info,
 		Message:    message,
 		RawMessage: r.FormValue("message"),
 	}
