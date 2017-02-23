@@ -6,17 +6,25 @@ p.material-icons {
     margin: 0px;
 }
 
+#success-alert {
+	display: none;
+}
+#danger-alert {
+	display: none;
+}
+
 /* Config panel */
 #left-menu {
     position: absolute;
-	display: none; /* Will be changed when offsetted */
+	display: none;
     height: 100%;
 	width: 0%;
     z-index: 9999;
     background: rgba(255, 255, 255, 0.95);
-    transition: all 0.5s ease-in-out;
 }
-#left-menu h2 {
+#left-menu div h2 {
+	display: inline-block;
+	vertical-align: middle;
 	margin: 1rem;
 }
 #left-menu form {
@@ -112,18 +120,3 @@ footer {
 	flex:1 0 auto;
 	padding-left:  0.5rem;
 }
-/*
-#palmi span {
-    display: block;
-    overflow: hidden;
-    height: 2.7rem;
-}
-#palmi input {
-    height: 100%;
-	flex:1 0 auto;
-}
-#palmi button {
-    height: 2.7rem;
-    margin-left: 0.5rem;
-	float: right;
-}*/

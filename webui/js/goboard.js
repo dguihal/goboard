@@ -14,6 +14,25 @@ function show_error(msg) {
     });
 }
 
+function toggle_settings() {
+    if ($('#left-menu').is(':visible')) {
+        hide_settings();
+    } else {
+        $('#left-menu').show();
+        $('#left-menu').animate({
+            'width': '350px'
+        }, 400);
+    }
+}
+
+function hide_settings() {
+	$('#left-menu').animate({
+		'width': '0px'
+	}, 400, function() {
+		$('#left-menu').hide();
+	});
+}
+
 function login() {
     var login = $('#loginInput').val();
     var pass = $('#passwordInput').val();

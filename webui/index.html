@@ -46,8 +46,11 @@
             </li>
         </ul>
     </nav>
-    <div class="toggler" id="left-menu">
-        <h2 class="ui-widget-header ui-corner-all"> Configuration</h2>
+    <div id="left-menu">
+        <div>
+            <h2> Configuration</h2>
+            <a class="btn btn-secondary btn-sm" href="#" role="button" id="toggler-btn"><i class="medium material-icons">done</i></a>
+        </div>
         <form id="webuiconf">
             <div class="form-group">
                 <label for="InfoInput">User Info</label>
@@ -239,19 +242,24 @@
             });
 
             $("#settings").on("click", function(e) {
-                if ($('#left-menu').is(':visible')) {
-                    $('#left-menu').animate({
-                        'width': '0px'
-                    }, 'slow', function() {
-                        $('#left-menu').hide();
-                    });
-                } else {
-                    $('#left-menu').show();
-                    $('#left-menu').animate({
-                        'width': '350px'
-                    }, 'slow');
-                }
+                toggle_settings(e)
+				e.stopPropagation();
                 e.preventDefault();
+            });
+
+            $("#toggler-btn").on("click", function(e) {
+                toggle_settings(e)
+                e.preventDefault();
+            });
+
+            $(document).on("click", function(e) {
+                var container = $("#left-menu");
+
+                if (!container.is(e.target) // if the target of the click isn't the container...
+                    && container.has(e.target).length === 0) // ... nor a descendant of the container
+                {
+                    hide_settings();
+                }
             });
 
             $("#login-form").submit(function(e) {
@@ -263,9 +271,6 @@
                 logout(e);
                 e.preventDefault();
             })
-
-            $("#success-alert").hide();
-            $("#danger-alert").hide();
 
             whoami();
             update_pini();
