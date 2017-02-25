@@ -14,6 +14,14 @@ function show_error(msg) {
     });
 }
 
+function hide_settings() {
+    $('#left-menu').animate({
+        'width': '0px'
+    }, 400, function() {
+        $('#left-menu').hide();
+    });
+}
+
 function toggle_settings() {
     if ($('#left-menu').is(':visible')) {
         hide_settings();
@@ -25,31 +33,23 @@ function toggle_settings() {
     }
 }
 
-function hide_settings() {
-	$('#left-menu').animate({
-		'width': '0px'
-	}, 400, function() {
-		$('#left-menu').hide();
-	});
-}
-
 function login() {
-    var login = $('#loginInput').val();
-    var pass = $('#passwordInput').val();
+    let loginName = $('#loginInput').val();
+    let pass = $('#passwordInput').val();
 
     $.ajax({
         method: 'POST',
         url: '/user/login',
         contentType: 'application/x-www-form-urlencoded',
         data: {
-            login: login,
+            login: loginName,
             password: pass
         }
     }).done(function(data, textStatus, request) {
-        show_success("Login successfull")
+        show_success("Login successfull");
         whoami();
     }).fail(function(jqXHR, textStatus, errorThrown) {
-        show_error("Login failed : " + errorThrown)
+        show_error("Login failed : " + errorThrown);
     })
 }
 
@@ -92,6 +92,129 @@ function post_msg() {
     });
 }
 
+/*  Pini */
+
+function norlogeclicked(e) {
+    let id = e.target.id;
+    let parts = id.split("-");
+
+    let d = new Date(); //Current date
+    let currDate = d.getFullYear() + '_' +
+        ("0" + (d.getMonth() + 1)).slice(-2) + '_' +
+        ("0" + d.getDate()).slice(-2);
+
+    let norloge = "";
+
+    //Date if necessary
+    if (currDate != parts[0].slice(-10)) {
+        let postDate = parts[0].slice(-10);
+        if (currDate.slice(0, 4) != postDate.slice(0, 4)) {
+            norloge += parts[0].slice(-10).replace(/_/g, '/') + '#';
+        } else {
+            norloge += parts[0].slice(-5).replace(/_/g, '/') + '#';
+        }
+    }
+
+    //Time
+    norloge += parts[1].replace(/_/g, ':').replace(/^t/, '');
+
+    //Index if necessary
+    if (parts.length >= 2 && parts[1] > 1) {
+        switch (parts[1]) {
+            case "1":
+                norloge += "¹";
+                break;
+            case "2":
+                norloge += "²";
+                break;
+            case "3":
+                norloge += "³";
+                break;
+            default:
+                norloge += "^" + parts[1];
+        }
+    }
+
+    postClockClicked(norloge);
+}
+
+function norlogeHighlight(e) {
+    let id = e.target.id;
+    let parts = id.split("-");
+    let norlogeD = parts[0];
+    let norlogeDShort = 'd' + norlogeD.slice(-5); // For yearless norloges
+    let norlogeDLess = 'd'; // For dateless norloges
+    let norlogeT = parts[1];
+
+    let query_strs = [];
+
+    if (parts.length >= 3 && parts[2].slice(1) > 1) {
+        if (norlogeD.length >= 2) { //Date
+            query_strs.push(norlogeD + '-' + norlogeT + '-' + parts[2])
+            query_strs.push(norlogeDShort + '-' + norlogeT + '-' + parts[2])
+            query_strs.push(norlogeDLess + '-' + norlogeT + '-' + parts[2])
+        } else {
+            query_strs.push(norlogeT + '-' + parts[2])
+        }
+    } else {
+        if (norlogeD.length >= 2) { //Date
+            query_strs.push(norlogeD + '-' + norlogeT)
+            query_strs.push(norlogeD + '-' + norlogeT + '-' + parts[2])
+            query_strs.push(norlogeDShort + '-' + norlogeT)
+            query_strs.push(norlogeDShort + '-' + norlogeT + '-' + parts[2])
+            query_strs.push(norlogeDLess + '-' + norlogeT)
+            query_strs.push(norlogeDLess + '-' + norlogeT + '-' + parts[2])
+        } else {
+            query_strs.push(norlogeT)
+            query_strs.push(norlogeT + '-i1')
+        }
+    }
+
+    query_strs.forEach(function(e) {
+        console.log(e);
+        $("#pini").find("span[id$=" + e + "]").each(function(index) {
+            if ($(this).hasClass('clock_ref')) {
+                $(this).addClass("highlighted");
+            } else {
+                $(this).parent().addClass("highlighted");
+            }
+        });
+    });
+}
+
+function clockRefHighlight(e) {
+    let meta = $("span.norloge_ref_meta", e.target);
+    let parts = meta[0].innerText.split("|");
+    let norlogeD = parts[0].replace(/:/g, "_");
+    let norlogeT = parts[1].replace(/:/g, "_");
+    let norlogeI = parts[2];
+
+    let query_str = "";
+    if (norlogeD.length > 0) {
+        query_str += norlogeD + '-';
+    }
+    query_str += 't' + norlogeT + (norlogeI ? '-i' + norlogeI : '');
+
+    console.log(query_str)
+
+    $("#pini").find("span[id*=" + query_str + "]").each(function(index) {
+        if ($(this).hasClass('clock_ref')) {
+            $(this).addClass("highlighted");
+        } else {
+            $(this).parent().addClass("highlighted");
+        }
+    });
+}
+
+function clearHighlight(e) {
+    $("#pini").find(".highlighted").each(function(index) {
+        $(this).removeClass("highlighted");
+    });
+    $("#pini").find(".highlighted").each(function(index) {
+        $(this).removeClass("highlighted");
+    });
+}
+
 function update_pini() {
     var url = BACKEND_URL;
     if (url.indexOf("%i")) {
@@ -126,8 +249,12 @@ function update_pini() {
             d.className = "post";
 
             let s = document.createElement("span");
+            console.log(item.time);
             let formatedClock = formatPostClock(new Date(item.time));
-            let idClock = 't' + formatedClock.replace(/:/g, "_");
+            let idClock = 'd' +
+                formatedClock.replace(/:/g, "_")
+                .replace(/\//g, "_")
+                .replace(/#/g, "-t");
 
             index = 1;
             while ($("#" + idClock + "-i" + index).length > 0) {
@@ -137,7 +264,7 @@ function update_pini() {
             s.className = "post_clock";
             s.id = idClock + '-i' + index;
             s.title = item.id;
-            s.innerHTML = formatedClock;
+            s.innerHTML = formatedClock.slice(-8);
             d.appendChild(s);
 
             s = document.createElement("span");
@@ -212,10 +339,13 @@ function insertPalmi(string) {
 }
 
 function formatPostClock(date) {
+    let Y = date.getFullYear();
+    let M = ("0" + (date.getMonth() + 1)).slice(-2);
+    let D = ("0" + date.getDate()).slice(-2);
     let h = date.getHours() > 9 ? date.getHours() : "0" + date.getHours();
     let m = date.getMinutes() > 9 ? date.getMinutes() : "0" + date.getMinutes();
     let s = date.getSeconds() > 9 ? date.getSeconds() : "0" + date.getSeconds();
-    return h + ":" + m + ":" + s;
+    return Y + '/' + M + '/' + D + '#' + h + ":" + m + ":" + s;
 }
 
 function totozify(message) {

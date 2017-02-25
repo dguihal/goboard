@@ -112,61 +112,13 @@
 
             $("#pini").on({
                 click: function(e) {
-                    let id = e.target.id;
-                    let parts = id.split("-");
-
-                    let norloge = parts[0].replace(/_/g, ':').replace(/^t/, '');
-                    if (parts.length >= 2 && parts[1] > 1) {
-                        switch (parts[1]) {
-                            case "1":
-                                norloge += "¹";
-                                break;
-                            case "2":
-                                norloge += "²";
-                                break;
-                            case "3":
-                                norloge += "³";
-                                break;
-                            default:
-                                norloge += "^" + parts[1];
-                        }
-                    }
-
-                    postClockClicked(norloge);
+                    norlogeclicked(e);
                 },
                 mouseenter: function(e) {
-                    let id = e.target.id;
-                    let parts = id.split("-");
-                    let norloge = parts[0];
-
-                    let nindex = '';
-                    let query_strs = [];
-                    if (parts.length >= 2 && parts[1] > 1) {
-                        nindex = parts[1];
-                        query_strs.push(norloge + '-i' + nindex)
-                    } else {
-                        query_strs.push(norloge)
-                        query_strs.push(norloge + '-i1')
-
-                    }
-
-                    query_strs.forEach(function(e) {
-                        $("#pini").find("span[id$=" + e + "]").each(function(index) {
-                            if ($(this).hasClass('clock_ref')) {
-                                $(this).addClass("highlighted");
-                            } else {
-                                $(this).parent().addClass("highlighted");
-                            }
-                        });
-                    });
+                    norlogeHighlight(e);
                 },
                 mouseleave: function(e) {
-                    $("#pini").find(".highlighted").each(function(index) {
-                        $(this).removeClass("highlighted");
-                    });
-                    $("#pini").find(".highlighted").each(function(index) {
-                        $(this).removeClass("highlighted");
-                    });
+                    clearHighlight(e);
                 }
             }, ".post_clock");
 
@@ -209,27 +161,10 @@
 
             $("#pini").on({
                 mouseenter: function(e) {
-                    let meta = $("span.norloge_ref_meta", e.target);
-                    let nparts = meta[0].innerText.split("|");
-                    let ntime = nparts[1].replace(/:/g, "_");
-                    let nindex = nparts[2];
-                    let query_str = 't' + ntime + (nindex ? '-i' + nindex : '');
-
-                    $("#pini").find("span[id*=" + query_str + "]").each(function(index) {
-                        if ($(this).hasClass('clock_ref')) {
-                            $(this).addClass("highlighted");
-                        } else {
-                            $(this).parent().addClass("highlighted");
-                        }
-                    });
+                    clockRefHighlight(e);
                 },
                 mouseleave: function(e) {
-                    $("#pini").find(".highlighted").each(function(index) {
-                        $(this).removeClass("highlighted");
-                    });
-                    $("#pini").find(".highlighted").each(function(index) {
-                        $(this).removeClass("highlighted");
-                    });
+                    clearHighlight(e);
                 }
             }, ".clock_ref");
 
@@ -243,7 +178,7 @@
 
             $("#settings").on("click", function(e) {
                 toggle_settings(e)
-				e.stopPropagation();
+                e.stopPropagation();
                 e.preventDefault();
             });
 
