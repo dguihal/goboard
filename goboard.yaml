@@ -3,8 +3,12 @@
 # Listen port of the board server
 ListenPort: 8080
 
+# BasePath of goboard URLS
+# Leave empty if URLs are relative to root PATH
+BasePath: "/goboard"
+
 # Maximum size of a backend returned by the board server
-MaxHistorySize: 5
+MaxHistorySize: 50
 
 # Cookies duration in days
 CookieDuration: 365

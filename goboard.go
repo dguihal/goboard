@@ -18,6 +18,7 @@ import (
 
 type Config struct {
 	ListenPort        string      `yaml:"ListenPort"`
+	BasePath          string      `yaml:"BasePath"`
 	MaxHistorySize    int         `yaml:"MaxHistorySize"`
 	CookieDuration    int         `yaml:"CookieDuration"`
 	GoBoardDBFile     string      `yaml:"GoBoardDBFile"`
@@ -84,19 +85,19 @@ func main() {
 	// Backend operations
 	backendHandler := NewBackendHandler(db, config.MaxHistorySize)
 	for _, op := range backendHandler.supportedOps {
-		muxRouter.Handle(op.RestPath, backendHandler).Methods(op.Method)
+		muxRouter.Handle(config.BasePath+op.RestPath, backendHandler).Methods(op.Method)
 	}
 
 	// User operations
 	userHandler := NewUserHandler(db, config.CookieDuration)
 	for _, op := range userHandler.supportedOps {
-		muxRouter.Handle(op.RestPath, userHandler).Methods(op.Method)
+		muxRouter.Handle(config.BasePath+op.RestPath, userHandler).Methods(op.Method)
 	}
 
 	// Admin operations
 	adminHandler := NewAdminHandler(db, config.AdminToken)
 	for _, op := range adminHandler.supportedOps {
-		muxRouter.Handle(op.RestPath, adminHandler).Methods(op.Method)
+		muxRouter.Handle(config.BasePath+op.RestPath, adminHandler).Methods(op.Method)
 	}
 
 	// Swagger operations
@@ -107,7 +108,7 @@ func main() {
 		} else {
 			swaggerHandler := NewSwaggerHandler(realPath)
 			for _, op := range swaggerHandler.supportedOps {
-				muxRouter.Handle(op.RestPath, swaggerHandler).Methods(op.Method)
+				muxRouter.Handle(config.BasePath+op.RestPath, swaggerHandler).Methods(op.Method)
 			}
 		}
 	}
@@ -120,7 +121,7 @@ func main() {
 		} else {
 			webuiHandler := NewWebuiHandler(realPath)
 			for _, op := range webuiHandler.supportedOps {
-				muxRouter.Handle(op.RestPath, webuiHandler).Methods(op.Method)
+				muxRouter.Handle(config.BasePath+op.RestPath, webuiHandler).Methods(op.Method)
 			}
 		}
 	}
