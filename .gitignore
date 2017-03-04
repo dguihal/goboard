@@ -3,3 +3,4 @@ goboard
 *.log
 .project
 .settings
+.vscode

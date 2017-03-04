@@ -16,6 +16,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Config holds the configuration of the process
 type Config struct {
 	ListenPort        string      `yaml:"ListenPort"`
 	BasePath          string      `yaml:"BasePath"`
@@ -30,18 +31,22 @@ type Config struct {
 	AdminToken        string      `yaml:"AdminToken"`
 }
 
-type RestEndpointHandler func(http.ResponseWriter, *http.Request)
+// RESTEndpointHandler defines a handler function for a REST Endpoint
+type RESTEndpointHandler func(http.ResponseWriter, *http.Request)
 
+// SupportedOp Defines a REST endpoint with its path, method and endpoint
 type SupportedOp struct {
 	PathBase string
 	RestPath string
 	Method   string
-	handler  RestEndpointHandler
+	handler  RESTEndpointHandler
 }
 
-type GoboardHandler struct {
-	db           *bolt.DB
+// GoBoardHandler Base Class for endpoint handlers
+type GoBoardHandler struct {
+	Db           *bolt.DB
 	supportedOps []SupportedOp
+	BasePath     string
 }
 
 func main() {
@@ -60,7 +65,7 @@ func main() {
 	if config.AccessLogFileMode == 0 {
 		config.AccessLogFileMode = 0660
 	}
-	var fiAccessLog *os.File = nil
+	var fiAccessLog *os.File
 	if len(config.AccessLogFile) > 0 {
 		fiAccessLog, err = os.OpenFile(config.AccessLogFile, os.O_RDWR|os.O_APPEND, config.AccessLogFileMode)
 		if err != nil {
@@ -79,25 +84,35 @@ func main() {
 		log.Fatalf("error: %v", err)
 	}
 
-	muxRouter := mux.NewRouter().StrictSlash(true)
-	//router.HandleFunc("/", Index)c
+	mainRouter := mux.NewRouter().StrictSlash(true)
+	r := mainRouter
+	if len(config.BasePath) > 0 {
+		r = mainRouter.PathPrefix(config.BasePath).Subrouter()
+	}
+	//router.HandleFunc("/", Index)
 
 	// Backend operations
-	backendHandler := NewBackendHandler(db, config.MaxHistorySize)
+	backendHandler := NewBackendHandler(config.MaxHistorySize)
+	backendHandler.BasePath = config.BasePath
+	backendHandler.Db = db
 	for _, op := range backendHandler.supportedOps {
-		muxRouter.Handle(config.BasePath+op.RestPath, backendHandler).Methods(op.Method)
+		r.Handle(op.RestPath, backendHandler).Methods(op.Method)
 	}
 
 	// User operations
-	userHandler := NewUserHandler(db, config.CookieDuration)
+	userHandler := NewUserHandler(config.CookieDuration)
+	userHandler.BasePath = config.BasePath
+	userHandler.Db = db
 	for _, op := range userHandler.supportedOps {
-		muxRouter.Handle(config.BasePath+op.RestPath, userHandler).Methods(op.Method)
+		r.Handle(op.RestPath, userHandler).Methods(op.Method)
 	}
 
 	// Admin operations
-	adminHandler := NewAdminHandler(db, config.AdminToken)
+	adminHandler := NewAdminHandler(config.AdminToken)
+	adminHandler.BasePath = config.BasePath
+	adminHandler.Db = db
 	for _, op := range adminHandler.supportedOps {
-		muxRouter.Handle(config.BasePath+op.RestPath, adminHandler).Methods(op.Method)
+		r.Handle(op.RestPath, adminHandler).Methods(op.Method)
 	}
 
 	// Swagger operations
@@ -107,8 +122,9 @@ func main() {
 			log.Println(strings.Join([]string{realPath, "/index.html"}, ""), "Not found: Disabling swagger capabilities")
 		} else {
 			swaggerHandler := NewSwaggerHandler(realPath)
+			swaggerHandler.BasePath = config.BasePath
 			for _, op := range swaggerHandler.supportedOps {
-				muxRouter.Handle(config.BasePath+op.RestPath, swaggerHandler).Methods(op.Method)
+				r.Handle(op.RestPath, swaggerHandler).Methods(op.Method)
 			}
 		}
 	}
@@ -120,8 +136,9 @@ func main() {
 			log.Println(strings.Join([]string{realPath, "/index.html"}, ""), "Not found: Disabling webui capabilities")
 		} else {
 			webuiHandler := NewWebuiHandler(realPath)
+			webuiHandler.BasePath = config.BasePath
 			for _, op := range webuiHandler.supportedOps {
-				muxRouter.Handle(config.BasePath+op.RestPath, webuiHandler).Methods(op.Method)
+				r.Handle(op.RestPath, webuiHandler).Methods(op.Method)
 			}
 		}
 	}
@@ -130,9 +147,9 @@ func main() {
 
 	var handler http.Handler
 	if fiAccessLog != nil {
-		handler = handlers.LoggingHandler(fiAccessLog, muxRouter)
+		handler = handlers.LoggingHandler(fiAccessLog, mainRouter)
 	} else {
-		handler = muxRouter
+		handler = mainRouter
 	}
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", config.ListenPort), handler))
 }

@@ -39,7 +39,7 @@ function login() {
 
     $.ajax({
         method: 'POST',
-        url: '/user/login',
+        url: BASE_PATH + '/user/login',
         contentType: 'application/x-www-form-urlencoded',
         data: {
             login: loginName,
@@ -56,7 +56,7 @@ function login() {
 function logout() {
     $.ajax({
         method: 'GET',
-        url: '/user/logout'
+        url: BASE_PATH + '/user/logout'
     }).always(function() {
         whoami();
         $("#login-form-group").show();
@@ -72,7 +72,7 @@ function post_msg() {
 
     $.ajax({
         method: 'POST',
-        url: '//localhost:8080/post',
+        url: BASE_PATH + '/post',
         contentType: 'application/x-www-form-urlencoded',
         // data to be added to query string:
         data: postData,
@@ -300,7 +300,7 @@ function update_pini() {
 function whoami() {
     $.ajax({
         method: 'GET',
-        url: '/user/whoami',
+        url: BASE_PATH + '/user/whoami',
         // type of data we are expecting in return:
         dataType: 'json',
         timeout: 300,

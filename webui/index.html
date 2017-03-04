@@ -3,7 +3,7 @@
 
 <head>
     <!--Import Google Icon Font-->
-    <link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!--Import materialize.css-->
     <link type="text/css" rel="stylesheet" href="css/bootstrap-4.0.0-alpha.6.css" media="screen,projection" />
     <link type="text/css" rel="stylesheet" href="css/goboard.css" />
@@ -90,16 +90,20 @@
     <script type="text/javascript" src="js/goboard.js"></script>
     <script>
         ///////////////////////////////////////////
-         /// TO BE LOADED FROM EXTERNAL JSON
+         /// TO BE LOADED FROM EXTERNAL FILE
         var MAX_POSTS = 50;
         var PINI_REFRESH_MS = 5000;
+		
+        var BASE_PATH = "";
 
-        var BACKEND_URL = "http://localhost:8080/backend/json?id=%i";
+        var BACKEND_URL = BASE_PATH + "/backend/json?id=%i";
 
         var TOTOZ_DEFAULT_SERVER = "http://totoz.eu/img"
-        var TOTOZ_SERVER = ""
+	</script>
+	
+    <script>
+        var totozServer = ""
 
-         ///////////////////////////////////////////
         var maxId = 0;
         var firstLoad = true;
         var intervalID;
@@ -127,7 +131,7 @@
                     let q = document.querySelectorAll(":hover");
                     let totozTxt = q[q.length - 1].innerText.slice(2, -1); // Surrounding "[:" & "]"
 
-                    let totozSrv = (TOTOZ_SERVER) ? TOTOZ_SERVER : TOTOZ_DEFAULT_SERVER;
+                    let totozSrv = (totozServer) ? totozServer : TOTOZ_DEFAULT_SERVER;
 
                     let popup = $("#popup");
                     if (popup.is(':visible')) {
