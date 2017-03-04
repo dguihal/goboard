@@ -9,12 +9,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// SwaggerHandler represents the handler of swagger URLs
 type SwaggerHandler struct {
-	GoboardHandler
+	GoBoardHandler
 
 	baseDir http.Dir
 }
 
+// NewSwaggerHandler creates an SwaggerHandler object
 func NewSwaggerHandler(swaggerBaseDir string) (s *SwaggerHandler) {
 	s = &SwaggerHandler{}
 
@@ -50,7 +52,6 @@ func (s *SwaggerHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 		}
-		return
 	} else {
 		defer f.Close()
 

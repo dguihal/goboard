@@ -9,12 +9,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// WebuiHandler represents the handler of webui URLs
 type WebuiHandler struct {
-	GoboardHandler
+	GoBoardHandler
 
 	baseDir http.Dir
 }
 
+// NewWebuiHandler creates an WebuiHandler object
 func NewWebuiHandler(webuiBaseDir string) (w *WebuiHandler) {
 	w = &WebuiHandler{}
 
@@ -25,6 +27,7 @@ func NewWebuiHandler(webuiBaseDir string) (w *WebuiHandler) {
 		{"/webui/", "/webui/{file}", "GET", w.ServeHTTP},          // GET webui file content
 		{"/webui/", "/webui/{subdir}/{file}", "GET", w.ServeHTTP}, // GET webui subdir file content
 	}
+
 	return
 }
 
@@ -50,7 +53,6 @@ func (w *WebuiHandler) ServeHTTP(wr http.ResponseWriter, rq *http.Request) {
 			wr.WriteHeader(http.StatusInternalServerError)
 			wr.Write([]byte(err.Error()))
 		}
-		return
 	} else {
 		defer f.Close()
 
