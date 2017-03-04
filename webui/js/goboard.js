@@ -171,7 +171,6 @@ function norlogeHighlight(e) {
     }
 
     query_strs.forEach(function(e) {
-        console.log(e);
         $("#pini").find("span[id$=" + e + "]").each(function(index) {
             if ($(this).hasClass('clock_ref')) {
                 $(this).addClass("highlighted");
@@ -194,8 +193,6 @@ function clockRefHighlight(e) {
         query_str += norlogeD + '-';
     }
     query_str += 't' + norlogeT + (norlogeI ? '-i' + norlogeI : '');
-
-    console.log(query_str)
 
     $("#pini").find("span[id*=" + query_str + "]").each(function(index) {
         if ($(this).hasClass('clock_ref')) {
@@ -249,7 +246,6 @@ function update_pini() {
             d.className = "post";
 
             let s = document.createElement("span");
-            console.log(item.time);
             let formatedClock = formatPostClock(new Date(item.time));
             let idClock = 'd' +
                 formatedClock.replace(/:/g, "_")
@@ -360,9 +356,7 @@ function norlogify(message) {
     let bouchotPart = "(?:@([A-Za-z0-9_]+))"
 
     let nReg = "(?:(" + datePart + ")#)?" + "(" + timePart + ")" + "(" + indexPart + ")?" + bouchotPart + "?"
-    //console.log(nReg);
     let exp = new RegExp(nReg, "g")
-    //console.log(exp.test("10:10:10"));
     return message.replace(exp, function(match, date, time, index, dest, offset, string) {
         let d = (date ? date.replace(/\//g, "_") : '');
         let t = time.replace(/:/g, "_");
