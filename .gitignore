@@ -5,3 +5,4 @@ goboard
 .settings
 .vscode/*
 *.dgu
+debug
