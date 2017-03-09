@@ -137,7 +137,7 @@ func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if post.Id == 0 {
+	if post.ID == 0 {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -155,7 +155,7 @@ func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 	case "tsv":
 		str := fmt.Sprintf("%d\t%s\t%s\t%s\t%s\n",
-			post.Id, post.Time.Format(goboardbackend.PostTimeFormat), post.Info, post.Login, post.Message)
+			post.ID, post.Time.Format(goboardbackend.PostTimeFormat), post.Info, post.Login, post.Message)
 		data = []byte(str)
 		w.Header().Set("Content-Type", "text/tab-separated-values")
 	case "raw":
@@ -277,7 +277,7 @@ func postsToXML(posts []goboardbackend.Post) []byte {
 	var i int
 	var p goboardbackend.Post
 	for i, p = range posts {
-		if p.Id == 0 {
+		if p.ID == 0 {
 			break
 		}
 		posts[i].RawMessage = "" // Don't print rawData field
@@ -299,7 +299,7 @@ func postsToJSON(posts []goboardbackend.Post) []byte {
 	var i int
 	var p goboardbackend.Post
 	for i, p = range posts {
-		if p.Id == 0 {
+		if p.ID == 0 {
 			i--
 			break
 		}
@@ -321,11 +321,11 @@ func postsToTsv(posts []goboardbackend.Post) []byte {
 	var b bytes.Buffer
 
 	for _, p := range posts {
-		if p.Id == 0 {
+		if p.ID == 0 {
 			break
 		}
 		fmt.Fprintf(&b, "%d\t%s\t%s\t%s\t%s\n",
-			p.Id, p.Time.Format(goboardbackend.PostTimeFormat), p.Info, p.Login, p.Message)
+			p.ID, p.Time.Format(goboardbackend.PostTimeFormat), p.Info, p.Login, p.Message)
 	}
 	return b.Bytes()
 }
