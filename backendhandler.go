@@ -17,6 +17,7 @@ import (
 	"github.com/dguihal/goboard/cookie"
 	"github.com/gorilla/mux"
 	"github.com/hishboy/gocommons/lang"
+	timezone "github.com/tkuchiki/go-timezone"
 )
 
 const defaultFormat string = "xml"
@@ -43,7 +44,7 @@ type BackendHandler struct {
 }
 
 // NewBackendHandler creates an BackendHandler object
-func NewBackendHandler(historySize int) (b *BackendHandler) {
+func NewBackendHandler(historySize int, backendTZShift string) (b *BackendHandler) {
 	b = &BackendHandler{}
 
 	b.supportedOps = []SupportedOp{
@@ -52,6 +53,12 @@ func NewBackendHandler(historySize int) (b *BackendHandler) {
 		{"/post", "/post", "POST", b.post},                     // Post new message
 		{"/post/", "/post/{id}", "GET", b.getPost},             // Get a specific message (in xml)
 		{"/post/", "/post/{id}/{format}", "GET", b.getPost},    // Get a specific message (in specific format)
+	}
+
+	if len(backendTZShift) > 0 {
+		if offset, err := timezone.GetOffset(backendTZShift); err == nil {
+			goboardbackend.TZShift = offset
+		}
 	}
 
 	b.historySize = historySize
@@ -84,7 +91,6 @@ func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
 	}
 
 	posts, err := goboardbackend.GetBackend(b.Db, b.historySize, last)
-	fmt.Println(len(posts))
 
 	if err == nil {
 
@@ -305,10 +311,8 @@ func postsToJSON(posts []goboardbackend.Post) []byte {
 		}
 		posts[i].RawMessage = "" // Don't print rawData field
 	}
-	fmt.Println(i, len(posts))
 
 	b.Posts = posts[:(i + 1)]
-	fmt.Println(len(b.Posts))
 
 	s, err := json.Marshal(b)
 	if err != nil {

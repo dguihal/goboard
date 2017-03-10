@@ -20,6 +20,7 @@ import (
 type Config struct {
 	ListenPort        string      `yaml:"ListenPort"`
 	BasePath          string      `yaml:"BasePath"`
+	BackendTimeZone   string      `yaml:"BackendTimeZone"`
 	MaxHistorySize    int         `yaml:"MaxHistorySize"`
 	CookieDuration    int         `yaml:"CookieDuration"`
 	GoBoardDBFile     string      `yaml:"GoBoardDBFile"`
@@ -92,7 +93,7 @@ func main() {
 	//router.HandleFunc("/", Index)
 
 	// Backend operations
-	backendHandler := NewBackendHandler(config.MaxHistorySize)
+	backendHandler := NewBackendHandler(config.MaxHistorySize, config.BackendTimeZone)
 	backendHandler.BasePath = config.BasePath
 	backendHandler.Db = db
 	for _, op := range backendHandler.supportedOps {

@@ -10,6 +10,9 @@ BasePath: ""
 # Maximum size of a backend returned by the board server
 MaxHistorySize: 50
 
+# Set Timezone of backend dates
+BackendTimeZone: "UTC"
+
 # Cookies duration in days
 CookieDuration: 365
 
@@ -25,10 +28,11 @@ AccessLogFile: access.log
 #Access Log File permissions (octal notation)
 AccessLogFileMode: 0660
 
-#SwaggerPath: $HOME/swaggerui
-SwaggerPath: /home/damien/Devel/golang/src/github.com/swagger-api/swagger-ui/dist/
+#Path for swagger dist files (optional, disabled if invalid)
+SwaggerPath: $HOME/swaggerui
 
-WebuiPath: /home/damien/Devel/golang/src/github.com/dguihal/goboard/webui/
+#Path for webui (optional, disabled if invalid)
+WebuiPath: $HOME/webui
 
 #No minimum length is enforced, but you are strongly encouraged to set it long and complex
 AdminToken: fkjqskfdhfudqgfvcgvxmomiqo324siufhdqgfyuqmosjcmjdcisq
