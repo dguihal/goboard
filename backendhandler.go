@@ -17,7 +17,6 @@ import (
 	"github.com/dguihal/goboard/cookie"
 	"github.com/gorilla/mux"
 	"github.com/hishboy/gocommons/lang"
-	timezone "github.com/tkuchiki/go-timezone"
 )
 
 const defaultFormat string = "xml"
@@ -43,8 +42,19 @@ type BackendHandler struct {
 	historySize int
 }
 
+func getOffsetFromLocation(tz string) (TZShift int) {
+	offset := 0
+	if location, err := time.LoadLocation(tz); err == nil {
+		t := time.Now()
+		_, offset = t.In(location).Zone()
+	} else {
+		fmt.Println("Error : ", err, ". Falling back to UTC")
+	}
+	return offset
+}
+
 // NewBackendHandler creates an BackendHandler object
-func NewBackendHandler(historySize int, backendTZShift string) (b *BackendHandler) {
+func NewBackendHandler(historySize int, frontLocation string) (b *BackendHandler) {
 	b = &BackendHandler{}
 
 	b.supportedOps = []SupportedOp{
@@ -55,11 +65,7 @@ func NewBackendHandler(historySize int, backendTZShift string) (b *BackendHandle
 		{"/post/", "/post/{id}/{format}", "GET", b.getPost},    // Get a specific message (in specific format)
 	}
 
-	if len(backendTZShift) > 0 {
-		if offset, err := timezone.GetOffset(backendTZShift); err == nil {
-			goboardbackend.TZShift = offset
-		}
-	}
+	goboardbackend.TZShift = getOffsetFromLocation(frontLocation)
 
 	b.historySize = historySize
 	b.BasePath = ""
