@@ -1,4 +1,3 @@
-// user.go
 package user
 
 import (
@@ -12,9 +11,10 @@ import (
 
 const backendBucketName string = "Backend"
 
+// Post represents a user post
 type Post struct {
 	XMLName    xml.Name `xml:"post" json:"-"`
-	Id         uint64   `xml:"id,attr" json:"id"`
+	ID         uint64   `xml:"id,attr" json:"id"`
 	Time       PostTime `xml:"time,attr" json:"time"`
 	Login      string   `xml:"login" json:"login"`
 	Info       string   `xml:"info" json:"info"`
@@ -22,23 +22,31 @@ type Post struct {
 	RawMessage string   `xml:"-" json:"rawmessage,omitempty"`
 }
 
+// TZShift is Timezone shift for norloge resolution
+var TZShift = 0
+
+// PostTime represents the timestamp of a user post
 type PostTime struct {
 	time.Time
 }
 
-func (c PostTime) MarshalText() (result []byte, err error) {
-	timeS := c.Format(PostTimeFormat)
+// PostTimeFormat is the format used to convert a PostTime to a byte array
+const PostTimeFormat = "20060102150405"
+
+// MarshalText converts a PostTime to a byte array
+func (pt PostTime) MarshalText() (result []byte, err error) {
+	timeS := pt.Add(time.Duration(TZShift) * time.Second).Format(PostTimeFormat)
 	return []byte(timeS), nil
 }
 
-const PostTimeFormat = "20060102150405"
-
+// Board represents the base struture for a board backend
 type Board struct {
 	XMLName xml.Name `xml:"board" json:"-"`
 	Site    string   `xml:"site,attr" json:"site"`
 	Posts   []Post   `xml:"" `
 }
 
+// DeletePost is a method for deleting a post from the history
 func DeletePost(db *bolt.DB, id uint64) (err error) {
 
 	err = db.Update(func(tx *bolt.Tx) error {
@@ -52,6 +60,7 @@ func DeletePost(db *bolt.DB, id uint64) (err error) {
 	return
 }
 
+// GetBackend returns the last posts from the history
 func GetBackend(db *bolt.DB, historySize int, last uint64) (posts []Post, err error) {
 
 	posts = make([]Post, historySize)
@@ -64,13 +73,13 @@ func GetBackend(db *bolt.DB, historySize int, last uint64) (posts []Post, err er
 		}
 
 		c := b.Cursor()
-		var count int = 0
+		var count int
 
 		for k, v := c.Last(); k != nil && count < historySize; k, v = c.Prev() {
 			var p Post
 			json.Unmarshal(v, &p)
 
-			if p.Id <= last {
+			if p.ID <= last {
 				break
 			}
 			posts[count] = p
@@ -82,6 +91,7 @@ func GetBackend(db *bolt.DB, historySize int, last uint64) (posts []Post, err er
 	return
 }
 
+// GetPost returns a post from its id
 func GetPost(db *bolt.DB, id uint64) (post Post, err error) {
 
 	post = Post{}
@@ -103,7 +113,8 @@ func GetPost(db *bolt.DB, id uint64) (post Post, err error) {
 	return
 }
 
-func PostMessage(db *bolt.DB, post Post) (postId uint64, err error) {
+// PostMessage adds a new message to the history
+func PostMessage(db *bolt.DB, post Post) (postID uint64, err error) {
 
 	err = db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(backendBucketName))
@@ -112,15 +123,15 @@ func PostMessage(db *bolt.DB, post Post) (postId uint64, err error) {
 		}
 
 		id, _ := b.NextSequence()
-		postId = uint64(id)
-		post.Id = postId
+		postID = uint64(id)
+		post.ID = postID
 
 		buf, err := json.Marshal(post)
 		if err != nil {
 			return err
 		}
 
-		err = b.Put(goboardutils.IToB(post.Id), buf)
+		err = b.Put(goboardutils.IToB(post.ID), buf)
 
 		return nil
 	})

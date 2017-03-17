@@ -3,8 +3,15 @@
 # Listen port of the board server
 ListenPort: 8080
 
+# BasePath of goboard URLS
+# Leave empty if URLs are relative to root PATH
+BasePath: ""
+
 # Maximum size of a backend returned by the board server
-MaxHistorySize: 5
+MaxHistorySize: 50
+
+# Set Timezone of backend dates
+BackendTimeZone: "UTC"
 
 # Cookies duration in days
 CookieDuration: 365
@@ -21,8 +28,10 @@ AccessLogFile: access.log
 #Access Log File permissions (octal notation)
 AccessLogFileMode: 0660
 
+#Path for swagger dist files (optional, disabled if invalid)
 SwaggerPath: $HOME/swaggerui
 
+#Path for webui (optional, disabled if invalid)
 WebuiPath: $HOME/webui
 
 #No minimum length is enforced, but you are strongly encouraged to set it long and complex

@@ -13,7 +13,6 @@ import (
 
 	"golang.org/x/net/html"
 
-	"github.com/boltdb/bolt"
 	goboardbackend "github.com/dguihal/goboard/backend"
 	"github.com/dguihal/goboard/cookie"
 	"github.com/gorilla/mux"
@@ -36,16 +35,27 @@ var knownHeaders = map[string]string{
 	"text/tsv":         "tsv",
 }
 
+// BackendHandler represents the handler of backend URLs
 type BackendHandler struct {
-	GoboardHandler
+	GoBoardHandler
 
 	historySize int
 }
 
-func NewBackendHandler(db *bolt.DB, historySize int) (b *BackendHandler) {
-	b = &BackendHandler{}
+func getOffsetFromLocation(tz string) (TZShift int) {
+	offset := 0
+	if location, err := time.LoadLocation(tz); err == nil {
+		t := time.Now()
+		_, offset = t.In(location).Zone()
+	} else {
+		fmt.Println("Error : ", err, ". Falling back to UTC")
+	}
+	return offset
+}
 
-	b.db = db
+// NewBackendHandler creates an BackendHandler object
+func NewBackendHandler(historySize int, frontLocation string) (b *BackendHandler) {
+	b = &BackendHandler{}
 
 	b.supportedOps = []SupportedOp{
 		{"/backend", "/backend", "GET", b.getBackend},          // Get backend (in xml)
@@ -55,14 +65,18 @@ func NewBackendHandler(db *bolt.DB, historySize int) (b *BackendHandler) {
 		{"/post/", "/post/{id}/{format}", "GET", b.getPost},    // Get a specific message (in specific format)
 	}
 
+	goboardbackend.TZShift = getOffsetFromLocation(frontLocation)
+
 	b.historySize = historySize
+	b.BasePath = ""
 	return
 }
 
 func (b *BackendHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.URL.Path)
 
 	for _, op := range b.supportedOps {
-		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, op.PathBase) {
+		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, b.BasePath+op.PathBase) {
 			// Call specific handling method
 			op.handler(w, r)
 			return
@@ -82,8 +96,7 @@ func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
 		last = 0
 	}
 
-	posts, err := goboardbackend.GetBackend(b.db, b.historySize, last)
-	fmt.Println(len(posts))
+	posts, err := goboardbackend.GetBackend(b.Db, b.historySize, last)
 
 	if err == nil {
 
@@ -93,10 +106,10 @@ func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
 		var data []byte
 
 		if format == "" || format == "xml" {
-			data = postsToXml(posts)
+			data = postsToXML(posts)
 			w.Header().Set("Content-Type", "application/xml")
 		} else if format == "json" {
-			data = postsToJson(posts)
+			data = postsToJSON(posts)
 			w.Header().Set("Content-Type", "application/json")
 		} else if format == "tsv" {
 			data = postsToTsv(posts)
@@ -130,13 +143,13 @@ func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := goboardbackend.GetPost(b.db, id)
+	post, err := goboardbackend.GetPost(b.Db, id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if post.Id == 0 {
+	if post.ID == 0 {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -154,7 +167,7 @@ func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 	case "tsv":
 		str := fmt.Sprintf("%d\t%s\t%s\t%s\t%s\n",
-			post.Id, post.Time.Format(goboardbackend.PostTimeFormat), post.Info, post.Login, post.Message)
+			post.ID, post.Time.Format(goboardbackend.PostTimeFormat), post.Info, post.Login, post.Message)
 		data = []byte(str)
 		w.Header().Set("Content-Type", "text/tab-separated-values")
 	case "raw":
@@ -193,12 +206,17 @@ func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
 		message := bP.Sanitize(r.FormValue("message"))
 	*/
 	message := sanitize(r.FormValue("message"))
+	rawInfo := r.FormValue("info")
+	if len(rawInfo) == 0 {
+		rawInfo = r.Header.Get("User-Agent")
+	}
+	info := sanitize(rawInfo)
 	login := ""
 
 	if cookies := r.Cookies(); len(cookies) > 0 {
 		var err error
 
-		if login, err = cookie.LoginForCookie(b.db, cookies[0].Value); err != nil {
+		if login, err = cookie.LoginForCookie(b.Db, cookies[0].Value); err != nil {
 			fmt.Println("POST :", err.Error())
 			login = ""
 		}
@@ -206,19 +224,19 @@ func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
 
 	// Build Post object to store
 	p := goboardbackend.Post{
-		Time:       goboardbackend.PostTime{time.Now()},
+		Time:       goboardbackend.PostTime{Time: time.Now()},
 		Login:      login,
-		Info:       r.Header.Get("User-Agent"),
+		Info:       info,
 		Message:    message,
 		RawMessage: r.FormValue("message"),
 	}
 
 	// Try to store it
-	if postId, err := goboardbackend.PostMessage(b.db, p); err != nil {
+	if postID, err := goboardbackend.PostMessage(b.Db, p); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 	} else {
-		w.Header().Set("X-Post-Id", strconv.FormatUint(postId, 10))
+		w.Header().Set("X-Post-Id", strconv.FormatUint(postID, 10))
 		w.WriteHeader(http.StatusNoContent)
 	}
 
@@ -239,39 +257,39 @@ func guessFormat(formatAttr string, acceptHeader string) (format string) {
 		var keys = make([]string, len(knownHeaders))
 
 		i := 0
-		for k, _ := range knownHeaders {
+		for k := range knownHeaders {
 			indexes[i] = strings.Index(acceptHeader, k)
 			keys[i] = k
 			i++
 		}
 
 		// Find lowest non null
-		min_index := 0
-		min_val := indexes[0]
+		minIndex := 0
+		minVal := indexes[0]
 
 		for i = 1; i < len(indexes); i++ {
-			if indexes[i] >= 0 && (min_val < 0 || indexes[i] < min_val) {
-				min_val = indexes[i]
-				min_index = i
+			if indexes[i] >= 0 && (minVal < 0 || indexes[i] < minVal) {
+				minVal = indexes[i]
+				minIndex = i
 			}
 		}
 
-		if min_val >= 0 { // At least one match found
-			format = knownHeaders[keys[min_index]]
+		if minVal >= 0 { // At least one match found
+			format = knownHeaders[keys[minIndex]]
 		}
 	}
 
 	return
 }
 
-func postsToXml(posts []goboardbackend.Post) []byte {
+func postsToXML(posts []goboardbackend.Post) []byte {
 	var b = goboardbackend.Board{}
 	b.Site = "http://localhost"
 
-	var i int = 0
+	var i int
 	var p goboardbackend.Post
 	for i, p = range posts {
-		if p.Id == 0 {
+		if p.ID == 0 {
 			break
 		}
 		posts[i].RawMessage = "" // Don't print rawData field
@@ -286,23 +304,21 @@ func postsToXml(posts []goboardbackend.Post) []byte {
 	return s
 }
 
-func postsToJson(posts []goboardbackend.Post) []byte {
+func postsToJSON(posts []goboardbackend.Post) []byte {
 	var b = goboardbackend.Board{}
 	b.Site = "http://localhost"
 
-	var i int = 0
+	var i int
 	var p goboardbackend.Post
 	for i, p = range posts {
-		if p.Id == 0 {
+		if p.ID == 0 {
 			i--
 			break
 		}
 		posts[i].RawMessage = "" // Don't print rawData field
 	}
-	fmt.Println(i, len(posts))
 
 	b.Posts = posts[:(i + 1)]
-	fmt.Println(len(b.Posts))
 
 	s, err := json.Marshal(b)
 	if err != nil {
@@ -315,11 +331,11 @@ func postsToTsv(posts []goboardbackend.Post) []byte {
 	var b bytes.Buffer
 
 	for _, p := range posts {
-		if p.Id == 0 {
+		if p.ID == 0 {
 			break
 		}
 		fmt.Fprintf(&b, "%d\t%s\t%s\t%s\t%s\n",
-			p.Id, p.Time.Format(goboardbackend.PostTimeFormat), p.Info, p.Login, p.Message)
+			p.ID, p.Time.Format(goboardbackend.PostTimeFormat), p.Info, p.Login, p.Message)
 	}
 	return b.Bytes()
 }

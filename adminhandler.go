@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/boltdb/bolt"
 	goboardbackend "github.com/dguihal/goboard/backend"
 	goboardcookie "github.com/dguihal/goboard/cookie"
 	goboarduser "github.com/dguihal/goboard/user"
@@ -18,16 +17,16 @@ import (
 const tokenMinLen int = 0
 const tokenWarnLen int = 12
 
+// AdminHandler represents the handler of admin URLs
 type AdminHandler struct {
-	GoboardHandler
+	GoBoardHandler
 
 	adminToken string
 }
 
-func NewAdminHandler(db *bolt.DB, adminToken string) (a *AdminHandler) {
+// NewAdminHandler creates an AdminHandler object
+func NewAdminHandler(adminToken string) (a *AdminHandler) {
 	a = &AdminHandler{}
-
-	a.db = db
 
 	a.supportedOps = []SupportedOp{
 		{"/admin/user/", "/admin/user/{login}", "DELETE", a.deleteUser}, // Delete a user
@@ -41,6 +40,7 @@ func NewAdminHandler(db *bolt.DB, adminToken string) (a *AdminHandler) {
 		log.Println("Admin token len <", tokenWarnLen, ": Come on I'm sure you can do a lot better")
 	}
 	a.adminToken = adminToken
+	a.BasePath = ""
 	return
 }
 
@@ -53,7 +53,7 @@ func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, op := range a.supportedOps {
-		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, op.PathBase) {
+		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, a.BasePath+op.PathBase) {
 			// Call specific handling method
 			op.handler(w, r)
 			return
@@ -69,23 +69,22 @@ func (a *AdminHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 
 	login := (mux.Vars(r))["login"]
 
-	if err := goboarduser.DeleteUser(a.db, login); err != nil {
+	if err := goboarduser.DeleteUser(a.Db, login); err != nil {
 		if uerr, ok := err.(*goboarduser.UserError); ok {
 			if uerr.ErrCode == goboarduser.UserDoesNotExistsError {
 				w.WriteHeader(http.StatusNotFound)
 				w.Write([]byte(fmt.Sprintf("User %s Not found", login)))
 				return
-			} else {
-				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Println(err.Error())
 			}
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println(err.Error())
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Println(err.Error())
 		}
 	}
 
-	if err := goboardcookie.DeleteCookiesForUser(a.db, login); err != nil {
+	if err := goboardcookie.DeleteCookiesForUser(a.Db, login); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Println(err.Error())
 		return
@@ -98,15 +97,15 @@ func (a *AdminHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 
 func (a *AdminHandler) deletePost(w http.ResponseWriter, rq *http.Request) {
 
-	postId := (mux.Vars(rq))["id"]
+	postID := (mux.Vars(rq))["id"]
 
-	id, err := strconv.ParseUint(postId, 10, 64)
+	id, err := strconv.ParseUint(postID, 10, 64)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 	}
 
-	if err := goboardbackend.DeletePost(a.db, id); err != nil {
+	if err := goboardbackend.DeletePost(a.Db, id); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Println(err.Error())
 		return
@@ -121,7 +120,7 @@ func (a *AdminHandler) getUser(w http.ResponseWriter, r *http.Request) {
 
 	login := (mux.Vars(r))["login"]
 
-	if user, err := goboarduser.GetUser(a.db, login); err != nil {
+	if user, err := goboarduser.GetUser(a.Db, login); err != nil {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
 		data, err := json.Marshal(user)

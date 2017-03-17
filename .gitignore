@@ -3,3 +3,6 @@ goboard
 *.log
 .project
 .settings
+.vscode/*
+*.dgu
+debug

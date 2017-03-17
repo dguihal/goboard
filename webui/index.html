@@ -1,203 +1,226 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-
-  <!-- Basic Page Needs
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <meta charset="utf-8">
-  <title>Goboard</title>
-  <meta name="description" content="Simple web ui for the goboard">
-  <meta name="author" content="dguihal">
-
-  <!-- Mobile Specific Metas
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- FONT
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
-
-  <!-- CSS
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link rel="stylesheet" href="css/normalize.css">
-  <link rel="stylesheet" href="css/skeleton.css">
-  <link rel="stylesheet" href="css/goboard.css">
-
-  <!-- JS
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <script src="js/zepto.js"></script>
-
-  <!-- Favicon
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link rel="icon" type="image/png" href="images/favicon.png">
-
+    <!--Import Google Icon Font-->
+    <link href="//fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--Import materialize.css-->
+    <link type="text/css" rel="stylesheet" href="css/bootstrap-4.0.0-alpha.6.css" media="screen,projection" />
+    <link type="text/css" rel="stylesheet" href="css/goboard.css" />
+    <!--Let browser know website is optimized for mobile-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!--Open links in a new window-->
+    <base target="_blank">
 </head>
+
 <body>
-
-  <!-- Primary Page Layout
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <div class="container">
-    <div class="row">
-      <div class="u-full-width" style="margin-top: 25px">
-        <h4>Welcome to the goboard</h4><!--
-        <p>This index.html page is a placeholder with the CSS, font and favicon. It's just waiting for you to add some content! If you need some help hit up the <a href="http://www.getskeleton.com">Skeleton documentation</a>.</p> -->
-      </div>
+    <nav class="navbar navbar-toggleable-md fixed-top bg-inverse">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <h3 class="text-white">Welcome to the goboard</h3>
+            </li>
+        </ul>
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link" href="../swagger/?url=https%3A%2F%2F212.47.226.196%2Fgoboard%2Fswagger%2Fswagger.yaml" target="blank">Backend API</a>
+            </li>
+            <li class="nav-item active">
+                <a class="nav-link" href="#" id="settings"><i class="medium material-icons">settings</i></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" id="login"><i class="medium material-icons">account_circle</i></a>
+                <div id="login-dp" class="dropdown-menu dropdown-menu-right">
+                    <div id="login-welcome-auth"></div>
+                    <div id="login-form-group">
+                        <div class="dropdown-divider"></div>
+                        <form id="login-form">
+                            <div class="form-group">
+                                <label for="loginInput">Login</label>
+                                <input type="text" class="form-control" id="loginInput" aria-describedby="loginHelp" placeholder="Enter login">
+                            </div>
+                            <div class="form-group">
+                                <label for="passwordInput">Password</label>
+                                <input type="password" class="form-control" id="passwordInput" placeholder="Password">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </li>
+        </ul>
+    </nav>
+    <div id="left-menu">
+        <div>
+            <h2> Configuration</h2>
+            <a class="btn btn-secondary btn-sm" href="#" role="button" id="toggler-btn"><i class="medium material-icons">done</i></a>
+        </div>
+        <form id="webuiconf">
+            <div class="form-group">
+                <label for="InfoInput">User Info</label>
+                <input type="text" class="form-control" id="InfoInput" placeholder="">
+            </div>
+            <div class="form-group">
+                <label for="totozServer">Totoz server</label>
+                <input type="url" class="form-control" id="totozServer" placeholder="">
+            </div>
+        </form>
     </div>
-	<div class="row">
-      <div class="u-full-width" id="pini">
-	  </div>
-	</div>
-    <div class="row" id="palmi">
-      <form id="palmiForm">
-        <input class="button-primary" value="Post" type="submit" id="palmiSubmit">
-        <span>
-          <input class="u-full-width" placeholder="coin ! coin !" id="palmiInput" type="text">
-		</span>
-	  </form>
-	</div>
-  </div>
+    <!-- Primary Page Layout -->
+    <div class="container">
+        <div class="row">
+            <div class="col s12" id="pini">
+                <div id="popup"></div>
+            </div>
+        </div>
+    </div>
 
-<!-- End Document
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <script>
+    <div class="alert alert-success pos-f-t" id="success-alert" role="alert"></div>
+    <div class="alert alert-danger pos-f-t" id="danger-alert" role="alert"></div>
+    <footer class="footer bg-inverse">
+        <div class="container">
+            <form id="palmi" class="form-inline d-flex">
+                <input placeholder="coin ! coin !" id="palmiInput" type="text" class="form-control align-self-stretch mr-2">
+                <button type="submit" class="btn btn-default align-self-stretch" id="palmiBtn"><i class="material-icons md-18">send</i>
+                </button>
+            </form>
+        </div>
+    </footer>
+    <!-- End Document  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <!--Import jQuery before materialize.js-->
+    <script type="text/javascript" src="js/jquery-3.1.1.js"></script>
+    <script type="text/javascript" src="js/tether-1.4.0.js"></script>
+    <script type="text/javascript" src="js/bootstrap-4.0.0-alpha.6.js"></script>
+    <script type="text/javascript" src="js/goboard.js"></script>
+    <script>
+        ///////////////////////////////////////////
+         /// TO BE LOADED FROM EXTERNAL FILE
+        var MAX_POSTS = 50;
+        var PINI_REFRESH_MS = 5000;
+		
+        var BASE_PATH = "/goboard";
 
-///////////////////////////////////////////
-/// TO BE LOADED FROM EXTERNAL JSON
-var MAX_POSTS = 50;
-var PINI_REFRESH_MS = 5000;
+        var BACKEND_URL = BASE_PATH + "/backend/json?last=%i";
 
-///////////////////////////////////////////
-var maxId = 0;
-var intervalID;
-
-Zepto(function($){
-    $("#palmiForm").submit(function(e) {
-        post_msg(e);
-        e.preventDefault();
-	});
-    
-    $("#pini").on("click", ".post_clock", function(e) {
-        insertPalmi(e.target.id);
-    });
+        var TOTOZ_DEFAULT_SERVER = "http://totoz.eu/img"
+	</script>
 	
-	update_pini();
-	// Launch pini periodic refresh
-	intervalID = setInterval(update_pini, PINI_REFRESH_MS);
-})
+    <script>
+        var totozServer = ""
 
-function post_msg() {
-    var postData = "message=" + encodeURIComponent($("#palmiInput").val());
-    
-    $.ajax({
-        type: 'POST',
-        url: '//localhost:8080/post',
-        contentType: 'application/x-www-form-urlencoded',
-        // data to be added to query string:
-        data: postData,
-        // type of data we are expecting in return:
-        dataType: 'json',
-        timeout: 300,
-        context: $('body'),
-        success: function(data){
-            $("#palmiInput").val("");
-            // Stop pini refresh
-            clearInterval(intervalID);
-            update_pini();
-            // Relaunch pini periodic refresh
-            intervalID = setInterval(update_pini, PINI_REFRESH_MS);
-        },
-        error: function(xhr, type){
-            alert('Ajax error!')
-        }
-    });
-}
-      
-function update_pini() {
+        var maxId = 0;
+        var firstLoad = true;
+        var intervalID;
 
-    $.ajax({
-        type: 'GET',
-        url: 'http://localhost:8080/backend/json',
-        // type of data we are expecting in return:
-        dataType: 'json',
-        timeout: 300,
-        context: $('body'),
-        success: function(data) {
-            
-            data.Posts = data.Posts.filter(function(item) {
-                return item.id > maxId;
+        $(function() {
+            $("#palmi").submit(function(e) {
+                post_msg(e);
+                e.preventDefault();
             });
-            
-            if(data.Posts.length > 1 &&
-              data.Posts[0].id > data.Posts[1].id) {
-                
-                data.Posts.sort(function(a, b) {
-                    return a.id - b.id;
-                })
+
+            $("#pini").on({
+                click: function(e) {
+                    norlogeclicked(e);
+                },
+                mouseenter: function(e) {
+                    norlogeHighlight(e);
+                },
+                mouseleave: function(e) {
+                    clearHighlight(e);
+                }
+            }, ".post_clock");
+
+            $("#pini").on({
+                mouseenter: function(e) {
+                    let q = document.querySelectorAll(":hover");
+                    let totozTxt = q[q.length - 1].innerText.slice(2, -1); // Surrounding "[:" & "]"
+
+                    let totozSrv = (totozServer) ? totozServer : TOTOZ_DEFAULT_SERVER;
+
+                    let popup = $("#popup");
+                    if (popup.is(':visible')) {
+                        popup.hide();
+                    }
+
+                    let oImg = document.createElement("img");
+                    oImg.setAttribute('src', totozSrv + '/' + encodeURI(totozTxt));
+                    oImg.setAttribute('alt', 'na');
+
+                    let popupElt = popup[0];
+                    popupElt.style.position = "absolute";
+                    popupElt.style.left = e.pageX.toString() + 'px';
+                    popupElt.style.top = e.pageY.toString() + 'px';
+                    popup.fadeIn(500);
+                    while (popupElt.firstChild) {
+                        popupElt.removeChild(popupElt.firstChild);
+                    }
+                    popupElt.appendChild(oImg)
+                    e.preventDefault();
+                },
+                mouseleave: function(e) {
+                    e.preventDefault();
+                    let popup = $("#popup");
+                    if (popup.is(':visible')) {
+                        popup.fadeOut(200);
+                    }
+                    e.preventDefault();
+                }
+            }, ".totoz");
+
+            $("#pini").on({
+                mouseenter: function(e) {
+                    clockRefHighlight(e);
+                },
+                mouseleave: function(e) {
+                    clearHighlight(e);
+                }
+            }, ".clock_ref");
+
+            if (typeof TOTOZ_DEFAULT_SERVER === 'string') {
+                $("#totozServer")[0].placeholder = TOTOZ_DEFAULT_SERVER;
             }
-            
-            var pini = $("#pini");            
-            $.each(data.Posts, function(index, item) {
-                maxId = item.id > maxId ? item.id : maxId;
-    
-                let d = document.createElement("div");
-                d.className = "u-full-width";
-                d.id = "post_" + item.id
-                
-                let d2 = document.createElement("div");
-                d2.className = "post";
 
-                let s = document.createElement("span");
-                let formatedDate = formatPostClock(new Date(item.time));
-                s.className = "post_clock";
-                s.id = formatedDate;
-                s.title = item.id;
-                s.innerHTML = formatedDate;
-                d2.appendChild(s);
-                
-                s = document.createElement("span");
-                s.className = item.login.length > 0 ? "post_login" : "post_ua";
-                s.title = item.info;
-                s.innerHTML = item.login.length > 0 ? item.login : item.info;
-                d2.appendChild(s);
-                
-                s = document.createElement("span");
-                s.className = "post_message";
-                s.innerHTML = item.message;
-                d2.appendChild(s);
-                
-                d.appendChild(d2);                
-                pini.append(d);
+            $("#pini").on("mouseenter", ".clock_ref", function(e) {
+                return false;
+            });
 
-                //Purge too olds posts    
-                while(pini.children().length > MAX_POSTS) {
-                    pini.children(':first-child').remove();
+            $("#settings").on("click", function(e) {
+                toggle_settings(e)
+                e.stopPropagation();
+                e.preventDefault();
+            });
+
+            $("#toggler-btn").on("click", function(e) {
+                toggle_settings(e)
+                e.preventDefault();
+            });
+
+            $(document).on("click", function(e) {
+                var container = $("#left-menu");
+
+                if (!container.is(e.target) // if the target of the click isn't the container...
+                    && container.has(e.target).length === 0) // ... nor a descendant of the container
+                {
+                    hide_settings();
                 }
             });
-        },
-        error: function(xhr, type){
-            alert('Ajax error!')
-        }
-    });
-}
 
-function postClockClicked(clicked_id){
-    insertPalmi(clicked_id);
-}
+            $("#login-form").submit(function(e) {
+                login(e);
+                e.preventDefault();
+            });
 
-//By now only appends, should take care of caret position
-function insertPalmi(string) {
-    $("#palmiInput").val( function(index, val) {
-        return val + string;
-    });
-}
+            $("#login-dp").on("click", "a", function(e) {
+                logout(e);
+                e.preventDefault();
+            })
 
-function formatPostClock(date) {
-    let h = date.getHours() > 9 ? date.getHours() : "0" + date.getHours();
-    let m = date.getMinutes() > 9 ? date.getMinutes() : "0" + date.getMinutes();
-    let s = date.getSeconds() > 9 ? date.getSeconds() : "0" + date.getSeconds();
-    return h + ":" + m + ":" + s;
-}
-
-  </script>
+            whoami();
+            update_pini();
+            // Launch pini periodic refresh
+            intervalID = setInterval(update_pini, PINI_REFRESH_MS);
+        })
+    </script>
 </body>
+
 </html>
+
