@@ -273,6 +273,7 @@ function update_pini() {
             s.className = "post_message";
             let msg = totozify(item.message);
             msg = norlogify(msg);
+            msg = emojify(msg);
             s.innerHTML = msg;
             d.appendChild(s);
 
@@ -378,4 +379,10 @@ function norlogify(message) {
             (dest ? dest : '') + "</span>" +
             match + "</span>";
     });
+}
+
+function emojify(message) {
+    //Could be optionnal with firefox and svginot font installed
+    let tmp = emojione.unicodeToImage(message);
+    return emojione.shortnameToImage(tmp);
 }
