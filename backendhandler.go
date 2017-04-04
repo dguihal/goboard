@@ -369,7 +369,7 @@ func stripCtlFromUTF8(str string) string {
 // HTML escape some conflicting characters
 func sanitizeChars(input string) string {
 	tmp := strings.Replace(input, "&", "&amp;", -1)
-	tmp = strings.Replace(tmp, "<", "&tl;", -1)
+	tmp = strings.Replace(tmp, "<", "&lt;", -1)
 	return strings.Replace(tmp, ">", "&gt;", -1)
 }
 
