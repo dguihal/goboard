@@ -232,6 +232,7 @@ paths:
       - "xml"
       - "json"
       - "tsv"
+      - "raw"
   /user/logout:
     get:
       tags:
