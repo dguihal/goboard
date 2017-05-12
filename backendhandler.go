@@ -329,13 +329,16 @@ func postsToJSON(posts []goboardbackend.Post) []byte {
 
 func postsToTsv(posts []goboardbackend.Post) []byte {
 	var b bytes.Buffer
+	var timeText []byte
 
 	for _, p := range posts {
 		if p.ID == 0 {
 			break
 		}
+
+		timeText, _ = p.Time.MarshalText()
 		fmt.Fprintf(&b, "%d\t%s\t%s\t%s\t%s\n",
-			p.ID, p.Time.Format(goboardbackend.PostTimeFormat), p.Info, p.Login, p.Message)
+			p.ID, timeText, p.Info, p.Login, p.Message)
 	}
 	return b.Bytes()
 }
