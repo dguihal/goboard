@@ -40,13 +40,17 @@ type BackendHandler struct {
 	GoBoardHandler
 
 	historySize int
+	tzLocation  time.Location
 }
 
 func getOffsetFromLocation(tz string) (TZShift int) {
 	offset := 0
 	if location, err := time.LoadLocation(tz); err == nil {
 		t := time.Now()
-		_, offset = t.In(location).Zone()
+		_, offsetBase := t.Zone()                //TZ of process
+		_, offsetTarget := t.In(location).Zone() //TZ configured
+		offset = offsetTarget - offsetBase
+		fmt.Println(offsetTarget, offsetBase, offsetTarget-offsetBase)
 	} else {
 		fmt.Println("Error : ", err, ". Falling back to UTC")
 	}
@@ -65,7 +69,12 @@ func NewBackendHandler(historySize int, frontLocation string) (b *BackendHandler
 		{"/post/", "/post/{id}/{format}", "GET", b.getPost},    // Get a specific message (in specific format)
 	}
 
-	goboardbackend.TZShift = getOffsetFromLocation(frontLocation)
+	if location, err := time.LoadLocation(frontLocation); err == nil {
+		goboardbackend.TZLocation = location
+	} else {
+		//Falls back to current Location
+		goboardbackend.TZLocation = time.Now().Location()
+	}
 
 	b.historySize = historySize
 	b.BasePath = ""

@@ -22,8 +22,8 @@ type Post struct {
 	RawMessage string   `xml:"-" json:"rawmessage,omitempty"`
 }
 
-// TZShift is Timezone shift for norloge resolution
-var TZShift = 0
+// TZLocation is destination TZ location for backends in TSV and XML
+var TZLocation *time.Location
 
 // PostTime represents the timestamp of a user post
 type PostTime struct {
@@ -35,7 +35,7 @@ const PostTimeFormat = "20060102150405"
 
 // MarshalText converts a PostTime to a byte array
 func (pt PostTime) MarshalText() (result []byte, err error) {
-	timeS := pt.Add(time.Duration(TZShift) * time.Second).Format(PostTimeFormat)
+	timeS := pt.In(TZLocation).Format(PostTimeFormat)
 	return []byte(timeS), nil
 }
 
