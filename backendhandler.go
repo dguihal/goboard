@@ -99,27 +99,29 @@ func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
 	posts, err := goboardbackend.GetBackend(b.Db, b.historySize, last)
 
 	if err == nil {
+		if len(posts) == 0 || posts[0].ID == 0 {
+			w.WriteHeader(http.StatusNoContent)
+		} else {
+			vars := mux.Vars(r)
+			format := guessFormat(vars["format"], r.Header.Get("Accept"))
 
-		vars := mux.Vars(r)
-		format := guessFormat(vars["format"], r.Header.Get("Accept"))
+			var data []byte
 
-		var data []byte
+			if format == "" || format == "xml" {
+				data = postsToXML(posts)
+				w.Header().Set("Content-Type", "application/xml")
+			} else if format == "json" {
+				data = postsToJSON(posts)
+				w.Header().Set("Content-Type", "application/json")
+			} else if format == "tsv" {
+				data = postsToTsv(posts)
+				w.Header().Set("Content-Type", "text/tab-separated-values")
+			}
 
-		if format == "" || format == "xml" {
-			data = postsToXML(posts)
-			w.Header().Set("Content-Type", "application/xml")
-		} else if format == "json" {
-			data = postsToJSON(posts)
-			w.Header().Set("Content-Type", "application/json")
-		} else if format == "tsv" {
-			data = postsToTsv(posts)
-			w.Header().Set("Content-Type", "text/tab-separated-values")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(data))
+			w.Write([]byte("\n"))
 		}
-
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(data))
-		w.Write([]byte("\n"))
-
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
