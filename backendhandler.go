@@ -117,7 +117,7 @@ func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
 			var data []byte
 
 			if format == "" || format == "xml" {
-				data = postsToXML(posts)
+				data = postsToXML(posts, r.Header.Get("Location"))
 				w.Header().Set("Content-Type", "application/xml")
 			} else if format == "json" {
 				data = postsToJSON(posts)
@@ -293,9 +293,13 @@ func guessFormat(formatAttr string, acceptHeader string) (format string) {
 	return
 }
 
-func postsToXML(posts []goboardbackend.Post) []byte {
+func postsToXML(posts []goboardbackend.Post, backendLocation string) []byte {
 	var b = goboardbackend.Board{}
-	b.Site = "http://localhost"
+	if (len(backendLocation)) > 0 {
+		b.Site = "http://" + backendLocation
+	} else {
+		b.Site = "http://localhost"
+	}
 
 	var i int
 	var p goboardbackend.Post
