@@ -351,34 +351,50 @@ function totozify(message) {
 }
 
 function norlogify(message) {
-    let datePart = "(?:[0-9]+/)?(?:1[0-2]|0[1-9])/(?:3[0-1]|[1-2][0-9]|0[1-9])"; // (?:y+/)?(?:(?:mm)/(?:dd))
-    let timePart = "(?:2[0-3]|[0-1][0-9]):(?:[0-5][0-9])(?::[0-5][0-9])?"; // (?:hh):(?:mm)(?::ss)?
-    let indexPart = "(?:[¹²³]|[:\\^][1-9]|[:\\^][1-9][0-9])?" // (?:¹²³|[:^]i|[:^]ii)?
-    let bouchotPart = "(?:@([A-Za-z0-9_]+))"
+    let datePart = "(?:[0-9]+/)?(?:1[0-2]|0[1-9])/(?:3[0-1]|[1-2][0-9]|0[1-9])"; // (?:y+/)?(?:(?:mm)/(?:dd));
+    let timePart = "(?:2[0-3]|[0-1][0-9]):(?:[0-5][0-9])(?::[0-5][0-9])?"; // (?:hh):(?:mm)(?::ss)?;
+    let indexPart = "(?:[¹²³]|[:\\^][1-9]|[:\\^][1-9][0-9])?" // (?:¹²³|[:^]i|[:^]ii)?;
+    let bouchotPart = "(?:@([A-Za-z0-9_]+))";
 
-    let nReg = "(?:(" + datePart + ")#)?" + "(" + timePart + ")" + "(" + indexPart + ")?" + bouchotPart + "?"
-    let exp = new RegExp(nReg, "g")
-    return message.replace(exp, function(match, date, time, index, dest, offset, string) {
-        let d = (date ? date.replace(/\//g, "_") : '');
-        let t = time.replace(/:/g, "_");
-        let i = (index ? index.replace(/[¹²³^]/, function(m) {
-            return {
-                '^': '',
-                '¹': '1',
-                '²': '2',
-                '³': '3'
-            }[m];
-        }) : '');
-        return "<span class=\"clock_ref\" id=\"d" + d +
-            '-t' + t +
-            (i ? '-i' + i : '') +
-            "\"><span class=\"norloge_ref_meta\">" +
-            d + "|" +
-            t + "|" +
-            i + "|" +
-            (dest ? dest : '') + "</span>" +
-            match + "</span>";
-    });
+    let nReg = "(?:(" + datePart + ")#)?" + "(" + timePart + ")" + "(" + indexPart + ")?" + bouchotPart + "?";
+    let exp = new RegExp(nReg, "g");
+
+    let aReg = new RegExp("((?:<a)|(?:<\\/a\\s*>))");
+    let splits = message.split(aReg);
+
+    let res = "";
+
+    for(i = 0; i < splits.length; i++)
+    {
+	let tmp = splits[i];
+        if( i % 4 == 0)
+        {
+            tmp = tmp.replace(exp, function(match, date, time, index, dest, offset, string) {
+                let d = (date ? date.replace(/\//g, "_") : '');
+                let t = time.replace(/:/g, "_");
+                let i = (index ? index.replace(/[¹²³^]/, function(m) {
+                    return {
+                        '^': '',
+                        '¹': '1',
+                        '²': '2',
+                        '³': '3'
+                    }[m];
+                }) : '');
+
+                return "<span class=\"clock_ref\" id=\"d" + d +
+                    '-t' + t +
+                    (i ? '-i' + i : '') +
+                    "\"><span class=\"norloge_ref_meta\">" +
+                    d + "|" +
+                    t + "|" +
+                    i + "|" +
+                    (dest ? dest : '') + "</span>" +
+                    match + "</span>";
+            });
+        }
+        res += tmp;
+    }
+    return res;
 }
 
 function emojify(message) {
