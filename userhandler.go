@@ -69,7 +69,7 @@ func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		// User created : Send him a cookie
-		if cookie, err := goboardcookie.CookieForUser(u.Db, login, u.cookieDurationD); err == nil {
+		if cookie, err := goboardcookie.ForUser(u.Db, login, u.cookieDurationD); err == nil {
 			http.SetCookie(w, &cookie)
 			w.WriteHeader(http.StatusOK)
 			return
@@ -126,7 +126,7 @@ func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
 		var err error
 
 		// User authenticated : Send him a cookie
-		if cookie, err = goboardcookie.CookieForUser(u.Db, login, u.cookieDurationD); err == nil {
+		if cookie, err = goboardcookie.ForUser(u.Db, login, u.cookieDurationD); err == nil {
 			if user, err = goboarduser.GetUser(u.Db, login); err == nil {
 				userJSON, err = json.Marshal(user)
 			}
@@ -157,26 +157,32 @@ func (u *UserHandler) unAuthUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserHandler) whoAmI(w http.ResponseWriter, r *http.Request) {
+	var login = ""
 
-	if cookies := r.Cookies(); len(cookies) > 0 {
-		if login, err := goboardcookie.LoginForCookie(u.Db, cookies[0].Value); err == nil && len(login) > 0 {
-			var err error
-			var user goboarduser.User
-
-			if user, err = goboarduser.GetUser(u.Db, login); err == nil {
-				var data []byte
-
-				if data, err = json.Marshal(user); err == nil {
-					w.WriteHeader(http.StatusOK)
-					w.Write(data)
-					return
-				}
-			}
-
-			w.WriteHeader(http.StatusInternalServerError)
-			u.logger.Println(err.Error())
-			return
+	for _, c := range r.Cookies() {
+		login, _ = goboardcookie.LoginForCookie(u.Db, c)
+		if len(login) > 0 {
+			break
 		}
+	}
+
+	if len(login) > 0 {
+		var err error
+		var user goboarduser.User
+
+		if user, err = goboarduser.GetUser(u.Db, login); err == nil {
+			var data []byte
+
+			if data, err = json.Marshal(user); err == nil {
+				w.WriteHeader(http.StatusOK)
+				w.Write(data)
+				return
+			}
+		}
+
+		w.WriteHeader(http.StatusInternalServerError)
+		u.logger.Println(err.Error())
+		return
 	}
 
 	w.WriteHeader(http.StatusForbidden)

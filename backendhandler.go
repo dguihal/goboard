@@ -14,7 +14,7 @@ import (
 	"golang.org/x/net/html"
 
 	goboardbackend "github.com/dguihal/goboard/backend"
-	"github.com/dguihal/goboard/cookie"
+	goboardcookie "github.com/dguihal/goboard/cookie"
 	"github.com/gorilla/mux"
 	"github.com/hishboy/gocommons/lang"
 )
@@ -203,19 +203,7 @@ func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 
 func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	/*
-		bP := bluemonday.NewPolicy()
-		bP.AllowStandardURLs()
-		bP.AllowAttrs("href").OnElements("a")
-		bP.AllowElements("i")
-		bP.AllowElements("u")
-		bP.AllowElements("b")
-		bP.AllowElements("s")
-		bP.AllowElements("em")
-		bP.AllowElements("tt")
 
-		message := bP.Sanitize(r.FormValue("message"))
-	*/
 	message := sanitize(r.FormValue("message"))
 	rawInfo := r.FormValue("info")
 	if len(rawInfo) == 0 {
@@ -224,12 +212,10 @@ func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
 	info := sanitize(rawInfo)
 	login := ""
 
-	if cookies := r.Cookies(); len(cookies) > 0 {
-		var err error
-
-		if login, err = cookie.LoginForCookie(b.Db, cookies[0].Value); err != nil {
-			fmt.Println("POST :", err.Error())
-			login = ""
+	for _, c := range r.Cookies() {
+		login, _ = goboardcookie.LoginForCookie(b.Db, c)
+		if len(login) > 0 {
+			break
 		}
 	}
 

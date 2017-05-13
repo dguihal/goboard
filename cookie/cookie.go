@@ -1,4 +1,4 @@
-// cookie.go
+// Package cookie provides management of cookies in database
 package cookie
 
 import (
@@ -11,20 +11,23 @@ import (
 	"github.com/dchest/uniuri"
 )
 
-const goboard_cookie_name string = "goboard_id"
+const goboardCookieName string = "goboard_id"
 const usersCookieBucketName string = "UsersCookie"
 
+// UserCookie struct used to modelize a cookie
 type UserCookie struct {
 	Login  string
 	Cookie http.Cookie
 }
 
+// A list of error codes used in UserCookieError
 const (
 	NoError       = iota
 	DatabaseError = iota
 	NoCookieFound = iota
 )
 
+// UserCookieError a struct modelizing cookie operation errors
 type UserCookieError struct {
 	error
 	ErrCode int // Error Code
@@ -32,13 +35,14 @@ type UserCookieError struct {
 
 func (e *UserCookieError) Error() string { return e.error.Error() }
 
-func CookieForUser(db *bolt.DB, login string, cookieDuration_d int) (cookie http.Cookie, err error) {
+// ForUser returns a valid cookie (already existing or new) for a user
+func ForUser(db *bolt.DB, login string, cookieDurationD int) (cookie http.Cookie, err error) {
 
-	if cookie, err = FetchCookieForUser(db, login); err != nil {
+	if cookie, err = fetchCookieForUser(db, login); err != nil {
 		if ucerr, ok := err.(*UserCookieError); ok {
 			if ucerr.ErrCode == NoCookieFound {
 				// No existing valid cookie found, create one
-				cookie, err = CreateAndStoreCookie(db, login, cookieDuration_d)
+				cookie, err = createAndStoreCookie(db, login, cookieDurationD)
 			}
 		}
 	}
@@ -46,11 +50,12 @@ func CookieForUser(db *bolt.DB, login string, cookieDuration_d int) (cookie http
 	return
 }
 
-func CreateAndStoreCookie(db *bolt.DB, login string, cookieDuration_d int) (cookie http.Cookie, err error) {
+// createAndStoreCookie creates a new cookie and stores it in database
+func createAndStoreCookie(db *bolt.DB, login string, cookieDurationD int) (cookie http.Cookie, err error) {
 
-	expiration := time.Now().Add(time.Duration(cookieDuration_d) * 24 * time.Hour)
+	expiration := time.Now().Add(time.Duration(cookieDurationD) * 24 * time.Hour)
 	cookie = http.Cookie{
-		Name:     goboard_cookie_name,
+		Name:     goboardCookieName,
 		Value:    uniuri.NewLen(64),
 		Expires:  expiration,
 		Path:     "/",
@@ -84,6 +89,7 @@ func CreateAndStoreCookie(db *bolt.DB, login string, cookieDuration_d int) (cook
 	return
 }
 
+// DeleteCookiesForUser delete stored cookies for user
 func DeleteCookiesForUser(db *bolt.DB, login string) (err error) {
 
 	err = db.Batch(func(tx *bolt.Tx) error {
@@ -113,7 +119,8 @@ func DeleteCookiesForUser(db *bolt.DB, login string) (err error) {
 	return
 }
 
-func FetchCookieForUser(db *bolt.DB, login string) (cookie http.Cookie, err error) {
+// fetchCookieForUser retreive a valid stored cookie for a user (if any in database)
+func fetchCookieForUser(db *bolt.DB, login string) (cookie http.Cookie, err error) {
 
 	cookie = http.Cookie{}
 
@@ -160,35 +167,45 @@ func FetchCookieForUser(db *bolt.DB, login string) (cookie http.Cookie, err erro
 	return
 }
 
-func LoginForCookie(db *bolt.DB, cookieValue string) (login string, err error) {
+// LoginForCookie get the user associated with a cookie
+func LoginForCookie(db *bolt.DB, cookie *http.Cookie) (login string, err error) {
 	var uc = UserCookie{}
 	login = ""
+
+	if cookie.Name != goboardCookieName || cookie.Expires.Before(time.Now()) {
+		return
+	}
 
 	err = db.View(func(tx *bolt.Tx) error {
 
 		b := tx.Bucket([]byte(usersCookieBucketName))
 
-		v := b.Get([]byte(cookieValue))
+		if b == nil {
+			return nil
+		}
+
+		v := b.Get([]byte(cookie.Value))
 		if v != nil {
 			json.Unmarshal(v, &uc)
 		}
 		return nil
 	})
 
-	login = uc.Login
+	if len(uc.Login) > 0 {
+		login = uc.Login
 
-	if err == nil && login != "" && uc.Cookie.Expires.Before(time.Now()) {
-		err = db.Update(func(tx *bolt.Tx) error {
-			b := tx.Bucket([]byte(usersCookieBucketName))
-			if b == nil {
-				ucerr := &UserCookieError{error: err, ErrCode: DatabaseError}
-				return ucerr
-			}
+		if err == nil && uc.Cookie.Expires.Before(time.Now()) {
+			err = db.Update(func(tx *bolt.Tx) error {
+				b := tx.Bucket([]byte(usersCookieBucketName))
+				if b == nil {
+					return nil
+				}
 
-			b.Delete([]byte(cookieValue))
+				b.Delete([]byte(cookie.Value))
 
-			return nil
-		})
+				return nil
+			})
+		}
 	}
 	return
 }
