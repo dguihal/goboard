@@ -23,13 +23,14 @@
         </ul>
         <ul class="nav nav-pills">
             <li class="nav-item">
-                <a class="nav-link" href="../swagger/?url=https%3A%2F%2Fototu.euromussels.eu%2Fgoboard%2Fswagger%2Fswagger.yaml" target="blank">Backend API</a>
+                <a class="nav-link" href="../swagger/?url=.%2Fswagger.yaml" target="blank" id="backend-api-link">Backend API</a>
             </li>
             <li class="nav-item active">
                 <a class="nav-link" href="#" id="settings"><i class="medium material-icons">settings</i></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" id="login"><i class="medium material-icons">account_circle</i></a>
+                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"
+                    id="login"><i class="medium material-icons">account_circle</i></a>
                 <div id="login-dp" class="dropdown-menu dropdown-menu-right">
                     <div id="login-welcome-auth"></div>
                     <div id="login-form-group">
@@ -92,20 +93,8 @@
     <script type="text/javascript" src="js/tether-1.4.0.js"></script>
     <script type="text/javascript" src="js/bootstrap-4.0.0-alpha.6.js"></script>
     <script type="text/javascript" src="js/emojione.js"></script>
+    <script type="text/javascript" src="js/settings.js"></script>
     <script type="text/javascript" src="js/goboard.js"></script>
-    <script>
-        ///////////////////////////////////////////
-         /// TO BE LOADED FROM EXTERNAL FILE
-        var MAX_POSTS = 50;
-        var PINI_REFRESH_MS = 5000;
-		
-        var BASE_PATH = "/goboard";
-
-        var BACKEND_URL = BASE_PATH + "/backend/json?last=%i";
-
-        var TOTOZ_DEFAULT_SERVER = "http://totoz.eu/img"
-	</script>
-	
     <script>
         var totozServer = ""
 
@@ -113,116 +102,10 @@
         var firstLoad = true;
         var intervalID;
 
-        $(function() {
-            $("#palmi").submit(function(e) {
-                post_msg(e);
-                e.preventDefault();
-            });
-
-            $("#pini").on({
-                click: function(e) {
-                    norlogeclicked(e);
-                },
-                mouseenter: function(e) {
-                    norlogeHighlight(e);
-                },
-                mouseleave: function(e) {
-                    clearHighlight(e);
-                }
-            }, ".post_clock");
-
-            $("#pini").on({
-                mouseenter: function(e) {
-                    let q = document.querySelectorAll(":hover");
-                    let totozTxt = q[q.length - 1].innerText.slice(2, -1); // Surrounding "[:" & "]"
-
-                    let totozSrv = (totozServer) ? totozServer : TOTOZ_DEFAULT_SERVER;
-
-                    let popup = $("#popup");
-                    if (popup.is(':visible')) {
-                        popup.hide();
-                    }
-
-                    let oImg = document.createElement("img");
-                    oImg.setAttribute('src', totozSrv + '/' + encodeURI(totozTxt));
-                    oImg.setAttribute('alt', 'na');
-
-                    let popupElt = popup[0];
-                    popupElt.style.position = "absolute";
-                    popupElt.style.left = e.pageX.toString() + 'px';
-                    popupElt.style.top = e.pageY.toString() + 'px';
-                    popup.fadeIn(500);
-                    while (popupElt.firstChild) {
-                        popupElt.removeChild(popupElt.firstChild);
-                    }
-                    popupElt.appendChild(oImg)
-                    e.preventDefault();
-                },
-                mouseleave: function(e) {
-                    e.preventDefault();
-                    let popup = $("#popup");
-                    if (popup.is(':visible')) {
-                        popup.fadeOut(200);
-                    }
-                    e.preventDefault();
-                }
-            }, ".totoz");
-
-            $("#pini").on({
-                mouseenter: function(e) {
-                    clockRefHighlight(e);
-                },
-                mouseleave: function(e) {
-                    clearHighlight(e);
-                }
-            }, ".clock_ref");
-
-            if (typeof TOTOZ_DEFAULT_SERVER === 'string') {
-                $("#totozServer")[0].placeholder = TOTOZ_DEFAULT_SERVER;
-            }
-
-            $("#pini").on("mouseenter", ".clock_ref", function(e) {
-                return false;
-            });
-
-            $("#settings").on("click", function(e) {
-                toggle_settings(e)
-                e.stopPropagation();
-                e.preventDefault();
-            });
-
-            $("#toggler-btn").on("click", function(e) {
-                toggle_settings(e)
-                e.preventDefault();
-            });
-
-            $(document).on("click", function(e) {
-                var container = $("#left-menu");
-
-                if (!container.is(e.target) // if the target of the click isn't the container...
-                    && container.has(e.target).length === 0) // ... nor a descendant of the container
-                {
-                    hide_settings();
-                }
-            });
-
-            $("#login-form").submit(function(e) {
-                login(e);
-                e.preventDefault();
-            });
-
-            $("#login-dp").on("click", "a", function(e) {
-                logout(e);
-                e.preventDefault();
-            })
-
-            whoami();
-            update_pini();
-            // Launch pini periodic refresh
-            intervalID = setInterval(update_pini, PINI_REFRESH_MS);
+        $(function () {
+            webui_init();
         })
     </script>
 </body>
 
 </html>
-
