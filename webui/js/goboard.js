@@ -359,14 +359,15 @@ function norlogify(message) {
     let nReg = "(?:(" + datePart + ")#)?" + "(" + timePart + ")" + "(" + indexPart + ")?" + bouchotPart + "?";
     let exp = new RegExp(nReg, "g");
 
+    //Do not expand nhorloges in html links, so we need to tokenize on these tags to
+    //  only apply replace outside.
     let aReg = new RegExp("((?:<a)|(?:<\\/a\\s*>))");
     let splits = message.split(aReg);
-
     let res = "";
 
-    for(i = 0; i < splits.length; i++)
+    for(let i = 0; i < splits.length; i++)
     {
-	let tmp = splits[i];
+	    let tmp = splits[i];
         if( i % 4 == 0)
         {
             tmp = tmp.replace(exp, function(match, date, time, index, dest, offset, string) {
@@ -398,7 +399,5 @@ function norlogify(message) {
 }
 
 function emojify(message) {
-    //Could be optionnal with firefox and svginot font installed
-    let tmp = emojione.unicodeToImage(message);
-    return emojione.shortnameToImage(tmp);
+    return emojione.unicodeToImage(message);
 }
