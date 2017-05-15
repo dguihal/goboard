@@ -15,7 +15,8 @@ p.material-icons {
 
 /* Config panel */
 #left-menu {
-    position: absolute;
+    position: fixed;
+    bottom: 0;
 	display: none;
     height: 100%;
 	width: 0%;
