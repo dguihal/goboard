@@ -125,12 +125,9 @@ function webui_init() {
 
   // Backend API link
   let swagger_url = window.location.protocol + "//" + window.location.host;
-  console.log(swagger_url);
   let swagger_base_path = window.location.pathname.replace(/\/webui\/?.*/, SWAGGER_BASE_PATH + "/");
-  console.log(swagger_base_path);
   let swagger_href =
     swagger_url + swagger_base_path + "?url=" + encodeURIComponent(swagger_url + swagger_base_path + SWAGGER_FILE_NAME);
-  console.log(swagger_href);
   $("#backend-api-link").attr("href", swagger_href);
   // Settings menu
   $("#settings").on("click", function(e) {
