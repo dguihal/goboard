@@ -368,16 +368,24 @@ function update_pini() {
     context: $("body")
   })
     .done(function(data, textStatus, jqXHR) {
+      // Nothing to do if there is no data
+      if (! data.Posts) {
+        return;
+      }
+
+      // Remove already known posts from list
       data.Posts = data.Posts.filter(function(item) {
         return item.id > maxId;
       });
 
+      // Sort posts by their ids
       if (data.Posts.length > 1 && data.Posts[0].id > data.Posts[1].id) {
         data.Posts.sort(function(a, b) {
           return a.id - b.id;
         });
       }
 
+      // Insert posts into pini
       var pini = $("#pini");
       $.each(data.Posts, function(index, item) {
         maxId = item.id > maxId ? item.id : maxId;
