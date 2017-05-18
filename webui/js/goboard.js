@@ -369,7 +369,7 @@ function update_pini() {
   })
     .done(function(data, textStatus, jqXHR) {
       // Nothing to do if there is no data
-      if (! data.Posts) {
+      if (! data || ! data.Posts) {
         return;
       }
 
