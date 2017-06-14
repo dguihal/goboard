@@ -77,14 +77,21 @@ func main() {
 		}
 	}
 
+	// Set some failsafe defaults
 	if config.GoBoardDBFileMode == 0 {
 		config.GoBoardDBFileMode = 0600
 	}
+	if config.MaxHistorySize <= 0 {
+		config.MaxHistorySize = 30
+	}
+
+	// Open database
 	db, err := bolt.Open(config.GoBoardDBFile, config.GoBoardDBFileMode, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
 
+	// Initialize router
 	mainRouter := mux.NewRouter().StrictSlash(true)
 	r := mainRouter
 	if len(config.BasePath) > 0 {
