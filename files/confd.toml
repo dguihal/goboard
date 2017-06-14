@@ -1,0 +1,6 @@
+[template]
+src = "goboard.yaml.template"
+dest = "/go/bin/goboard.yaml"
+keys = [
+    "MaxHistorySize",
+]
