@@ -1,7 +1,7 @@
 function show_success(msg) {
   $("#success-alert").html(msg);
   $("#success-alert").alert();
-  $("#success-alert").fadeTo(2000, 500).slideUp(500, function() {
+  $("#success-alert").fadeTo(2000, 500).slideUp(500, function () {
     $("#success-alert").slideUp(500);
   });
 }
@@ -9,18 +9,17 @@ function show_success(msg) {
 function show_error(msg) {
   $("#danger-alert").html(msg);
   $("#danger-alert").alert();
-  $("#danger-alert").fadeTo(2000, 500).slideUp(500, function() {
+  $("#danger-alert").fadeTo(2000, 500).slideUp(500, function () {
     $("#danger-alert").slideUp(500);
   });
 }
 
 function hide_settings() {
-  $("#left-menu").animate(
-    {
+  $("#left-menu").animate({
       width: "0px"
     },
     400,
-    function() {
+    function () {
       $("#left-menu").hide();
     }
   );
@@ -31,8 +30,7 @@ function toggle_settings() {
     hide_settings();
   } else {
     $("#left-menu").show();
-    $("#left-menu").animate(
-      {
+    $("#left-menu").animate({
         width: "350px"
       },
       400
@@ -42,30 +40,28 @@ function toggle_settings() {
 
 function webui_init() {
   // Palmi
-  $("#palmi").submit(function(e) {
+  $("#palmi").submit(function (e) {
     post_msg(e);
     e.preventDefault();
   });
 
   // Pini
-  $("#pini").on(
-    {
-      click: function(e) {
+  $("#pini").on({
+      click: function (e) {
         norlogeclicked(e);
       },
-      mouseenter: function(e) {
+      mouseenter: function (e) {
         norlogeHighlight(e);
       },
-      mouseleave: function(e) {
+      mouseleave: function (e) {
         clearHighlight(e);
       }
     },
     ".post_clock"
   );
 
-  $("#pini").on(
-    {
-      mouseenter: function(e) {
+  $("#pini").on({
+      mouseenter: function (e) {
         let q = document.querySelectorAll(":hover");
         let totozTxt = q[q.length - 1].innerText.slice(2, -1); // Surrounding "[:" & "]"
 
@@ -91,7 +87,7 @@ function webui_init() {
         popupElt.appendChild(oImg);
         e.preventDefault();
       },
-      mouseleave: function(e) {
+      mouseleave: function (e) {
         e.preventDefault();
         let popup = $("#popup");
         if (popup.is(":visible")) {
@@ -103,19 +99,18 @@ function webui_init() {
     ".totoz"
   );
 
-  $("#pini").on(
-    {
-      mouseenter: function(e) {
+  $("#pini").on({
+      mouseenter: function (e) {
         clockRefHighlight(e);
       },
-      mouseleave: function(e) {
+      mouseleave: function (e) {
         clearHighlight(e);
       }
     },
     ".clock_ref"
   );
 
-  $("#pini").on("mouseenter", ".clock_ref", function(e) {
+  $("#pini").on("mouseenter", ".clock_ref", function (e) {
     return false;
   });
 
@@ -130,36 +125,37 @@ function webui_init() {
   let swagger_href =
     swagger_url + swagger_base_path + "?url=" + encodeURIComponent(swagger_url + swagger_base_path + SWAGGER_FILE_NAME);
   $.ajax({
-    url: swagger_url,
-    type: "HEAD",
-    statusCode: {
+      url: swagger_href,
+      type: "HEAD",
+      statusCode: {
         404: function () {
           $("#backend-api-link").hide();
+        }
       }
-    }
-  })
-  .fail(function (jqXHR, textStatus, errorThrown) {
-    $("#backend-api-link").hide();
-  });
+    })
+    .done(function (data, textStatus, request) {
+      $("#backend-api-link").attr("href", swagger_href);
+    })
+    .fail(function (jqXHR, textStatus, errorThrown) {
+      $("#backend-api-link").hide();
+    });
 
-  $("#backend-api-link").attr("href", swagger_href);
   // Settings menu
-  $("#settings").on("click", function(e) {
+  $("#settings").on("click", function (e) {
     toggle_settings(e);
     e.stopPropagation();
     e.preventDefault();
   });
 
-  $("#toggler-btn").on("click", function(e) {
+  $("#toggler-btn").on("click", function (e) {
     toggle_settings(e);
     e.preventDefault();
   });
 
-  $(document).on("click", function(e) {
+  $(document).on("click", function (e) {
     var container = $("#left-menu");
 
-    if (
-      !container.is(e.target) && // if the target of the click isn't the container...
+    if (!container.is(e.target) && // if the target of the click isn't the container...
       container.has(e.target).length === 0
     ) {
       // ... nor a descendant of the container
@@ -168,12 +164,12 @@ function webui_init() {
   });
 
   // Login form
-  $("#login-form").submit(function(e) {
+  $("#login-form").submit(function (e) {
     login(e);
     e.preventDefault();
   });
 
-  $("#login-dp").on("click", "a", function(e) {
+  $("#login-dp").on("click", "a", function (e) {
     logout(e);
     e.preventDefault();
   });
@@ -189,19 +185,19 @@ function login() {
   let pass = $("#passwordInput").val();
 
   $.ajax({
-    method: "POST",
-    url: BASE_PATH + "/user/login",
-    contentType: "application/x-www-form-urlencoded",
-    data: {
-      login: loginName,
-      password: pass
-    }
-  })
-    .done(function(data, textStatus, request) {
+      method: "POST",
+      url: BASE_PATH + "/user/login",
+      contentType: "application/x-www-form-urlencoded",
+      data: {
+        login: loginName,
+        password: pass
+      }
+    })
+    .done(function (data, textStatus, request) {
       show_success("Login successfull");
       whoami();
     })
-    .fail(function(jqXHR, textStatus, errorThrown) {
+    .fail(function (jqXHR, textStatus, errorThrown) {
       show_error("Login failed : " + errorThrown);
     });
 }
@@ -210,7 +206,7 @@ function logout() {
   $.ajax({
     method: "GET",
     url: BASE_PATH + "/user/logout"
-  }).always(function() {
+  }).always(function () {
     whoami();
     $("#login-form-group").show();
   });
@@ -224,17 +220,17 @@ function post_msg() {
   }
 
   $.ajax({
-    method: "POST",
-    url: BASE_PATH + "/post",
-    contentType: "application/x-www-form-urlencoded",
-    // data to be added to query string:
-    data: postData,
-    // type of data we are expecting in return:
-    // dataType: '',
-    timeout: 300,
-    context: $("body")
-  })
-    .done(function(data, textStatus, jqXHR) {
+      method: "POST",
+      url: BASE_PATH + "/post",
+      contentType: "application/x-www-form-urlencoded",
+      // data to be added to query string:
+      data: postData,
+      // type of data we are expecting in return:
+      // dataType: '',
+      timeout: 300,
+      context: $("body")
+    })
+    .done(function (data, textStatus, jqXHR) {
       $("#palmiInput").val("");
       // Stop pini refresh
       clearInterval(intervalID);
@@ -242,7 +238,7 @@ function post_msg() {
       // Relaunch pini periodic refresh
       intervalID = setInterval(update_pini, PINI_REFRESH_MS);
     })
-    .fail(function(jqXHR, textStatus, errorThrown) {
+    .fail(function (jqXHR, textStatus, errorThrown) {
       console.log("Ajax error : " + textStatus);
     });
 }
@@ -325,8 +321,8 @@ function norlogeHighlight(e) {
     }
   }
 
-  query_strs.forEach(function(e) {
-    $("#pini").find("span[id$=" + e + "]").each(function(index) {
+  query_strs.forEach(function (e) {
+    $("#pini").find("span[id$=" + e + "]").each(function (index) {
       if ($(this).hasClass("clock_ref")) {
         $(this).addClass("highlighted");
       } else {
@@ -349,7 +345,7 @@ function clockRefHighlight(e) {
   }
   query_str += "t" + norlogeT + (norlogeI ? "-i" + norlogeI : "");
 
-  $("#pini").find("span[id*=" + query_str + "]").each(function(index) {
+  $("#pini").find("span[id*=" + query_str + "]").each(function (index) {
     if ($(this).hasClass("clock_ref")) {
       $(this).addClass("highlighted");
     } else {
@@ -359,10 +355,10 @@ function clockRefHighlight(e) {
 }
 
 function clearHighlight(e) {
-  $("#pini").find(".highlighted").each(function(index) {
+  $("#pini").find(".highlighted").each(function (index) {
     $(this).removeClass("highlighted");
   });
-  $("#pini").find(".highlighted").each(function(index) {
+  $("#pini").find(".highlighted").each(function (index) {
     $(this).removeClass("highlighted");
   });
 }
@@ -374,34 +370,34 @@ function update_pini() {
   }
 
   $.ajax({
-    method: "GET",
-    url: url,
-    // type of data we are expecting in return:
-    dataType: "json",
-    timeout: 300,
-    context: $("body")
-  })
-    .done(function(data, textStatus, jqXHR) {
+      method: "GET",
+      url: url,
+      // type of data we are expecting in return:
+      dataType: "json",
+      timeout: 300,
+      context: $("body")
+    })
+    .done(function (data, textStatus, jqXHR) {
       // Nothing to do if there is no data
-      if (! data || ! data.Posts) {
+      if (!data || !data.Posts) {
         return;
       }
 
       // Remove already known posts from list
-      data.Posts = data.Posts.filter(function(item) {
+      data.Posts = data.Posts.filter(function (item) {
         return item.id > maxId;
       });
 
       // Sort posts by their ids
       if (data.Posts.length > 1 && data.Posts[0].id > data.Posts[1].id) {
-        data.Posts.sort(function(a, b) {
+        data.Posts.sort(function (a, b) {
           return a.id - b.id;
         });
       }
 
       // Insert posts into pini
       var pini = $("#pini");
-      $.each(data.Posts, function(index, item) {
+      $.each(data.Posts, function (index, item) {
         maxId = item.id > maxId ? item.id : maxId;
 
         let d = document.createElement("div");
@@ -449,21 +445,21 @@ function update_pini() {
         firstLoad = false;
       }
     })
-    .fail(function(jqXHR, textStatus, errorThrown) {
+    .fail(function (jqXHR, textStatus, errorThrown) {
       console.log("Ajax error!" + errorThrown);
     });
 }
 
 function whoami() {
   $.ajax({
-    method: "GET",
-    url: BASE_PATH + "/user/whoami",
-    // type of data we are expecting in return:
-    dataType: "json",
-    timeout: 300,
-    context: $("body")
-  })
-    .done(function(data, textStatus, jqXHR) {
+      method: "GET",
+      url: BASE_PATH + "/user/whoami",
+      // type of data we are expecting in return:
+      dataType: "json",
+      timeout: 300,
+      context: $("body")
+    })
+    .done(function (data, textStatus, jqXHR) {
       var str = "<span>Welcome </span>";
       str += "<strong>" + data.Login + "</strong>";
       str += "<span> </span>";
@@ -471,7 +467,7 @@ function whoami() {
       $("#login-welcome-auth").html(str);
       $("#login-form-group").hide();
     })
-    .fail(function(jqXHR, textStatus, errorThrown) {
+    .fail(function (jqXHR, textStatus, errorThrown) {
       $("#login-welcome-auth").html("<strong>Unauthenticated</strong>");
     });
 }
@@ -530,19 +526,19 @@ function norlogify(message) {
   for (let i = 0; i < splits.length; i++) {
     let tmp = splits[i];
     if (i % 4 == 0) {
-      tmp = tmp.replace(exp, function(match, date, time, index, dest, offset, string) {
+      tmp = tmp.replace(exp, function (match, date, time, index, dest, offset, string) {
         let d = date ? date.replace(/\//g, "_") : "";
         let t = time.replace(/:/g, "_");
-        let i = index
-          ? index.replace(/[¹²³^]/, function(m) {
-              return {
-                "^": "",
-                "¹": "1",
-                "²": "2",
-                "³": "3"
-              }[m];
-            })
-          : "";
+        let i = index ?
+          index.replace(/[¹²³^]/, function (m) {
+            return {
+              "^": "",
+              "¹": "1",
+              "²": "2",
+              "³": "3"
+            }[m];
+          }) :
+          "";
 
         return (
           '<span class="clock_ref" id="d' +
