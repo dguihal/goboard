@@ -47,6 +47,7 @@ function webui_init() {
     e.preventDefault();
   });
 
+  // Pini
   $("#pini").on(
     {
       click: function(e) {
@@ -62,7 +63,6 @@ function webui_init() {
     ".post_clock"
   );
 
-  // Pini
   $("#pini").on(
     {
       mouseenter: function(e) {
@@ -119,6 +119,7 @@ function webui_init() {
     return false;
   });
 
+  // Totoz Server
   if (typeof TOTOZ_DEFAULT_SERVER === "string") {
     $("#totozServer")[0].placeholder = TOTOZ_DEFAULT_SERVER;
   }
@@ -128,6 +129,19 @@ function webui_init() {
   let swagger_base_path = window.location.pathname.replace(/\/webui\/?.*/, SWAGGER_BASE_PATH + "/");
   let swagger_href =
     swagger_url + swagger_base_path + "?url=" + encodeURIComponent(swagger_url + swagger_base_path + SWAGGER_FILE_NAME);
+  $.ajax({
+    url: swagger_url,
+    type: "HEAD",
+    statusCode: {
+        404: function () {
+          $("#backend-api-link").hide();
+      }
+    }
+  })
+  .fail(function (jqXHR, textStatus, errorThrown) {
+    $("#backend-api-link").hide();
+  });
+
   $("#backend-api-link").attr("href", swagger_href);
   // Settings menu
   $("#settings").on("click", function(e) {
