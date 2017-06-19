@@ -24,7 +24,7 @@ Support user launched docker (-u parameter)
 
 Support for BasePath, MaxHistorySize, BackendTimeZone, CookieDuration and AdminToken environment variables (-e)
 
-**AdminToken has to be set (no default)
+**AdminToken has to be set (no default)**
 
 Usage:
 
