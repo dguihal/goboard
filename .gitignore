@@ -6,3 +6,4 @@ goboard
 .vscode/*
 *.dgu
 debug
+*~
