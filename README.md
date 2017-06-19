@@ -25,7 +25,11 @@ Support for BasePath, MaxHistorySize, BackendTimeZone, CookieDuration and AdminT
 ** AdminToken has to be set (no default)
 
 Usage:
+
 `git clone https://github.com/dguihal/goboard`
+
 `cd goboard`
+
 `docker build -t goboard:latest .`
+
 `docker run -p 8080:8080 -u 1001 -e AdminToken=somekindofverylongstring goboard`
