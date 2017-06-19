@@ -11,8 +11,6 @@ WORKDIR goboard
 COPY files/start.sh /go/bin/
 
 ENV GOPATH /go
-#RUN cp files/goboard.yaml.template /etc/confd/templates/
-#RUN cp files/confd.toml /etc/confd/conf.d/
 COPY goboard.yaml /go/bin/goboard.yaml.template
 
 RUN go-wrapper download

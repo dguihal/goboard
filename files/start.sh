@@ -1,10 +1,9 @@
 #!/bin/bash
 set -e
-set -x
 
 cd /go/bin/
 
-echo "Using user"
+echo "Using user:"
 id
 
 echo "Generating conf"
