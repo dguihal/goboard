@@ -1,25 +1,25 @@
 FROM golang:alpine
 
 WORKDIR /go/src/
-RUN apk add --no-cache  bash git 
+RUN apk add --no-cache  bash git
 
+RUN git clone https://github.com/dguihal/goboard
+RUN git clone https://github.com/swagger-api/swagger-ui/
+RUN 
 
-RUN git clone https://github.com/dguihal/goboard app
-WORKDIR app
-COPY files/start.sh files/
+WORKDIR goboard
+COPY files/start.sh /go/bin/
 
+ENV GOPATH /go
+#RUN cp files/goboard.yaml.template /etc/confd/templates/
+#RUN cp files/confd.toml /etc/confd/conf.d/
+COPY goboard.yaml /go/bin/goboard.yaml.template
 
-ADD https://github.com/kelseyhightower/confd/releases/download/v0.12.0-alpha3/confd-0.12.0-alpha3-linux-amd64 /usr/local/bin/confd
-RUN chmod +x /usr/local/bin/confd
-
-RUN mkdir -p /etc/confd/{conf.d,templates}
-
-COPY files/goboard.yaml.template /etc/confd/templates/
-COPY files/confd.toml /etc/confd/conf.d/
-
-RUN go-wrapper download   # "go get -d -v ./..."
-RUN go-wrapper install    # "go install -v ./..."
+RUN go-wrapper download
+RUN go-wrapper install
 
 EXPOSE 8080
 
-CMD ["/go/src/app/files/start.sh"]
+RUN mv /go/src/goboard/webui /go/bin/
+RUN mv /go/src/swagger-ui/dist /go/bin/swagger-ui
+CMD ["/go/bin/start.sh"]

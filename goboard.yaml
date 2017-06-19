@@ -32,7 +32,7 @@ AccessLogFileMode: 0660
 SwaggerPath: $HOME/swaggerui
 
 #Path for webui (optional, disabled if invalid)
-WebuiPath: $HOME/gopath/src/github.com/dguihal/goboard/webui
+WebuiPath: $HOME/webui
 
 #No minimum length is enforced, but you are strongly encouraged to set it long and complex
 AdminToken: fkjqskfdhfudqgfvcgvxmomiqo324siufhdqgfyuqmosjcmjdcisq
