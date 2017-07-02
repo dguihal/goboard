@@ -11,7 +11,7 @@ BasePath: ""
 MaxHistorySize: 50
 
 # Set Timezone of backend dates
-BackendTimeZone: "UTC"
+BackendTimeZone: "Europe/Paris"
 
 # Cookies duration in days
 CookieDuration: 365
@@ -29,10 +29,12 @@ AccessLogFile: access.log
 AccessLogFileMode: 0660
 
 #Path for swagger dist files (optional, disabled if invalid)
-SwaggerPath: $HOME/swaggerui
+#SwaggerPath: $HOME/swaggerui
+SwaggerPath: /home/damien/Devel/golang/src/github.com/swagger-api/swagger-ui/dist/
 
 #Path for webui (optional, disabled if invalid)
-WebuiPath: $HOME/webui
+#SwaggerPath: $HOME/webui
+WebuiPath: /home/damien/Devel/golang/src/github.com/dguihal/goboard/webui/
 
 #No minimum length is enforced, but you are strongly encouraged to set it long and complex
 AdminToken: fkjqskfdhfudqgfvcgvxmomiqo324siufhdqgfyuqmosjcmjdcisq
