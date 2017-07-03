@@ -34,4 +34,7 @@ Usage:
 
 `docker build -t goboard:latest .`
 
-`docker run -p 8080:8080 -u 1001 -e AdminToken=somekindofverylongstring goboard`
+Create a data volume (To store db data)
+`docker volume create goboard_data`
+
+`docker run -p 8080:8080 -u 1001 goboard_data:/data -e AdminToken=somekindofverylongstring -e DBDataPath=/data goboard`

@@ -33,7 +33,7 @@ AccessLogFileMode: 0660
 SwaggerPath: /home/damien/Devel/golang/src/github.com/swagger-api/swagger-ui/dist/
 
 #Path for webui (optional, disabled if invalid)
-#SwaggerPath: $HOME/webui
+#WebuiPath: $HOME/webui
 WebuiPath: /home/damien/Devel/golang/src/github.com/dguihal/goboard/webui/
 
 #No minimum length is enforced, but you are strongly encouraged to set it long and complex

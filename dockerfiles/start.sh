@@ -25,6 +25,12 @@ if [ ! -z "${CookieDuration}" ] ; then
     sed -i -e "s/CookieDuration.*/CookieDuration: ${CookieDuration}/" goboard.yaml
 fi
 
+if [ -z "${GoBoardDBPath}" ] ; then
+    echo "Warn: GoBoardDBFile won't be stored on a persitent file system"
+else
+    sed -i -e "s/GoBoardDBFile.*/GoBoardDBFile: ${GoBoardDBPath}/goboard.db" goboard.yaml    
+fi
+
 if [ -z "${AdminToken}" ] ; then
     echo "AdminToken MUST be set, aborting"
     test $AdminToken
