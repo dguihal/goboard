@@ -3,9 +3,6 @@ set -e
 
 cd /go/bin/
 
-echo "Using user:"
-id
-
 echo "Generating conf"
 cp goboard.yaml.template goboard.yaml
 
@@ -28,7 +25,7 @@ fi
 if [ -z "${GoBoardDBPath}" ] ; then
     echo "Warn: GoBoardDBFile won't be stored on a persitent file system"
 else
-    sed -i -e "s#GoBoardDBFile.*#GoBoardDBFile: ${GoBoardDBPath}/goboard.db#" goboard.yaml    
+    sed -i -e "s#GoBoardDBFile.*#GoBoardDBFile: ${GoBoardDBPath}/goboard.db#" goboard.yaml
 fi
 
 if [ -z "${AdminToken}" ] ; then
@@ -41,6 +38,10 @@ fi
 sed -i -e "s/SwaggerPath.*/SwaggerPath: swaggerui/" goboard.yaml
 sed -i -e "s/WebuiPath.*/WebuiPath: webui/" goboard.yaml
 
+USER="goboard"
+adduser -D -u 1000 goboard
+chown -R "${USER}" "${GoBoardDBPath}"
+
 echo "Starting Goboard"
-exec goboard
+su-exec "${USER}" goboard
 
