@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"net/http"
 	"os"
 	"strings"
@@ -58,6 +60,39 @@ func (s *SwaggerHandler) ServeHTTP(w http.ResponseWriter, rq *http.Request) {
 		if fStat, err := f.Stat(); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
+		} else if filePath == "swagger.yaml" {
+			tmpl := template.New("Swagger")
+
+			// Read swagger template data
+			buf := new(bytes.Buffer)
+			buf.ReadFrom(f)
+			s := buf.String()
+
+			// Try to guess original Scheme
+			scheme := rq.URL.Scheme
+			if len(rq.Header.Get("X-Forwarded-Proto")) > 0 {
+				scheme = rq.Header.Get("X-Forwarded-Proto")
+			}
+			if len(scheme) == 0 {
+				scheme = "http" //Default value
+			}
+
+			// Try to guess original Host
+			host := rq.Host
+			if len(rq.Header.Get("X-Forwarded-Host")) > 0 {
+				host = rq.Header.Get("X-Forwarded-Host")
+			}
+
+			data := struct {
+				Scheme   string
+				Hostname string
+			}{
+				scheme,
+				host,
+			}
+
+			tmpl, _ = tmpl.Parse(s) // Parse template file.
+			tmpl.Execute(w, data)
 		} else {
 			http.ServeContent(w, rq, fStat.Name(), fStat.ModTime(), f)
 		}

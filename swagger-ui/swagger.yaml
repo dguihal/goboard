@@ -1,251 +1,415 @@
-swagger: '2.0'
+---
+swagger: "2.0"
 info:
-  title: Goboard  
-  description: Goboard API
+  description: "Goboard API"
   version: "1.0.0"
-# the domain of the service
-host: localhost:8080
-# array of all schemes that your API supports
+  title: "Goboard"
+  contact: {}
+host: {{ .Hostname }}
+basePath: "/goboard"
 schemes:
-  - http
-# will be prefixed to all paths
-basePath: /
+- {{ .Scheme }}
+consumes:
+- "application/xml"
+- "application/json"
+- "text/tsv"
+- "text/xml"
+- "text/plain"
 produces:
-  - application/json
+- "application/xml"
+- "application/json"
+- "text/tsv"
+- "text/xml"
+- "text/plain"
 paths:
-  /backend:
-    get:
-      summary: Returns the backend
-      description: |
-        Returns the backend (the post history)
-      produces:
-        - text/xml
-        - application/xml
-        - application/json
-        - text/tsv
-      parameters:
-        - name: last
-          in: query
-          description: Last id known by the client.
-          required: false
-          type: number
-          format: int
-      tags:
-        - Backend
-      responses:
-        '200':
-          description: An XML document with backend data
-          schema:
-            $ref: '#/definitions/Board'
-        default:
-          description: Unexpected error
   /backend/{format}:
     get:
-      summary: Returns the backend in specified format
-      description: |
-        Returns the backend (the post history)
-      produces:
-        - text/xml
-        - application/xml
-        - application/json
-        - text/tsv
-      parameters:
-        - name: last
-          in: query
-          description: Last id known by the client.
-          required: false
-          type: number
-          format: int
-        - name: format
-          in: path
-          description: Desired output format.
-          required: true
-          type: string
       tags:
-        - Backend
+      - "Backend"
+      summary: "Returns the backend in specified format"
+      description: "Returns the backend (the post history)\n"
+      produces:
+      - "text/xml"
+      - "application/xml"
+      - "application/json"
+      - "text/tsv"
+      - "text/plain"
+      parameters:
+      - name: "last"
+        in: "query"
+        required: false
+        type: "number"
+        description: "Last id known by the client."
+      - name: "Accept"
+        in: "header"
+        required: false
+        type: "string"
+        enum:
+        - "application/xml"
+        - "text/xml"
+        - "application/json"
+        - "text/tsv"
       responses:
-        '200':
-          description: An XML/JSON/TSV document with backend data
+        200:
+          description: "An XML/JSON/TSV document with backend data"
           schema:
-            $ref: '#/definitions/Board'
-        default:
-          description: Unexpected error
+            $ref: "#/definitions/Board"
+        500:
+          description: "An internal error happened"
+          schema:
+            type: "string"
+            description: "Error message"
+    parameters:
+    - name: "format"
+      in: "path"
+      required: true
+      type: "string"
+      description: "Desired output format"
+      enum:
+      - "xml"
+      - "json"
+      - "tsv"
   /post:
     post:
-      summary: Post a new message
-      description: |
-        Post a new message
-      parameters:
-        - name: message
-          in: body
-          description: Message to post.
-          required: true
-          schema:
-            type: string
-            format: string
-            example: "Plop"
-        - name: Cookie
-          in: header
-          description: Authentification cookie.
-          required: false
-          type: string
-          format: string
-      consumes: 
-        - text/plain
       tags:
-        - Backend
+      - "Backend"
+      summary: "Post a new message"
+      description: "Post a new message\n"
+      consumes:
+      - "multipart/form-data"
+      produces:
+      - "text/plain"
+      parameters:
+      - name: "Cookie"
+        in: "header"
+        required: false
+        type: "string"
+        description: "Authentification cookie."
+      - name: "message"
+        in: "formData"
+        required: true
+        type: "string"
+        description: "Message to post"
       responses:
-        '200':
-          description: Message stored
+        200:
+          description: "Message stored"
           headers:
             X-Post-Id:
-              type: integer
-              format: int64
-              description: id of the message
-        default:
-          description: Unexpected error
+              type: "integer"
+              format: "int64"
+              description: "id of the message"
+        500:
+          description: "An internal error happened"
+          schema:
+            type: "string"
+            description: "Error message"
+  /post/{id}/{format}:
+    get:
+      tags:
+      - "Backend"
+      summary: "Get a post with a specified format"
+      description: "If format is empty, it is equivalent to calling /post/{id}"
+      produces:
+      - "application/xml"
+      - "application/json"
+      - "text/tsv"
+      - "text/xml"
+      - "text/plain"
+      parameters:
+      - name: "Accept"
+        in: "header"
+        required: false
+        type: "string"
+        enum:
+        - "application/xml"
+        - "text/xml"
+        - "application/json"
+        - "text/tsv"
+      responses:
+        200:
+          description: "Status 200"
+          schema:
+            $ref: "#/definitions/Post"
+        404:
+          description: "Status 404"
+        500:
+          description: "An internal error happened"
+          schema:
+            type: "string"
+            description: "Error message"
+    parameters:
+    - name: "id"
+      in: "path"
+      required: true
+      type: "string"
+    - name: "format"
+      in: "path"
+      required: false
+      type: "string"
+      enum:
+      - "xml"
+      - "json"
+      - "tsv"
   /user/add:
     post:
-      summary: Add a new user
-      description: |
-        Add a new user
-      parameters:
-        - name: user
-          in: formData
-          description: User's login
-          required: true
-          type: string
-          format: string
-        - name: password
-          in: formData
-          description: User's password
-          required: true
-          type: string
-          format: string
-      consumes: 
-        - multipart/form-data
       tags:
-        - User
+      - "User"
+      summary: "Add a new user"
+      description: "Add a new user\n"
+      consumes:
+      - "multipart/form-data"
+      produces:
+      - "text/plain"
+      parameters:
+      - name: "user"
+        in: "formData"
+        required: true
+        type: "string"
+        description: "User's login"
+      - name: "password"
+        in: "formData"
+        required: true
+        type: "string"
+        description: "User's password"
       responses:
-        '200':
-          description: User created
+        200:
+          description: "User created"
           headers:
             Set-Cookie:
-              type: string
-              format: string
-              description: Authenticated user's cookie
-        default:
-          description: Unexpected error
+              type: "string"
+              description: "Authenticated user's cookie"
+        500:
+          description: "An internal error happened"
+          schema:
+            type: "string"
+          examples:
+            text/plain: "Error message"
   /user/login:
     post:
-      summary: Authenticate a user
-      description: |
-        Authenticate a user
-      parameters:
-        - name: user
-          in: formData
-          description: User's login
-          required: true
-          type: string
-          format: string
-        - name: password
-          in: formData
-          description: User's password
-          required: true
-          type: string
-          format: string
-      consumes: 
-        - multipart/form-data
       tags:
-        - User
+      - "User"
+      summary: "Authenticate a user"
+      description: "Authenticate a user\n\nuser and password form params must be set\
+        \ and not empty\n"
+      consumes:
+      - "multipart/form-data"
+      produces:
+      - "text/plain"
+      parameters:
+      - name: "login"
+        in: "formData"
+        required: true
+        type: "string"
+        description: "User's login"
+      - name: "password"
+        in: "formData"
+        required: true
+        type: "string"
+        description: "User's password"
       responses:
-        '200':
-          description: User logged in
+        200:
+          description: "User logged in"
           headers:
             Set-Cookie:
-              type: string
-              format: string
-              description: Authenticated user's cookie
-        '401':
-          description: Authentication failed
-        default:
-          description: Unexpected error
-  /admin/user/{login}:
-    delete:
-      summary: Deletes a user
-      description: |
-        Deletes a user by it's login
-      parameters:
-        - name: login
-          in: path
-          description: User login to delete.
-          required: true
-          type: string
-        - name: Token-Id
-          in: header
-          description: Admin token.
-          required: true
-          type: string
-          format: string
+              type: "string"
+              description: "Authenticated user's cookie"
+        400:
+          description: "Some invalid parameters were sent (usually empty login or\
+            \ password)"
+          schema:
+            type: "string"
+            description: "Error message"
+          examples:
+            text/plain: "Login can't be empty"
+        401:
+          description: "Authentication failed"
+        500:
+          description: "An internal error happened"
+          schema:
+            type: "string"
+            description: "Error message"
+  /user/logout:
+    get:
       tags:
-        - Admin
+      - "User"
+      summary: "Logout a user"
+      parameters:
+      - name: "Cookie"
+        in: "header"
+        required: false
+        type: "string"
+        description: "authenticated user cookie"
       responses:
-        '200':
-          description: Message deleted
+        204:
+          description: "Status 204"
+          headers:
+            Set-Cookie:
+              type: "string"
+              description: "Expired cookie"
+  /user/whoami:
+    get:
+      tags:
+      - "User"
+      summary: "Returns current user info"
+      produces:
+      - "application/json"
+      - "text/plain"
+      parameters:
+      - name: "Cookie"
+        in: "header"
+        required: true
+        type: "string"
+        description: "Authenticated used cookie"
+      responses:
+        200:
+          description: "Valid cookie"
+          schema:
+            $ref: "#/definitions/User"
+        403:
+          description: "No cookie or invalid cookie"
+          schema:
+            type: "string"
+        500:
+          description: "Some internal error happened"
+          schema:
+            type: "string"
+            description: "Error message"
+  /admin/user/{login}:
+    get:
+      tags:
+      - "Admin"
+      summary: "Get user infos"
+      produces:
+      - "application/json"
+      - "text/plain"
+      parameters:
+      - name: "Token-Id"
+        in: "header"
+        required: true
+        type: "string"
+        description: "Admin token."
+      responses:
+        200:
+          description: "User infos associated with login"
+          schema:
+            $ref: "#/definitions/User"
+        404:
+          description: "Login not found"
+        500:
+          description: "An internal error happened"
+          schema:
+            type: "string"
+            description: "Error message"
+    delete:
+      tags:
+      - "Admin"
+      summary: "Deletes a user"
+      description: "Deletes a user by it's login\n"
+      produces:
+      - "text/plain"
+      parameters:
+      - name: "Token-Id"
+        in: "header"
+        required: true
+        type: "string"
+        description: "Admin token."
+      responses:
+        200:
+          description: "Message deleted"
+        401:
+          description: "Wrong, Empty or no Token-Id was send"
+        404:
+          description: "Send post id doesn't exists"
+          schema:
+            type: "string"
+            description: "User not found message"
+          examples:
+            text/plain: "User <login> Not found"
+        500:
+          description: "An internal error happened"
+          schema:
+            type: "string"
+            description: "Returns error message"
+    parameters:
+    - name: "login"
+      in: "path"
+      required: true
+      type: "string"
   /admin/post/{id}:
     delete:
-      summary: Deletes a post
-      description: |
-        Deletes a post by it's id
-      parameters:
-        - name: id
-          in: path
-          description: Post Id to delete.
-          required: true
-          type: integer
-          format: int64
-        - name: Token-Id
-          in: header
-          description: Admin token.
-          required: true
-          type: string
-          format: string
       tags:
-        - Admin
+      - "Admin"
+      summary: "Deletes a post"
+      description: "Deletes a post by it's id\n"
+      produces:
+      - "text/plain"
+      parameters:
+      - name: "Token-Id"
+        in: "header"
+        required: true
+        type: "string"
+        description: "Admin token."
       responses:
-        '200':
-          description: Post deleted
+        200:
+          description: "Post deleted"
+        401:
+          description: "Wrong, Empty or no Token-Id was send"
+        404:
+          description: "Post id not found"
+          schema:
+            type: "string"
+            description: "Post id not found message"
+          examples:
+            text/plain: "Post <id> Not found"
+        500:
+          description: "An internal error happened"
+          schema:
+            type: "string"
+            description: "Error message"
+    parameters:
+    - name: "id"
+      in: "path"
+      required: true
+      type: "string"
 definitions:
   Board:
-    type: object
-    required: [site, posts]
+    type: "object"
+    required:
+    - "posts"
+    - "site"
     properties:
       site:
-        type: string
-        format: url
-        xml:
-          attribute: true
+        type: "string"
       posts:
-        type: array
+        type: "array"
         items:
-          $ref: '#/definitions/Post'
+          $ref: "#/definitions/Post"
   Post:
-    type: object
-    required: [time, id, info, message, login]
+    type: "object"
+    required:
+    - "id"
+    - "info"
+    - "login"
+    - "message"
+    - "time"
     properties:
       time:
-        type: integer
-        format: int64
-        xml:
-          attribute: true
+        type: "integer"
+        format: "int64"
       id:
-        type: integer
-        format: int64
-        xml:
-          attribute: true
+        type: "integer"
+        format: "int64"
       info:
-        type: string
+        type: "string"
       message:
-        type: string
+        type: "string"
       login:
-        type: string
+        type: "string"
+  User:
+    type: "object"
+    properties:
+      Login:
+        type: "string"
+      CreationDate:
+        type: "string"
+        format: "date-time"
