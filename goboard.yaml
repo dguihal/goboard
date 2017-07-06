@@ -29,12 +29,10 @@ AccessLogFile: access.log
 AccessLogFileMode: 0660
 
 #Path for swagger dist files (optional, disabled if invalid)
-#SwaggerPath: $HOME/swaggerui
-SwaggerPath: /home/damien/Devel/golang/src/github.com/swagger-api/swagger-ui/dist/
+SwaggerPath: $HOME/swagger-ui
 
 #Path for webui (optional, disabled if invalid)
-#WebuiPath: $HOME/webui
-WebuiPath: /home/damien/Devel/golang/src/github.com/dguihal/goboard/webui/
+WebuiPath: $HOME/webui
 
 #No minimum length is enforced, but you are strongly encouraged to set it long and complex
-AdminToken: fkjqskfdhfudqgfvcgvxmomiqo324siufhdqgfyuqmosjcmjdcisq
+AdminToken: Taiste
