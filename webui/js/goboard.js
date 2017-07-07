@@ -62,8 +62,9 @@ function webui_init() {
 
     $("#pini").on({
             mouseenter: function(e) {
-                let q = document.querySelectorAll(":hover");
-                let totozTxt = q[q.length - 1].innerText.slice(2, -1); // Surrounding "[:" & "]"
+
+                var srcElt = this;
+                let totozTxt = srcElt.innerText.slice(2, -1); // Surrounding "[:" & "]"
 
                 let totozSrv = totozServer ? totozServer : TOTOZ_DEFAULT_SERVER;
 
@@ -74,12 +75,12 @@ function webui_init() {
 
                 let oImg = document.createElement("img");
                 oImg.setAttribute("src", totozSrv + "/" + encodeURI(totozTxt));
-                oImg.setAttribute("alt", "na");
+                oImg.setAttribute("alt", "Unknown Totoz");
 
                 let popupElt = popup[0];
                 popupElt.style.position = "absolute";
-                popupElt.style.left = e.pageX.toString() + "px";
-                popupElt.style.top = e.pageY.toString() + "px";
+                popupElt.style.left = (srcElt.offsetLeft + srcElt.offsetWidth + 1) + "px";
+                popupElt.style.top = srcElt.offsetTop + "px";
                 popup.fadeIn(500);
                 while (popupElt.firstChild) {
                     popupElt.removeChild(popupElt.firstChild);
