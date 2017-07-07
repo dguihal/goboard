@@ -5,7 +5,8 @@ var BASE_PATH = "";
 
 var BACKEND_URL = BASE_PATH + "/backend/json?last=%i";
 
-var TOTOZ_DEFAULT_SERVER = "http://totoz.eu/img";
+// Do not specify scheme to avoid mixed content error
+var TOTOZ_DEFAULT_SERVER = "//totoz.eu/img";
 
 var SWAGGER_BASE_PATH = "/swagger";
 var SWAGGER_FILE_NAME = "swagger.yaml";
