@@ -268,10 +268,13 @@ function norlogeclicked(e) {
     norloge += parts[1].replace(/_/g, ":").replace(/^t/, "");
 
     //Index if necessary
-    if (parts.length >= 2 && parts[1] > 1) {
-        switch (parts[1]) {
+    if (parts.length > 2 && parts[2].match(/i\d+/)) {
+        let index = parts[2].slice(1);
+        switch (index) {
             case "1":
-                norloge += "¹";
+                if($("#" + id.replace(/1$/, "2"))[0]) { // Only if #2 exists
+                    norloge += "¹";
+                }
                 break;
             case "2":
                 norloge += "²";
@@ -280,7 +283,7 @@ function norlogeclicked(e) {
                 norloge += "³";
                 break;
             default:
-                norloge += "^" + parts[1];
+                norloge += "^" + index;
         }
     }
 
