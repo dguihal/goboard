@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -15,7 +16,10 @@ import (
 func main() {
 	for {
 		reader := bufio.NewReader(os.Stdin)
-		text, _ := reader.ReadString('\n')
+		text, err := reader.ReadString('\n')
+		if err == io.EOF {
+			break
+		}
 		fmt.Println(sanitize(text))
 	}
 }
