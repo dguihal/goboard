@@ -131,8 +131,10 @@ L:
 			tnStr := string(tn)
 
 			if allowedTags[tnStr] && tagCount[tnStr] > 0 {
-				str := fmt.Sprintf("</%s>", tn)
+				endStr := fmt.Sprintf("</%s>", tn)
 
+				str := ""
+				startTagFound := false
 				for s.Len() > 0 {
 					tmp := s.Pop().(token)
 
@@ -144,10 +146,15 @@ L:
 						str = fmt.Sprintf("%s%s", tmp.txt, str)
 
 						if tmp.tagName == tnStr {
+							startTagFound = true
+							str = fmt.Sprintf("%s%s", str, endStr)
 							// and leave if it's a corresponding open tag
 							break
 						}
 					}
+				}
+				if !startTagFound {
+					str = fmt.Sprintf("%s%s", str, sanitizeChars(endStr))
 				}
 
 				s.Push(token{
@@ -160,7 +167,7 @@ L:
 			}
 
 		default:
-			re := regexp.MustCompile("(?i)https?://[\\da-z\\.-]+(?:/[^\\s\"]*)*/?")
+			re := regexp.MustCompile("(?i)https?://[\\da-z\\.-]+(?::\\d+)?(?:/[^\\s\"]*)*/?")
 			raw := string(z.Raw())
 			if matches := re.FindAllStringIndex(raw, -1); matches != nil {
 				start := 0
