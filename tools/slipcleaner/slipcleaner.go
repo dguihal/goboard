@@ -14,8 +14,8 @@ import (
 )
 
 func main() {
+	reader := bufio.NewReader(os.Stdin)
 	for {
-		reader := bufio.NewReader(os.Stdin)
 		text, err := reader.ReadString('\n')
 		if err == io.EOF {
 			break
@@ -133,32 +133,38 @@ L:
 			if allowedTags[tnStr] && tagCount[tnStr] > 0 {
 				endStr := fmt.Sprintf("</%s>", tn)
 
-				str := ""
+				var strs []string
 				startTagFound := false
 				for s.Len() > 0 {
 					tmp := s.Pop().(token)
 
 					if tmp.tokenType == html.StartTagToken && tmp.tagName != tnStr {
 						// Not a corresponding open tag : sanitize it and store it as text
-						str = fmt.Sprintf("%s%s", sanitizeChars(tmp.txt), str)
+						strs = append([]string{sanitizeChars(tmp.txt)}, strs...)
 					} else {
 						// a text or a corresponding open tag, at it as is
-						str = fmt.Sprintf("%s%s", tmp.txt, str)
+						strs = append([]string{tmp.txt}, strs...)
 
 						if tmp.tagName == tnStr {
 							startTagFound = true
-							str = fmt.Sprintf("%s%s", str, endStr)
+							strs = append(strs, endStr)
 							// and leave if it's a corresponding open tag
 							break
 						}
 					}
 				}
 				if !startTagFound {
-					str = fmt.Sprintf("%s%s", str, sanitizeChars(endStr))
+					strs = append(strs, sanitizeChars(endStr))
+				}
+
+				//Use a string buffer to build the final string from slice
+				var buffer bytes.Buffer
+				for elt := range strs {
+					buffer.WriteString(strs[elt])
 				}
 
 				s.Push(token{
-					txt:       str,
+					txt:       buffer.String(),
 					tokenType: html.TextToken})
 			} else {
 				s.Push(token{
