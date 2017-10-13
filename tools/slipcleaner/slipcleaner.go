@@ -3,17 +3,31 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"flag"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"regexp"
+	"runtime/pprof"
 	"strings"
 
 	"github.com/hishboy/gocommons/lang"
 	"golang.org/x/net/html"
 )
 
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
 func main() {
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		text, err := reader.ReadString('\n')
@@ -83,6 +97,7 @@ func htmlEscape(input string) string {
 	tagCount := map[string]int{}
 
 	z := html.NewTokenizer(strings.NewReader(input))
+	urlRe := regexp.MustCompile("(?i)https?://[\\da-z\\.-]+(?::\\d+)?(?:/[^\\s\"]*)*/?")
 
 L:
 	for {
@@ -173,9 +188,8 @@ L:
 			}
 
 		default:
-			re := regexp.MustCompile("(?i)https?://[\\da-z\\.-]+(?::\\d+)?(?:/[^\\s\"]*)*/?")
 			raw := string(z.Raw())
-			if matches := re.FindAllStringIndex(raw, -1); matches != nil {
+			if matches := urlRe.FindAllStringIndex(raw, -1); matches != nil {
 				start := 0
 				for _, match := range matches {
 					if start < match[0] {
