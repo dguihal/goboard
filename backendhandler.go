@@ -328,7 +328,16 @@ func postsToTsv(posts []goboardbackend.Post) []byte {
 	var b bytes.Buffer
 	var timeText []byte
 
-	for _, p := range posts {
+	reverse := make([]goboardbackend.Post, len(posts))
+	j := 0
+	for i := len(posts) - 1; i >= 0; i-- {
+		if posts[i].ID > 0 {
+			reverse[j] = posts[i]
+			j++
+		}
+	}
+
+	for _, p := range reverse {
 		if p.ID == 0 {
 			break
 		}
