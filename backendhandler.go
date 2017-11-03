@@ -328,6 +328,7 @@ func postsToTsv(posts []goboardbackend.Post) []byte {
 	var b bytes.Buffer
 	var timeText []byte
 
+	// TSV Backend is from oldest to latests
 	reverse := make([]goboardbackend.Post, len(posts))
 	j := 0
 	for i := len(posts) - 1; i >= 0; i-- {
