@@ -91,13 +91,18 @@ paths:
         type: "string"
         description: "Message to post"
       responses:
-        200:
+        204:
           description: "Message stored"
           headers:
             X-Post-Id:
               type: "integer"
               format: "int64"
               description: "id of the message"
+        400:
+          description: "Request contains some errors"
+          schema:
+            type: "string"
+            description: "Error message"
         500:
           description: "An internal error happened"
           schema:
