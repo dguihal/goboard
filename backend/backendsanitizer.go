@@ -2,6 +2,7 @@ package backend
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -16,14 +17,15 @@ import (
 
 // Sanitize is the entry point for the backend sanitizer
 func Sanitize(input string) string {
-
-	if len(input) == 0 {
-		return ""
-	}
-
 	tmp := stripCtlFromUTF8(input)
-	tmp = htmlEscape(tmp)
-	return tmp
+	return htmlEscape(tmp)
+}
+
+// SanitizeAndValidate sanitizes and applies some validation rules
+func SanitizeAndValidate(input string) (string, error) {
+	tmp := Sanitize(input)
+
+	return validate(tmp)
 }
 
 // Remove unwanted (control) characters
@@ -65,13 +67,18 @@ type token struct {
 	tokenType html.TokenType
 }
 
+// Used to cache regex object
+var urlReg *regexp.Regexp
+
 func htmlEscape(input string) string {
 
 	s := lang.NewStack()
 	tagCount := map[string]int{}
 
 	z := html.NewTokenizer(strings.NewReader(input))
-	urlRe := regexp.MustCompile("(?i)https?://[\\da-z\\.-]+(?::\\d+)?(?:/[^\\s\"]*)*/?")
+	if urlReg == nil {
+		urlReg = regexp.MustCompile("(?i)https?://[\\da-z\\.-]+(?::\\d+)?(?:/[^\\s\"]*)*/?")
+	}
 
 L:
 	for {
@@ -163,7 +170,7 @@ L:
 
 		default:
 			raw := string(z.Raw())
-			if matches := urlRe.FindAllStringIndex(raw, -1); matches != nil {
+			if matches := urlReg.FindAllStringIndex(raw, -1); matches != nil {
 				start := 0
 				for _, match := range matches {
 					if start < match[0] {
@@ -208,4 +215,22 @@ L:
 		}
 	}
 	return str
+}
+
+// Used to cache regex object
+var noIsoNorReg *regexp.Regexp
+
+func validate(input string) (string, error) {
+	if len(input) == 0 {
+		return "", errors.New("Empty string aren't accepted")
+	}
+
+	if noIsoNorReg == nil {
+		noIsoNorReg = regexp.MustCompile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}")
+	}
+	if noIsoNorReg.MatchString(input) {
+		return "", errors.New("Get out, those norloges aren't accepted here")
+	}
+
+	return input, nil
 }

@@ -200,7 +200,14 @@ func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
-	message := goboardbackend.Sanitize(r.FormValue("message"))
+	message, err := goboardbackend.SanitizeAndValidate(r.FormValue("message"))
+	// Validation failed
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
 	rawInfo := r.FormValue("info")
 	if len(rawInfo) == 0 {
 		rawInfo = r.Header.Get("User-Agent")
