@@ -1,123 +1,124 @@
 /* Global css */
 
-body {
-}
 p.material-icons {
-    margin: 0px;
+  margin: 0px;
 }
 
 #success-alert {
-	display: none;
+  display: none;
 }
 #danger-alert {
-	display: none;
+  display: none;
 }
 
 /* Config panel */
 #left-menu {
-    position: fixed;
-    bottom: 0;
-	display: none;
-    height: 100%;
-	width: 0%;
-    z-index: 9999;
-    background: rgba(255, 255, 255, 0.95);
+  position: fixed;
+  bottom: 0;
+  display: none;
+  height: 100%;
+  width: 0%;
+  z-index: 9999;
+  background: rgba(255, 255, 255, 0.95);
 }
 #left-menu div h2 {
-	display: inline-block;
-	vertical-align: middle;
-	margin: 1rem;
+  display: inline-block;
+  vertical-align: middle;
+  margin: 1rem;
 }
 #left-menu form {
-	margin: 1rem;
+  margin: 1rem;
 }
 
 /* Header bar */
 
 nav.navbar {
-    width: 100%;
-    z-index: 10;
-	border-radius: 0rem;
+  width: 100%;
+  z-index: 10;
+  border-radius: 0rem;
 }
 #login-dp {
-    padding: 0.5rem
+  padding: 0.5rem;
 }
 /* Pini css */
 
 #pini {
-    padding: 4.5rem 0 4.5rem 0;
-    z-index: 1;
+  padding: 4.5rem 0 4.5rem 0;
+  z-index: 1;
 }
 span.post_clock {
-    display: inline-block;
-    font-weight: bold;
-    vertical-align: middle;
-    padding-right: 5px;
+  display: inline-block;
+  font-weight: bold;
+  vertical-align: middle;
+  padding-right: 5px;
 }
 span.post_clock:before {
-    content: "[";
+  content: "[";
 }
 span.post_clock:after {
-    content: "]";
+  content: "]";
 }
 span.post_login {
-    color: brown;
-    display: inline-block;
-    max-width: 15%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    vertical-align: middle;
-    white-space: nowrap;
-    padding-right: 5px;
+  color: brown;
+  display: inline-block;
+  max-width: 15%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+  padding-right: 5px;
 }
 span.post_ua {
-    color: lightcoral;
-    display: inline-block;
-    max-width: 20%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    vertical-align: middle;
-    white-space: nowrap;
-    padding-right: 5px;
+  color: lightcoral;
+  display: inline-block;
+  max-width: 20%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+  padding-right: 5px;
 }
 span.post_message {
-    white-space: normal;
+  white-space: normal;
 }
 span.totoz {
-    color: #00AA11;
-    font-weight: bolder;
-    cursor: pointer;
+  color: #00aa11;
+  font-weight: bolder;
+  cursor: pointer;
 }
 span.clock_ref {
-    color: #0000DD;
-    cursor: pointer;
+  color: #0000dd;
+  cursor: pointer;
 }
 span.norloge_ref_meta {
-    display: none
+  display: none;
 }
 
 .highlighted {
-	background-color: yellow;
+  background-color: yellow;
 }
 /* Palmi css */
 
 footer {
-    position: fixed;
-    bottom: 0px;
-    width: 100%;
-    padding: 0.5rem 1rem;
-    z-index: 10;
+  position: fixed;
+  bottom: 0px;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  z-index: 10;
 }
 #popup {
-	display: none;
-	background-color: transparent;
+  display: none;
+  background-color: transparent;
 }
 #palmi {
-    margin-bottom: 0.5rem;
-    overflow: hidden;
-	width: 100%;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+  width: 100%;
 }
 #palmi input {
-	flex:1 0 auto;
-	padding-left:  0.5rem;
+  flex: 1 0 auto;
+  padding-left: 0.5rem;
+}
+#palmiBtn > i {
+  vertical-align: middle;
 }
