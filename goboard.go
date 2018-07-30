@@ -1,8 +1,8 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"html"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,6 +15,8 @@ import (
 	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v2"
 )
+
+const goBoardVer = 0.02
 
 // Config holds the configuration of the process
 type Config struct {
@@ -50,8 +52,36 @@ type GoBoardHandler struct {
 	BasePath     string
 }
 
+// Command line arguments management
+var configFilePath string
+var showHelp bool
+
+func init() {
+	const (
+		defaultConfigFilePath = "goboard.yaml"
+		usageC                = "Path to `goboard config file`"
+		usageH                = "Show help"
+	)
+	flag.StringVar(&configFilePath, "config", defaultConfigFilePath, usageC)
+	flag.StringVar(&configFilePath, "C", defaultConfigFilePath, usageC+" (shorthand)")
+	flag.BoolVar(&showHelp, "help", false, usageH)
+	flag.BoolVar(&showHelp, "h", false, usageH+" (shorthand)")
+}
+
 func main() {
-	configData, err := ioutil.ReadFile("goboard.yaml")
+	flag.Parse()
+
+	println(configFilePath)
+	println(showHelp)
+
+	if showHelp {
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
+
+	log.Printf("Using %s as config file\n", configFilePath)
+
+	configData, err := ioutil.ReadFile(configFilePath)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
@@ -151,7 +181,7 @@ func main() {
 		}
 	}
 
-	fmt.Println("GoBoard version 0.0.1 starting on port", config.ListenPort)
+	fmt.Println("GoBoard version ", goBoardVer, " starting on port", config.ListenPort)
 
 	var handler http.Handler
 	if fiAccessLog != nil {
@@ -160,10 +190,6 @@ func main() {
 		handler = mainRouter
 	}
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", config.ListenPort), handler))
-}
-
-func Index(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
 }
 
 //http://thenewstack.io/make-a-restful-json-api-go/
