@@ -19,7 +19,8 @@ p.material-icons {
   height: 100%;
   width: 0%;
   z-index: 9999;
-  background: rgba(255, 255, 255, 0.95);
+  background-color: #EFECCA;
+  color: #B36442;
 }
 #left-menu div h2 {
   display: inline-block;
@@ -36,8 +37,12 @@ nav.navbar {
   width: 100%;
   z-index: 10;
   border-radius: 0rem;
+  background-color: #EFECCA;
 }
-#login-dp {
+a.nav-link {
+  color: #B36442;
+}
+#login-dp { 
   padding: 0.5rem;
 }
 /* Pini css */
