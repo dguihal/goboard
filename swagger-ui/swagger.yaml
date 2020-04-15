@@ -6,7 +6,7 @@ info:
   title: "Goboard"
   contact: {}
 host: {{ .Hostname }}
-basePath: "/goboard"
+basePath: {{ .BasePath }}
 schemes:
 - {{ .Scheme }}
 consumes:
