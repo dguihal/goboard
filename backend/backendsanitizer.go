@@ -58,7 +58,7 @@ var allowedTags = map[string]bool{
 
 // Allowed attributes for tag dictionnary
 var allowedAttrForTags = map[string][]string{
-	"a": []string{"href"},
+	"a": {"href"},
 }
 
 type token struct {
@@ -192,7 +192,7 @@ L:
 
 				if start < (len(raw)) {
 					s.Push(token{
-						txt:       sanitizeChars(raw[start:len(raw)]),
+						txt:       sanitizeChars(raw[start:]),
 						tokenType: html.TextToken})
 
 				}
