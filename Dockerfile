@@ -1,23 +1,31 @@
-FROM golang:alpine
+FROM golang:1.14-alpine
 
-RUN apk add --no-cache bash git su-exec
+ENV SWAGGER_PATH="/go/src/goboard/swagger-ui" \
+    WEBUI_PATH="/go/src/goboard/webui" \
+    GOPATH="/go" \
+    GOBOARD_DB_PATH="/var/lib/goboard" \
+    GOBOARD_DB_FILE="/var/lib/goboard/goboard.db" \
+    GOBOARD_CONFIG_PATH="/etc/goboard" \
+    GOBOARD_CONFIG_FILE="/etc/goboard/goboard.yaml" \
+    GOBOARD_LOG_PATH="/var/log/goboard"
 
-WORKDIR /go/src/
+WORKDIR /${GOPATH}/src/goboard
+COPY . .
+RUN rm -rf vendor && \
+    go get -d -v ./... && \
+    go install -v ./... && \
+    adduser -S -h "${GOBOARD_DB_PATH}" -D goboard && \
+    mkdir -p "${GOBOARD_CONFIG_PATH}" && \
+    mkdir -p "${GOBOARD_LOG_PATH}"
 
-RUN git clone -b improve_docker https://github.com/dguihal/goboard
+COPY dockerfiles/entrypoint.sh /
+COPY goboard.yaml "${GOBOARD_CONFIG_FILE}"
 
-WORKDIR goboard
-COPY dockerfiles/start.sh /go/bin/
-
-ENV GOPATH /go
-COPY goboard.yaml /go/bin/goboard.yaml.template
-
-RUN go-wrapper download
-RUN go-wrapper install
-
-RUN cp -Rfv /go/src/goboard/webui /go/bin/webui
-RUN cp -Rfv /go/src/goboard/swagger-ui /go/bin/swaggerui
+RUN chown goboard: "${GOBOARD_CONFIG_PATH}" && \
+    chown goboard: "${GOBOARD_LOG_PATH}" && \
+    chmod +x /entrypoint.sh
 
 EXPOSE 8080
 
-ENTRYPOINT ["/go/bin/start.sh"]
+USER goboard
+ENTRYPOINT ["/entrypoint.sh"]

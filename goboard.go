@@ -1,22 +1,26 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"gopkg.in/yaml.v2"
 )
 
-const goBoardVer = 0.02
+const goBoardVer = 0.03
 
 // Config holds the configuration of the process
 type Config struct {
@@ -51,6 +55,8 @@ type GoBoardHandler struct {
 	supportedOps []SupportedOp
 	BasePath     string
 }
+
+var upgrader = websocket.Upgrader{} // use default options
 
 // Command line arguments management
 var configFilePath string
@@ -102,9 +108,13 @@ func main() {
 		if err != nil {
 			fiAccessLog, err = os.Create(config.AccessLogFile)
 			if err != nil {
-				log.Fatalf("error: %v", err)
+				log.Printf("error: %v", err)
+				log.Printf("Fallbacking to stdout")
+				fiAccessLog = os.Stdout
 			}
 		}
+	} else {
+		fiAccessLog = os.Stdout
 	}
 
 	// Set some failsafe defaults
@@ -127,7 +137,6 @@ func main() {
 	if len(config.BasePath) > 0 {
 		r = mainRouter.PathPrefix(config.BasePath).Subrouter()
 	}
-	//router.HandleFunc("/", Index)
 
 	// Backend operations
 	backendHandler := NewBackendHandler(config.MaxHistorySize, config.BackendTimeZone)
@@ -155,8 +164,12 @@ func main() {
 
 	// Swagger operations
 	if len(config.SwaggerPath) > 0 {
+
+		// Sanity checks before enabling swagger capability
 		realPath := os.ExpandEnv(config.SwaggerPath)
-		if _, err := os.Stat(strings.Join([]string{realPath, "/index.html"}, "")); os.IsNotExist(err) {
+		if fi, err := os.Stat(realPath); os.IsNotExist(err) || !fi.IsDir() {
+			log.Println(realPath, "Not found or not a directory: Disabling swagger capabilities")
+		} else if _, err := os.Stat(strings.Join([]string{realPath, "/index.html"}, "")); os.IsNotExist(err) {
 			log.Println(strings.Join([]string{realPath, "/index.html"}, ""), "Not found: Disabling swagger capabilities")
 		} else {
 			swaggerHandler := NewSwaggerHandler(realPath)
@@ -164,20 +177,26 @@ func main() {
 			for _, op := range swaggerHandler.supportedOps {
 				r.Handle(op.RestPath, swaggerHandler).Methods(op.Method)
 			}
+
+			r.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", http.FileServer(http.Dir(realPath))))
+			r.Handle("/swagger", http.RedirectHandler("/swagger/", 301))
+
 		}
 	}
 
 	// Webui operations
 	if len(config.WebuiPath) > 0 {
+
+		// Sanity checks before enabling webui capability
 		realPath := os.ExpandEnv(config.WebuiPath)
-		if _, err := os.Stat(strings.Join([]string{realPath, "/index.html"}, "")); os.IsNotExist(err) {
+		if fi, err := os.Stat(realPath); os.IsNotExist(err) || !fi.IsDir() {
+			log.Println(realPath, "Not found or not a directory: Disabling webui capabilities")
+		} else if _, err := os.Stat(strings.Join([]string{realPath, "/index.html"}, "")); os.IsNotExist(err) {
 			log.Println(strings.Join([]string{realPath, "/index.html"}, ""), "Not found: Disabling webui capabilities")
 		} else {
-			webuiHandler := NewWebuiHandler(realPath)
-			webuiHandler.BasePath = config.BasePath
-			for _, op := range webuiHandler.supportedOps {
-				r.Handle(op.RestPath, webuiHandler).Methods(op.Method)
-			}
+			r.PathPrefix("/webui/").Handler(http.StripPrefix("/webui/", http.FileServer(http.Dir(realPath))))
+			r.Handle("/webui", http.RedirectHandler("/webui/", 301))
+			r.Handle("/", http.RedirectHandler("/webui/", 301))
 		}
 	}
 
@@ -189,7 +208,29 @@ func main() {
 	} else {
 		handler = mainRouter
 	}
-	log.Fatal(http.ListenAndServe(fmt.Sprint(":", config.ListenPort), handler))
+
+	server := &http.Server{Addr: fmt.Sprint(":", config.ListenPort), Handler: handler}
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	// Setting up signal capturing
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGABRT)
+
+	// Waiting for SIGNAL
+	s := <-sigs
+
+	log.Printf("Signal '%s' received, exiting with 5s graceful-timeout", s.String())
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal(err)
+	}
 }
 
 //http://thenewstack.io/make-a-restful-json-api-go/
