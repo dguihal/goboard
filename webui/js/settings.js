@@ -1,7 +1,7 @@
 var MAX_POSTS = 50;
 var PINI_REFRESH_MS = 10000;
 
-var BASE_PATH = "";
+var BASE_PATH = "{{ .BasePath }}";
 
 var BACKEND_URL = BASE_PATH + "/backend/json?last=%i";
 

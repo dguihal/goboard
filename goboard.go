@@ -162,6 +162,9 @@ func main() {
 		r.Handle(op.RestPath, adminHandler).Methods(op.Method)
 	}
 
+	templateHandler := NewTemplateHandler()
+	adminHandler.BasePath = config.BasePath
+
 	// Swagger operations
 	if len(config.SwaggerPath) > 0 {
 
@@ -172,12 +175,9 @@ func main() {
 		} else if _, err := os.Stat(strings.Join([]string{realPath, "/index.html"}, "")); os.IsNotExist(err) {
 			log.Println(strings.Join([]string{realPath, "/index.html"}, ""), "Not found: Disabling swagger capabilities")
 		} else {
-			swaggerHandler := NewSwaggerHandler(realPath)
-			swaggerHandler.BasePath = config.BasePath
-			for _, op := range swaggerHandler.supportedOps {
-				r.Handle(op.RestPath, swaggerHandler).Methods(op.Method)
-			}
-
+			templateHandler.SetSwaggerBaseDir(realPath)
+			swaggerOp := templateHandler.GetSwaggerOp()
+			r.HandleFunc(swaggerOp.RestPath, swaggerOp.handler).Methods(swaggerOp.Method)
 			r.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", http.FileServer(http.Dir(realPath))))
 			r.Handle("/swagger", http.RedirectHandler("/swagger/", 301))
 
@@ -194,6 +194,9 @@ func main() {
 		} else if _, err := os.Stat(strings.Join([]string{realPath, "/index.html"}, "")); os.IsNotExist(err) {
 			log.Println(strings.Join([]string{realPath, "/index.html"}, ""), "Not found: Disabling webui capabilities")
 		} else {
+			templateHandler.setWebUIBaseDir(realPath)
+			webUIOp := templateHandler.GetWebUIOp()
+			r.HandleFunc(webUIOp.RestPath, webUIOp.handler).Methods(webUIOp.Method)
 			r.PathPrefix("/webui/").Handler(http.StripPrefix("/webui/", http.FileServer(http.Dir(realPath))))
 			r.Handle("/webui", http.RedirectHandler("/webui/", 301))
 			r.Handle("/", http.RedirectHandler("/webui/", 301))
