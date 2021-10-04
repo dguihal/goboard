@@ -1,7 +1,7 @@
 FROM golang:1.14-alpine
 
-ENV SWAGGER_PATH="/go/src/goboard/swagger-ui" \
-    WEBUI_PATH="/go/src/goboard/webui" \
+ENV SWAGGER_PATH="/go/src/goboard/web/swagger" \
+    WEBUI_PATH="/go/src/goboard/web/static" \
     GOPATH="/go" \
     GOBOARD_DB_PATH="/var/lib/goboard" \
     GOBOARD_DB_FILE="/var/lib/goboard/goboard.db" \

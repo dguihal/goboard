@@ -1,0 +1,16 @@
+{
+  "name": "goboard-ui",
+  "version": "0.0.3",
+  "private": true,
+  "devDependencies": {
+    "bower": "^1.8.12",
+    "grunt": "^1.4.1",
+    "grunt-bowercopy": "^1.2.5",
+    "load-grunt-tasks": "^5.1.0"
+  },
+  "scripts": {
+    "prestart": "npm install",
+    "postinstall": "bower update --unsafe-perm",
+    "build": "grunt"
+  }
+}
