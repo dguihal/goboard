@@ -1,9 +1,8 @@
-
 name: Create and publish a Docker image
 
 on:
   push:
-    branches: ['release']
+    branches: ["release"]
 
 env:
   REGISTRY: ghcr.io
@@ -19,6 +18,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Get Node.js
+        uses: actions/setup-node@v2
+
+      - run: npm run-script build
+        working-directory: web
 
       - name: Log in to the Container registry
         uses: docker/login-action@v1.10.0

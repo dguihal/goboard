@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	goboardbackend "github.com/dguihal/goboard/backend"
-	goboardcookie "github.com/dguihal/goboard/cookie"
-	goboarduser "github.com/dguihal/goboard/user"
+	goboardbackend "github.com/dguihal/goboard/internal/backend"
+	goboardcookie "github.com/dguihal/goboard/internal/cookie"
+	goboarduser "github.com/dguihal/goboard/internal/user"
 	"github.com/gorilla/mux"
 )
 

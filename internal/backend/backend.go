@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	goboardutils "github.com/dguihal/goboard/utils"
+	goboardutils "github.com/dguihal/goboard/internal/utils"
 )
 
 const backendBucketName string = "Backend"

@@ -45,16 +45,14 @@ module.exports = function (grunt) {
         },
       },
       swagger: {
-        options: {
-          destPrefix: "swagger",
-        },
         files: {
-          "favicon-16x16.png": "swagger-ui/dist/favicon-16x16.png",
-          "favicon-32x32.png": "swagger-ui/dist/favicon-32x32.png",
-          "index.html": "swagger-ui/dist/index.html",
-          "swagger-ui.css": "swagger-ui/dist/swagger-ui.css",
-          "swagger-ui-bundle.js": "swagger-ui/dist/swagger-ui-bundle.js",
-          "swagger-ui-standalone-preset.js":
+          "swagger/favicon-16x16.png": "swagger-ui/dist/favicon-16x16.png",
+          "swagger/favicon-32x32.png": "swagger-ui/dist/favicon-32x32.png",
+          "swagger/index.html": "swagger-ui/dist/index.html",
+          "swagger/swagger-ui.css": "swagger-ui/dist/swagger-ui.css",
+          "swagger/swagger-ui-bundle.js":
+            "swagger-ui/dist/swagger-ui-bundle.js",
+          "swagger/swagger-ui-standalone-preset.js":
             "swagger-ui/dist/swagger-ui-standalone-preset.js",
         },
       },

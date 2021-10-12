@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	goboardbackend "github.com/dguihal/goboard/backend"
-	goboardcookie "github.com/dguihal/goboard/cookie"
+	goboardbackend "github.com/dguihal/goboard/internal/backend"
+	goboardcookie "github.com/dguihal/goboard/internal/cookie"
 	"github.com/gorilla/mux"
 )
 

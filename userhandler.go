@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	goboardcookie "github.com/dguihal/goboard/cookie"
-	goboarduser "github.com/dguihal/goboard/user"
+	goboardcookie "github.com/dguihal/goboard/internal/cookie"
+	goboarduser "github.com/dguihal/goboard/internal/user"
 )
 
 // UserHandler represents the handler of user URLs
