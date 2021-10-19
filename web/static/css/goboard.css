@@ -1,7 +1,7 @@
 /* Global css */
 
 p.material-icons {
-  margin: 0px;
+  margin: 0;
 }
 
 #success-alert {
@@ -39,7 +39,7 @@ p.material-icons {
 nav.navbar {
   width: 100%;
   z-index: 10;
-  border-radius: 0rem;
+  border-radius: 0;
   background-color: #efecca;
 }
 
@@ -50,6 +50,7 @@ a.nav-link {
 #login-dp {
   padding: 0.5rem;
 }
+
 /* Pini css */
 
 #pini {
@@ -64,11 +65,11 @@ span.post_clock {
   padding-right: 5px;
 }
 
-span.post_clock:before {
+span.post_clock::before {
   content: "[";
 }
 
-span.post_clock:after {
+span.post_clock::after {
   content: "]";
 }
 
@@ -99,13 +100,13 @@ span.post_message {
 }
 
 span.totoz {
-  color: #00aa11;
+  color: #0a1;
   font-weight: bolder;
   cursor: pointer;
 }
 
 span.clock_ref {
-  color: #0000dd;
+  color: #00d;
   cursor: pointer;
 }
 
@@ -128,7 +129,7 @@ img.emoji {
 
 footer {
   position: fixed;
-  bottom: 0px;
+  bottom: 0;
   width: 100%;
   padding: 0.5rem 1rem;
   z-index: 10;
