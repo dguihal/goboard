@@ -84,8 +84,6 @@ func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusInternalServerError)
 	u.logger.Println(err.Error())
-
-	return
 }
 
 func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
@@ -186,5 +184,4 @@ func (u *UserHandler) whoAmI(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusForbidden)
 	w.Write([]byte("You need to be authenticated"))
-	return
 }

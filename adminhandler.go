@@ -61,7 +61,6 @@ func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// If we are here : no methods has been found (shouldn't happen)
 	w.WriteHeader(http.StatusNotFound)
-	return
 }
 
 func (a *AdminHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
@@ -90,8 +89,6 @@ func (a *AdminHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	return
-
 }
 
 func (a *AdminHandler) deletePost(w http.ResponseWriter, rq *http.Request) {
@@ -111,8 +108,6 @@ func (a *AdminHandler) deletePost(w http.ResponseWriter, rq *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	return
-
 }
 
 func (a *AdminHandler) getUser(w http.ResponseWriter, r *http.Request) {

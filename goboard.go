@@ -16,7 +16,6 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	"gopkg.in/yaml.v2"
 )
 
@@ -53,8 +52,6 @@ type GoBoardHandler struct {
 	Db           *bolt.DB
 	supportedOps []SupportedOp
 }
-
-var upgrader = websocket.Upgrader{} // use default options
 
 // Command line arguments management
 var configFilePath string
