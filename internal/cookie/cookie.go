@@ -82,6 +82,12 @@ func createAndStoreCookie(db *bolt.DB, login string, cookieDurationD int) (cooki
 		}
 
 		err = b.Put([]byte(cookie.Value), buf)
+		if err != nil {
+			ucerr := &UserCookieError{error: err, ErrCode: DatabaseError}
+			cookie = http.Cookie{}
+			fmt.Println(err.Error())
+			return ucerr
+		}
 
 		return nil
 	})
@@ -157,7 +163,7 @@ func fetchCookieForUser(db *bolt.DB, login string) (cookie http.Cookie, err erro
 		}
 
 		if !cookieFound {
-			ucerr := &UserCookieError{error: fmt.Errorf("No cookie found"), ErrCode: NoCookieFound}
+			ucerr := &UserCookieError{error: fmt.Errorf("no cookie found"), ErrCode: NoCookieFound}
 			return ucerr
 		}
 
