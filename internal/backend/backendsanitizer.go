@@ -40,9 +40,9 @@ func stripCtlFromUTF8(str string) string {
 
 // HTML escape some conflicting characters
 func sanitizeChars(input string) string {
-	tmp := strings.Replace(input, "&", "&amp;", -1)
-	tmp = strings.Replace(tmp, "<", "&lt;", -1)
-	return strings.Replace(tmp, ">", "&gt;", -1)
+	tmp := strings.ReplaceAll(input, "&", "&amp;")
+	tmp = strings.ReplaceAll(tmp, "<", "&lt;")
+	return strings.ReplaceAll(tmp, ">", "&gt;")
 }
 
 // Allowed tags dictionnary
@@ -116,7 +116,7 @@ L:
 					tokenType: html.StartTagToken})
 
 				// if a key doesn't exists it's value is 0
-				tagCount[tnStr] = tagCount[tnStr] + 1
+				tagCount[tnStr]++
 			} else {
 				s.Push(token{
 					txt:       sanitizeChars(string(z.Raw())),
@@ -153,7 +153,7 @@ L:
 					strs = append(strs, sanitizeChars(endStr))
 				}
 
-				//Use a string buffer to build the final string from slice
+				// Use a string buffer to build the final string from slice
 				var buffer bytes.Buffer
 				for elt := range strs {
 					buffer.WriteString(strs[elt])
@@ -222,14 +222,14 @@ var noIsoNorReg *regexp.Regexp
 
 func validate(input string) (string, error) {
 	if len(input) == 0 {
-		return "", errors.New("Empty string aren't accepted")
+		return "", errors.New("empty string aren't accepted")
 	}
 
 	if noIsoNorReg == nil {
-		noIsoNorReg = regexp.MustCompile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}")
+		noIsoNorReg = regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}`)
 	}
 	if noIsoNorReg.MatchString(input) {
-		return "", errors.New("Get out, those norloges aren't accepted here")
+		return "", errors.New("get out, those norloges aren't accepted here")
 	}
 
 	return input, nil
