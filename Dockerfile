@@ -19,7 +19,7 @@ RUN go build -o /goboard
 ##
 ## Run
 ##
-FROM alpine
+FROM alpine:latest
 
 ENV SWAGGER_PATH="/var/lib/goboard/web/swagger" \
     WEBUI_PATH="/var/lib/goboard/web/static" \
@@ -52,4 +52,4 @@ RUN chown goboard: "${GOBOARD_CONFIG_PATH}" && \
 EXPOSE 8080
 
 USER goboard
-ENTRYPOINT /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
