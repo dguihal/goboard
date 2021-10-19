@@ -68,7 +68,7 @@ func (a *AdminHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	login := (mux.Vars(r))["login"]
 
 	if err := goboarduser.DeleteUser(a.Db, login); err != nil {
-		if uerr, ok := err.(*goboarduser.UserError); ok {
+		if uerr, ok := err.(*goboarduser.Error); ok {
 			if uerr.ErrCode == goboarduser.UserDoesNotExistsError {
 				w.WriteHeader(http.StatusNotFound)
 				w.Write([]byte(fmt.Sprintf("User %s Not found", login)))
