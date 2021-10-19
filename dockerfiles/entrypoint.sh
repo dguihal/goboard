@@ -5,10 +5,6 @@ env
 
 echo "Generating conf"
 
-if [ -n "${BASE_PATH}" ] ; then
-    sed -i -e "s#^BasePath: .*#BasePath: ${BASE_PATH}#" "${GOBOARD_CONFIG_FILE}"
-fi
-
 if [ -n "${MAX_HISTORY_SIZE}" ] ; then
     sed -i -e "s#^MaxHistorySize: .*#MaxHistorySize: ${MAX_HISTORY_SIZE}#" "${GOBOARD_CONFIG_FILE}"
 fi

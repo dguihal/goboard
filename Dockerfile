@@ -52,4 +52,4 @@ RUN chown goboard: "${GOBOARD_CONFIG_PATH}" && \
 EXPOSE 8080
 
 USER goboard
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT /entrypoint.sh

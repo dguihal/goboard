@@ -3,7 +3,7 @@ function show_success(msg) {
   $("#success-alert").alert();
   $("#success-alert")
     .fadeTo(2000, 500)
-    .slideUp(500, function() {
+    .slideUp(500, function () {
       $("#success-alert").slideUp(500);
     });
 }
@@ -13,7 +13,7 @@ function show_error(msg) {
   $("#danger-alert").alert();
   $("#danger-alert")
     .fadeTo(2000, 500)
-    .slideUp(500, function() {
+    .slideUp(500, function () {
       $("#danger-alert").slideUp(500);
     });
 }
@@ -21,10 +21,10 @@ function show_error(msg) {
 function hide_settings() {
   $("#left-menu").animate(
     {
-      width: "0px"
+      width: "0px",
     },
     400,
-    function() {
+    function () {
       $("#left-menu").hide();
     }
   );
@@ -37,7 +37,7 @@ function toggle_settings() {
     $("#left-menu").show();
     $("#left-menu").animate(
       {
-        width: "350px"
+        width: "350px",
       },
       400
     );
@@ -46,7 +46,7 @@ function toggle_settings() {
 
 function webui_init() {
   // Palmi
-  $("#palmi").submit(function(e) {
+  $("#palmi").submit(function (e) {
     post_msg(e);
     e.preventDefault();
   });
@@ -54,22 +54,61 @@ function webui_init() {
   // Pini
   $("#pini").on(
     {
-      click: function(e) {
+      click: function (e) {
         norlogeclicked(e);
       },
-      mouseenter: function(e) {
+      mouseenter: function (e) {
         norlogeHighlight(e);
       },
-      mouseleave: function(e) {
+      mouseleave: function (e) {
         clearHighlight(e);
-      }
+      },
     },
     ".post_clock"
   );
 
+  if (sessionStorage.getItem("emojiMode") !== null) {
+    var emojiMode = sessionStorage.getItem("emojiMode");
+    if (emojiMode === "png") {
+      emojiRenderSettings = {
+        base: "./images/emojis/",
+        ext: ".png",
+      };
+      $("#emojiMod").val("png");
+    } else if (emojiMode === "svg") {
+      emojiRenderSettings = {
+        base: "./images/emojis/",
+        folder: "svg",
+        ext: ".svg",
+      };
+      $("#emojiMod").val("svg");
+    }
+  }
+
+  $("#emojiMod").on({
+    change: function (e) {
+      var emojiMode = $("option:selected", this).attr("value");
+      if (emojiMode === "png") {
+        emojiRenderSettings = {
+          base: "./images/emojis/",
+          ext: ".png",
+        };
+        sessionStorage.setItem("emojiMode", "png");
+      } else if (emojiMode === "svg") {
+        emojiRenderSettings = {
+          base: "./images/emojis/",
+          folder: "svg",
+          ext: ".svg",
+        };
+        sessionStorage.setItem("emojiMode", "svg");
+      }
+      //ToDo : Recompute pini
+    },
+  });
+
   $("#pini").on(
     {
-      mouseenter: function(e) {
+      mouseenter: function (e) {
         var srcElt = this;
         let totozTxt = srcElt.innerText.slice(2, -1); // Surrounding "[:" & "]"
 
@@ -96,31 +135,31 @@ function webui_init() {
         popupElt.appendChild(oImg);
         e.preventDefault();
       },
-      mouseleave: function(e) {
+      mouseleave: function (e) {
         e.preventDefault();
         let popup = $("#popup");
         if (popup.is(":visible")) {
           popup.fadeOut(200);
         }
         e.preventDefault();
-      }
+      },
     },
     ".totoz"
   );
 
   $("#pini").on(
     {
-      mouseenter: function(e) {
+      mouseenter: function (e) {
         clockRefHighlight(e);
       },
-      mouseleave: function(e) {
+      mouseleave: function (e) {
         clearHighlight(e);
-      }
+      },
     },
     ".clock_ref"
   );
 
-  $("#pini").on("mouseenter", ".clock_ref", function(e) {
+  $("#pini").on("mouseenter", ".clock_ref", function (e) {
     return false;
   });
 
@@ -130,44 +169,39 @@ function webui_init() {
   }
 
   // Backend API link
-  let swagger_url = window.location.protocol + "//" + window.location.host;
-  let swagger_base_path = window.location.pathname.replace(
-    /\/webui\/?.*/,
-    SWAGGER_BASE_PATH + "/"
-  );
-  let swagger_href = swagger_url + swagger_base_path + "swagger.yaml";
+  let swagger_href = "../swagger/" + SWAGGER_FILE_NAME;
   $.ajax({
     url: swagger_href,
     type: "GET",
     statusCode: {
-      404: function() {
+      404: function () {
         $("#backend-api-link").hide();
-      }
-    }
+      },
+    },
   })
-    .done(function(data, textStatus, request) {
+    .done(function (data, textStatus, request) {
       $("#backend-api-link").attr(
         "href",
-        swagger_url + swagger_base_path + "?url=swagger.yaml"
+        "../swagger/?url=" + SWAGGER_FILE_NAME
       );
     })
-    .fail(function(jqXHR, textStatus, errorThrown) {
+    .fail(function (jqXHR, textStatus, errorThrown) {
       $("#backend-api-link").hide();
     });
 
   // Settings menu
-  $("#settings").on("click", function(e) {
+  $("#settings").on("click", function (e) {
     toggle_settings(e);
     e.stopPropagation();
     e.preventDefault();
   });
 
-  $("#toggler-btn").on("click", function(e) {
+  $("#toggler-btn").on("click", function (e) {
     toggle_settings(e);
     e.preventDefault();
   });
 
-  $(document).on("click", function(e) {
+  $(document).on("click", function (e) {
     var container = $("#left-menu");
 
     if (
@@ -180,12 +214,12 @@ function webui_init() {
   });
 
   // Login form
-  $("#login-form").submit(function(e) {
+  $("#login-form").submit(function (e) {
     login(e);
     e.preventDefault();
   });
 
-  $("#login-dp").on("click", "a", function(e) {
+  $("#login-dp").on("click", "a", function (e) {
     logout(e);
     e.preventDefault();
   });
@@ -202,18 +236,18 @@ function login() {
 
   $.ajax({
     method: "POST",
-    url: BASE_PATH + "/user/login",
+    url: "../user/login",
     contentType: "application/x-www-form-urlencoded",
     data: {
       login: loginName,
-      password: pass
-    }
+      password: pass,
+    },
   })
-    .done(function(data, textStatus, request) {
+    .done(function (data, textStatus, request) {
       show_success("Login successfull");
       whoami();
     })
-    .fail(function(jqXHR, textStatus, errorThrown) {
+    .fail(function (jqXHR, textStatus, errorThrown) {
       show_error("Login failed : " + errorThrown);
     });
 }
@@ -221,8 +255,8 @@ function login() {
 function logout() {
   $.ajax({
     method: "GET",
-    url: BASE_PATH + "/user/logout"
-  }).always(function() {
+    url: "../user/logout",
+  }).always(function () {
     whoami();
     $("#login-form-group").show();
   });
@@ -237,16 +271,16 @@ function post_msg() {
 
   $.ajax({
     method: "POST",
-    url: BASE_PATH + "/post",
+    url: "../post",
     contentType: "application/x-www-form-urlencoded",
     // data to be added to query string:
     data: postData,
     // type of data we are expecting in return:
     // dataType: '',
     timeout: 300,
-    context: $("body")
+    context: $("body"),
   })
-    .done(function(data, textStatus, jqXHR) {
+    .done(function (data, textStatus, jqXHR) {
       $("#palmiInput").val("");
       // Stop pini refresh
       clearInterval(intervalID);
@@ -254,7 +288,7 @@ function post_msg() {
       // Relaunch pini periodic refresh
       intervalID = setInterval(update_pini, PINI_REFRESH_MS);
     })
-    .fail(function(jqXHR, textStatus, errorThrown) {
+    .fail(function (jqXHR, textStatus, errorThrown) {
       console.log("Ajax error : " + textStatus);
     });
 }
@@ -346,16 +380,14 @@ function norlogeHighlight(e) {
     }
   }
 
-  query_strs.forEach(function(e) {
+  query_strs.forEach(function (e) {
     $("#pini")
       .find("span[id$=" + e + "]")
-      .each(function(index) {
+      .each(function (index) {
         if ($(this).hasClass("clock_ref")) {
           $(this).addClass("highlighted");
         } else {
-          $(this)
-            .parent()
-            .addClass("highlighted");
+          $(this).parent().addClass("highlighted");
         }
       });
   });
@@ -376,13 +408,11 @@ function clockRefHighlight(e) {
 
   $("#pini")
     .find("span[id*=" + query_str + "]")
-    .each(function(index) {
+    .each(function (index) {
       if ($(this).hasClass("clock_ref")) {
         $(this).addClass("highlighted");
       } else {
-        $(this)
-          .parent()
-          .addClass("highlighted");
+        $(this).parent().addClass("highlighted");
       }
     });
 }
@@ -390,12 +420,12 @@ function clockRefHighlight(e) {
 function clearHighlight(e) {
   $("#pini")
     .find(".highlighted")
-    .each(function(index) {
+    .each(function (index) {
       $(this).removeClass("highlighted");
     });
   $("#pini")
     .find(".highlighted")
-    .each(function(index) {
+    .each(function (index) {
       $(this).removeClass("highlighted");
     });
 }
@@ -412,29 +442,29 @@ function update_pini() {
     // type of data we are expecting in return:
     dataType: "json",
     timeout: 300,
-    context: $("body")
+    context: $("body"),
   })
-    .done(function(data, textStatus, jqXHR) {
+    .done(function (data, textStatus, jqXHR) {
       // Nothing to do if there is no data
       if (!data || !data.Posts) {
         return;
       }
 
       // Remove already known posts from list
-      data.Posts = data.Posts.filter(function(item) {
+      data.Posts = data.Posts.filter(function (item) {
         return item.id > maxId;
       });
 
       // Sort posts by their ids
       if (data.Posts.length > 1 && data.Posts[0].id > data.Posts[1].id) {
-        data.Posts.sort(function(a, b) {
+        data.Posts.sort(function (a, b) {
           return a.id - b.id;
         });
       }
 
       // Insert posts into pini
       var pini = $("#pini");
-      $.each(data.Posts, function(index, item) {
+      $.each(data.Posts, function (index, item) {
         maxId = item.id > maxId ? item.id : maxId;
 
         let d = document.createElement("div");
@@ -470,8 +500,8 @@ function update_pini() {
         s.className = "post_message";
         let msg = totozify(item.message);
         msg = norlogify(msg);
-        msg = emojify(msg);
         s.innerHTML = msg;
+        twemoji.parse(s, emojiRenderSettings);
         d.appendChild(s);
 
         pini.append(d);
@@ -487,7 +517,7 @@ function update_pini() {
         firstLoad = false;
       }
     })
-    .fail(function(jqXHR, textStatus, errorThrown) {
+    .fail(function (jqXHR, textStatus, errorThrown) {
       console.log("Ajax error!" + errorThrown);
     });
 }
@@ -495,13 +525,13 @@ function update_pini() {
 function whoami() {
   $.ajax({
     method: "GET",
-    url: BASE_PATH + "/user/whoami",
+    url: "../user/whoami",
     // type of data we are expecting in return:
     dataType: "json",
     timeout: 300,
-    context: $("body")
+    context: $("body"),
   })
-    .done(function(data, textStatus, jqXHR) {
+    .done(function (data, textStatus, jqXHR) {
       var str = "<span>Welcome </span>";
       str += "<strong>" + data.Login + "</strong>";
       str += "<span> </span>";
@@ -509,7 +539,7 @@ function whoami() {
       $("#login-welcome-auth").html(str);
       $("#login-form-group").hide();
     })
-    .fail(function(jqXHR, textStatus, errorThrown) {
+    .fail(function (jqXHR, textStatus, errorThrown) {
       $("#login-welcome-auth").html("<strong>Unauthenticated</strong>");
     });
 }
@@ -590,53 +620,44 @@ function norlogify(message) {
   for (let i = 0; i < splits.length; i++) {
     let tmp = splits[i];
     if (i % 4 == 0) {
-      tmp = tmp.replace(exp, function(
-        match,
-        date,
-        time,
-        index,
-        dest,
-        offset,
-        string
-      ) {
-        let d = date ? date.replace(/\//g, "_") : "";
-        let t = time.replace(/:/g, "_");
-        let i = index
-          ? index.replace(/[¹²³^]/, function(m) {
-              return {
-                "^": "",
-                "¹": "1",
-                "²": "2",
-                "³": "3"
-              }[m];
-            })
-          : "";
+      tmp = tmp.replace(
+        exp,
+        function (match, date, time, index, dest, offset, string) {
+          let d = date ? date.replace(/\//g, "_") : "";
+          let t = time.replace(/:/g, "_");
+          let i = index
+            ? index.replace(/[¹²³^]/, function (m) {
+                return {
+                  "^": "",
+                  "¹": "1",
+                  "²": "2",
+                  "³": "3",
+                }[m];
+              })
+            : "";
 
-        return (
-          '<span class="clock_ref" id="d' +
-          d +
-          "-t" +
-          t +
-          (i ? "-i" + i : "") +
-          '"><span class="norloge_ref_meta">' +
-          d +
-          "|" +
-          t +
-          "|" +
-          i +
-          "|" +
-          (dest ? dest : "") +
-          "</span>" +
-          match +
-          "</span>"
-        );
-      });
+          return (
+            '<span class="clock_ref" id="d' +
+            d +
+            "-t" +
+            t +
+            (i ? "-i" + i : "") +
+            '"><span class="norloge_ref_meta">' +
+            d +
+            "|" +
+            t +
+            "|" +
+            i +
+            "|" +
+            (dest ? dest : "") +
+            "</span>" +
+            match +
+            "</span>"
+          );
+        }
+      );
     }
     res += tmp;
   }
   return res;
-}
-
-function emojify(message) {
-  return emojione.unicodeToImage(message);
 }

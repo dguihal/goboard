@@ -7,6 +7,7 @@ p.material-icons {
 #success-alert {
   display: none;
 }
+
 #danger-alert {
   display: none;
 }
@@ -19,14 +20,16 @@ p.material-icons {
   height: 100%;
   width: 0%;
   z-index: 9999;
-  background-color: #EFECCA;
-  color: #B36442;
+  background-color: #efecca;
+  color: #b36442;
 }
+
 #left-menu div h2 {
   display: inline-block;
   vertical-align: middle;
   margin: 1rem;
 }
+
 #left-menu form {
   margin: 1rem;
 }
@@ -37,12 +40,14 @@ nav.navbar {
   width: 100%;
   z-index: 10;
   border-radius: 0rem;
-  background-color: #EFECCA;
+  background-color: #efecca;
 }
+
 a.nav-link {
-  color: #B36442;
+  color: #b36442;
 }
-#login-dp { 
+
+#login-dp {
   padding: 0.5rem;
 }
 /* Pini css */
@@ -51,18 +56,22 @@ a.nav-link {
   padding: 4.5rem 0 4.5rem 0;
   z-index: 1;
 }
+
 span.post_clock {
   display: inline-block;
   font-weight: bold;
   vertical-align: middle;
   padding-right: 5px;
 }
+
 span.post_clock:before {
   content: "[";
 }
+
 span.post_clock:after {
   content: "]";
 }
+
 span.post_login {
   color: brown;
   display: inline-block;
@@ -73,6 +82,7 @@ span.post_login {
   white-space: nowrap;
   padding-right: 5px;
 }
+
 span.post_ua {
   color: lightcoral;
   display: inline-block;
@@ -83,18 +93,22 @@ span.post_ua {
   white-space: nowrap;
   padding-right: 5px;
 }
+
 span.post_message {
   white-space: normal;
 }
+
 span.totoz {
   color: #00aa11;
   font-weight: bolder;
   cursor: pointer;
 }
+
 span.clock_ref {
   color: #0000dd;
   cursor: pointer;
 }
+
 span.norloge_ref_meta {
   display: none;
 }
@@ -102,6 +116,14 @@ span.norloge_ref_meta {
 .highlighted {
   background-color: yellow;
 }
+
+img.emoji {
+  height: 1em;
+  width: 1em;
+  margin: 0 0.05em 0 0.1em;
+  vertical-align: -0.1em;
+}
+
 /* Palmi css */
 
 footer {
@@ -111,15 +133,18 @@ footer {
   padding: 0.5rem 1rem;
   z-index: 10;
 }
+
 #popup {
   display: none;
   background-color: transparent;
 }
+
 #palmi {
   margin-bottom: 0.5rem;
   overflow: hidden;
   width: 100%;
 }
+
 #palmi input {
   flex: 1 0 auto;
   padding-left: 0.5rem;

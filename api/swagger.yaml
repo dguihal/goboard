@@ -6,49 +6,49 @@ info:
   title: "Goboard"
   contact: {}
 host: {{ .Hostname }}
-basePath: {{ .BasePath }}
+basePath: {{ .PathPrefix }}
 schemes:
-- {{ .Scheme }}
+  - {{ .Scheme }}
 consumes:
-- "application/xml"
-- "application/json"
-- "text/tsv"
-- "text/xml"
-- "text/plain"
+  - "application/xml"
+  - "application/json"
+  - "text/tsv"
+  - "text/xml"
+  - "text/plain"
 produces:
-- "application/xml"
-- "application/json"
-- "text/tsv"
-- "text/xml"
-- "text/plain"
+  - "application/xml"
+  - "application/json"
+  - "text/tsv"
+  - "text/xml"
+  - "text/plain"
 paths:
   /backend/{format}:
     get:
       tags:
-      - "Backend"
+        - "Backend"
       summary: "Returns the backend in specified format"
       description: "Returns the backend (the post history)\n"
       produces:
-      - "text/xml"
-      - "application/xml"
-      - "application/json"
-      - "text/tsv"
-      - "text/plain"
-      parameters:
-      - name: "last"
-        in: "query"
-        required: false
-        type: "number"
-        description: "Last id known by the client."
-      - name: "Accept"
-        in: "header"
-        required: false
-        type: "string"
-        enum:
-        - "application/xml"
         - "text/xml"
+        - "application/xml"
         - "application/json"
         - "text/tsv"
+        - "text/plain"
+      parameters:
+        - name: "last"
+          in: "query"
+          required: false
+          type: "number"
+          description: "Last id known by the client."
+        - name: "Accept"
+          in: "header"
+          required: false
+          type: "string"
+          enum:
+            - "application/xml"
+            - "text/xml"
+            - "application/json"
+            - "text/tsv"
       responses:
         200:
           description: "An XML/JSON/TSV document with backend data"
@@ -60,36 +60,36 @@ paths:
             type: "string"
             description: "Error message"
     parameters:
-    - name: "format"
-      in: "path"
-      required: true
-      type: "string"
-      description: "Desired output format"
-      enum:
-      - "xml"
-      - "json"
-      - "tsv"
+      - name: "format"
+        in: "path"
+        required: true
+        type: "string"
+        description: "Desired output format"
+        enum:
+          - "xml"
+          - "json"
+          - "tsv"
   /post:
     post:
       tags:
-      - "Backend"
+        - "Backend"
       summary: "Post a new message"
       description: "Post a new message\n"
       consumes:
-      - "multipart/form-data"
+        - "multipart/form-data"
       produces:
-      - "text/plain"
+        - "text/plain"
       parameters:
-      - name: "Cookie"
-        in: "header"
-        required: false
-        type: "string"
-        description: "Authentification cookie."
-      - name: "message"
-        in: "formData"
-        required: true
-        type: "string"
-        description: "Message to post"
+        - name: "Cookie"
+          in: "header"
+          required: false
+          type: "string"
+          description: "Authentification cookie."
+        - name: "message"
+          in: "formData"
+          required: true
+          type: "string"
+          description: "Message to post"
       responses:
         204:
           description: "Message stored"
@@ -111,25 +111,25 @@ paths:
   /post/{id}/{format}:
     get:
       tags:
-      - "Backend"
+        - "Backend"
       summary: "Get a post with a specified format"
       description: "If format is empty, it is equivalent to calling /post/{id}"
       produces:
-      - "application/xml"
-      - "application/json"
-      - "text/tsv"
-      - "text/xml"
-      - "text/plain"
-      parameters:
-      - name: "Accept"
-        in: "header"
-        required: false
-        type: "string"
-        enum:
         - "application/xml"
-        - "text/xml"
         - "application/json"
         - "text/tsv"
+        - "text/xml"
+        - "text/plain"
+      parameters:
+        - name: "Accept"
+          in: "header"
+          required: false
+          type: "string"
+          enum:
+            - "application/xml"
+            - "text/xml"
+            - "application/json"
+            - "text/tsv"
       responses:
         200:
           description: "Status 200"
@@ -143,39 +143,39 @@ paths:
             type: "string"
             description: "Error message"
     parameters:
-    - name: "id"
-      in: "path"
-      required: true
-      type: "string"
-    - name: "format"
-      in: "path"
-      required: false
-      type: "string"
-      enum:
-      - "xml"
-      - "json"
-      - "tsv"
+      - name: "id"
+        in: "path"
+        required: true
+        type: "string"
+      - name: "format"
+        in: "path"
+        required: false
+        type: "string"
+        enum:
+          - "xml"
+          - "json"
+          - "tsv"
   /user/add:
     post:
       tags:
-      - "User"
+        - "User"
       summary: "Add a new user"
       description: "Add a new user\n"
       consumes:
-      - "multipart/form-data"
+        - "multipart/form-data"
       produces:
-      - "text/plain"
+        - "text/plain"
       parameters:
-      - name: "user"
-        in: "formData"
-        required: true
-        type: "string"
-        description: "User's login"
-      - name: "password"
-        in: "formData"
-        required: true
-        type: "string"
-        description: "User's password"
+        - name: "user"
+          in: "formData"
+          required: true
+          type: "string"
+          description: "User's login"
+        - name: "password"
+          in: "formData"
+          required: true
+          type: "string"
+          description: "User's password"
       responses:
         200:
           description: "User created"
@@ -192,25 +192,26 @@ paths:
   /user/login:
     post:
       tags:
-      - "User"
+        - "User"
       summary: "Authenticate a user"
-      description: "Authenticate a user\n\nuser and password form params must be set\
+      description:
+        "Authenticate a user\n\nuser and password form params must be set\
         \ and not empty\n"
       consumes:
-      - "multipart/form-data"
+        - "multipart/form-data"
       produces:
-      - "text/plain"
+        - "text/plain"
       parameters:
-      - name: "login"
-        in: "formData"
-        required: true
-        type: "string"
-        description: "User's login"
-      - name: "password"
-        in: "formData"
-        required: true
-        type: "string"
-        description: "User's password"
+        - name: "login"
+          in: "formData"
+          required: true
+          type: "string"
+          description: "User's login"
+        - name: "password"
+          in: "formData"
+          required: true
+          type: "string"
+          description: "User's password"
       responses:
         200:
           description: "User logged in"
@@ -219,7 +220,8 @@ paths:
               type: "string"
               description: "Authenticated user's cookie"
         400:
-          description: "Some invalid parameters were sent (usually empty login or\
+          description:
+            "Some invalid parameters were sent (usually empty login or\
             \ password)"
           schema:
             type: "string"
@@ -236,14 +238,14 @@ paths:
   /user/logout:
     get:
       tags:
-      - "User"
+        - "User"
       summary: "Logout a user"
       parameters:
-      - name: "Cookie"
-        in: "header"
-        required: false
-        type: "string"
-        description: "authenticated user cookie"
+        - name: "Cookie"
+          in: "header"
+          required: false
+          type: "string"
+          description: "authenticated user cookie"
       responses:
         204:
           description: "Status 204"
@@ -254,17 +256,17 @@ paths:
   /user/whoami:
     get:
       tags:
-      - "User"
+        - "User"
       summary: "Returns current user info"
       produces:
-      - "application/json"
-      - "text/plain"
+        - "application/json"
+        - "text/plain"
       parameters:
-      - name: "Cookie"
-        in: "header"
-        required: true
-        type: "string"
-        description: "Authenticated used cookie"
+        - name: "Cookie"
+          in: "header"
+          required: true
+          type: "string"
+          description: "Authenticated used cookie"
       responses:
         200:
           description: "Valid cookie"
@@ -282,17 +284,17 @@ paths:
   /admin/user/{login}:
     get:
       tags:
-      - "Admin"
+        - "Admin"
       summary: "Get user infos"
       produces:
-      - "application/json"
-      - "text/plain"
+        - "application/json"
+        - "text/plain"
       parameters:
-      - name: "Token-Id"
-        in: "header"
-        required: true
-        type: "string"
-        description: "Admin token."
+        - name: "Token-Id"
+          in: "header"
+          required: true
+          type: "string"
+          description: "Admin token."
       responses:
         200:
           description: "User infos associated with login"
@@ -307,17 +309,17 @@ paths:
             description: "Error message"
     delete:
       tags:
-      - "Admin"
+        - "Admin"
       summary: "Deletes a user"
       description: "Deletes a user by it's login\n"
       produces:
-      - "text/plain"
+        - "text/plain"
       parameters:
-      - name: "Token-Id"
-        in: "header"
-        required: true
-        type: "string"
-        description: "Admin token."
+        - name: "Token-Id"
+          in: "header"
+          required: true
+          type: "string"
+          description: "Admin token."
       responses:
         200:
           description: "Message deleted"
@@ -336,24 +338,24 @@ paths:
             type: "string"
             description: "Returns error message"
     parameters:
-    - name: "login"
-      in: "path"
-      required: true
-      type: "string"
+      - name: "login"
+        in: "path"
+        required: true
+        type: "string"
   /admin/post/{id}:
     delete:
       tags:
-      - "Admin"
+        - "Admin"
       summary: "Deletes a post"
       description: "Deletes a post by it's id\n"
       produces:
-      - "text/plain"
+        - "text/plain"
       parameters:
-      - name: "Token-Id"
-        in: "header"
-        required: true
-        type: "string"
-        description: "Admin token."
+        - name: "Token-Id"
+          in: "header"
+          required: true
+          type: "string"
+          description: "Admin token."
       responses:
         200:
           description: "Post deleted"
@@ -372,16 +374,16 @@ paths:
             type: "string"
             description: "Error message"
     parameters:
-    - name: "id"
-      in: "path"
-      required: true
-      type: "string"
+      - name: "id"
+        in: "path"
+        required: true
+        type: "string"
 definitions:
   Board:
     type: "object"
     required:
-    - "posts"
-    - "site"
+      - "posts"
+      - "site"
     properties:
       site:
         type: "string"
@@ -392,11 +394,11 @@ definitions:
   Post:
     type: "object"
     required:
-    - "id"
-    - "info"
-    - "login"
-    - "message"
-    - "time"
+      - "id"
+      - "info"
+      - "login"
+      - "message"
+      - "time"
     properties:
       time:
         type: "integer"

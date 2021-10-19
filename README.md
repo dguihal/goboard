@@ -20,7 +20,7 @@
 
 ### Dockerfile
 
-Support for BasePath, MaxHistorySize, BackendTimeZone, CookieDuration and ADMIN_TOKEN environment variables (-e)
+Support for MaxHistorySize, BackendTimeZone, CookieDuration and ADMIN_TOKEN environment variables (-e)
 
 **ADMIN_TOKEN has to be set (no default).**
 

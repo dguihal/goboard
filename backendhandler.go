@@ -73,14 +73,13 @@ func NewBackendHandler(historySize int, frontLocation string) (b *BackendHandler
 	}
 
 	b.historySize = historySize
-	b.BasePath = ""
 	return
 }
 
 func (b *BackendHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	for _, op := range b.supportedOps {
-		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, b.BasePath+op.PathBase) {
+		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, op.PathBase) {
 			// Call specific handling method
 			op.handler(w, r)
 			return

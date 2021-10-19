@@ -57,7 +57,7 @@
     </nav>
     <div id="left-menu">
         <div>
-            <h2> Configuration</h2>
+            <h2>Configuration</h2>
             <a class="btn btn-secondary btn-sm" href="#" role="button" id="toggler-btn">
                 <i class="medium material-icons">done</i>
             </a>
@@ -70,6 +70,13 @@
             <div class="form-group">
                 <label for="totozServer">Totoz server</label>
                 <input type="url" class="form-control" id="totozServer" placeholder="">
+            </div>
+            <div class="form-group">
+                <label for="emojiMod">Emoji mode</label>
+                <select class="form-control" id="emojiMod">
+                    <option value="png">PNG</option>
+                    <option value="svg" selected>SVG</option>
+                </select>
             </div>
         </form>
     </div>
@@ -108,6 +115,12 @@
         var maxId = 0;
         var firstLoad = true;
         var intervalID;
+
+        var emojiRenderSettings = {
+            base: "./images/emojis/",
+            folder: "svg",
+            ext: ".svg",
+          }
 
         $(function () {
             webui_init();

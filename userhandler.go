@@ -33,7 +33,6 @@ func NewUserHandler(cookieDuration int) (u *UserHandler) {
 	}
 
 	u.cookieDurationD = cookieDuration
-	u.BasePath = ""
 
 	return
 }
@@ -41,7 +40,7 @@ func NewUserHandler(cookieDuration int) (u *UserHandler) {
 func (u *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	for _, op := range u.supportedOps {
-		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, u.BasePath+op.PathBase) {
+		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, op.PathBase) {
 			// Call specific handling method
 			op.handler(w, r)
 			return

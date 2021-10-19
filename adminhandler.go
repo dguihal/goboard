@@ -40,7 +40,6 @@ func NewAdminHandler(adminToken string) (a *AdminHandler) {
 		log.Println("Admin token len <", tokenWarnLen, ": Come on I'm sure you can do a lot better")
 	}
 	a.adminToken = adminToken
-	a.BasePath = ""
 	return
 }
 
@@ -53,7 +52,7 @@ func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, op := range a.supportedOps {
-		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, a.BasePath+op.PathBase) {
+		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, op.PathBase) {
 			// Call specific handling method
 			op.handler(w, r)
 			return
