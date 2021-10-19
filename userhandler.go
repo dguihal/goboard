@@ -74,7 +74,7 @@ func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		if uerr, ok := err.(*goboarduser.UserError); ok {
+		if uerr, ok := err.(*goboarduser.Error); ok {
 			if uerr.ErrCode == goboarduser.UserAlreadyExistsError {
 				w.WriteHeader(http.StatusConflict)
 				w.Write([]byte("User login already exists"))
@@ -104,7 +104,7 @@ func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
 
 	if err := goboarduser.AuthUser(u.Db, login, passwd); err != nil {
 		u.logger.Println(err.Error())
-		if uerr, ok := err.(*goboarduser.UserError); ok {
+		if uerr, ok := err.(*goboarduser.Error); ok {
 			switch uerr.ErrCode {
 			case goboarduser.AuthenticationFailed:
 				w.WriteHeader(http.StatusUnauthorized)
