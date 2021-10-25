@@ -25,6 +25,9 @@ jobs:
       - name: Get Node.js
         uses: actions/setup-node@v2
 
+      - run: npm install
+        working-directory: web
+
       - run: npm run-script build
         working-directory: web
 
