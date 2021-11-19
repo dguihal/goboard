@@ -271,7 +271,7 @@ function post_msg () {
 
   $.ajax({
     method: 'POST',
-    url: '../post',
+    url: POST_URL,
     contentType: 'application/x-www-form-urlencoded',
     // data to be added to query string:
     data: postData,
