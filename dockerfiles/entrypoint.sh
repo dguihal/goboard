@@ -5,10 +5,6 @@ env
 
 echo "Generating conf"
 
-if [ -n "${BASE_PATH}" ] ; then
-    sed -i -e "s#^BasePath: .*#BasePath: ${BASE_PATH}#" "${GOBOARD_CONFIG_FILE}"
-fi
-
 if [ -n "${MAX_HISTORY_SIZE}" ] ; then
     sed -i -e "s#^MaxHistorySize: .*#MaxHistorySize: ${MAX_HISTORY_SIZE}#" "${GOBOARD_CONFIG_FILE}"
 fi
@@ -25,7 +21,7 @@ if [ -z "${ADMIN_TOKEN}" ] ; then
     echo "AdminToken MUST be set, aborting"
     exit 1
 else
-    sed -i -e "s#AdminToken: .*#AdminToken: ${ADMIN_TOKEN}#" "${GOBOARD_CONFIG_FILE}"    
+    sed -i -e "s#AdminToken: .*#AdminToken: ${ADMIN_TOKEN}#" "${GOBOARD_CONFIG_FILE}"
 fi
 
 sed -i -e "s#^GoBoardDBFile: .*#GoBoardDBFile: ${GOBOARD_DB_FILE}#" "${GOBOARD_CONFIG_FILE}"
@@ -43,5 +39,5 @@ fi
 cat "${GOBOARD_CONFIG_FILE}"
 
 echo "Starting Goboard"
-goboard -C "${GOBOARD_CONFIG_FILE}"
-
+ls -l /goboard
+/goboard -C "${GOBOARD_CONFIG_FILE}"

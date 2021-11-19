@@ -1,29 +1,53 @@
-FROM golang:1.14-alpine
 
-ENV SWAGGER_PATH="/go/src/goboard/swagger-ui" \
-    WEBUI_PATH="/go/src/goboard/webui" \
-    GOPATH="/go" \
+##
+## Build
+##
+FROM golang:1.14-alpine AS build
+
+WORKDIR /goboard
+
+COPY go.mod ./
+COPY go.sum ./
+
+RUN go mod download
+
+COPY *.go ./
+COPY internal ./internal/
+
+RUN go build -o /goboard
+
+##
+## Run
+##
+FROM alpine:latest
+
+ENV SWAGGER_PATH="/var/lib/goboard/web/swagger" \
+    WEBUI_PATH="/var/lib/goboard/web/static" \
     GOBOARD_DB_PATH="/var/lib/goboard" \
     GOBOARD_DB_FILE="/var/lib/goboard/goboard.db" \
     GOBOARD_CONFIG_PATH="/etc/goboard" \
     GOBOARD_CONFIG_FILE="/etc/goboard/goboard.yaml" \
     GOBOARD_LOG_PATH="/var/log/goboard"
 
-WORKDIR /${GOPATH}/src/goboard
-COPY . .
-RUN rm -rf vendor && \
-    go get -d -v ./... && \
-    go install -v ./... && \
-    adduser -S -h "${GOBOARD_DB_PATH}" -D goboard && \
+WORKDIR /
+
+RUN adduser -S -h "${GOBOARD_DB_PATH}" -D goboard && \
     mkdir -p "${GOBOARD_CONFIG_PATH}" && \
     mkdir -p "${GOBOARD_LOG_PATH}"
 
+COPY --from=build /goboard/goboard /
 COPY dockerfiles/entrypoint.sh /
 COPY goboard.yaml "${GOBOARD_CONFIG_FILE}"
+COPY dockerfiles/entrypoint.sh /
+COPY goboard.yaml "${GOBOARD_CONFIG_FILE}"
+COPY web/swagger/ "${SWAGGER_PATH}"
+COPY api/swagger.yaml "${SWAGGER_PATH}"
+COPY web/static/ "${WEBUI_PATH}"
 
 RUN chown goboard: "${GOBOARD_CONFIG_PATH}" && \
     chown goboard: "${GOBOARD_LOG_PATH}" && \
-    chmod +x /entrypoint.sh
+    chmod +x /entrypoint.sh && \
+    chmod +x /goboard
 
 EXPOSE 8080
 

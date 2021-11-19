@@ -16,7 +16,6 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	"gopkg.in/yaml.v2"
 )
 
@@ -25,7 +24,6 @@ const goBoardVer = 0.03
 // Config holds the configuration of the process
 type Config struct {
 	ListenPort        string      `yaml:"ListenPort"`
-	BasePath          string      `yaml:"BasePath"`
 	BackendTimeZone   string      `yaml:"BackendTimeZone"`
 	MaxHistorySize    int         `yaml:"MaxHistorySize"`
 	CookieDuration    int         `yaml:"CookieDuration"`
@@ -53,10 +51,7 @@ type SupportedOp struct {
 type GoBoardHandler struct {
 	Db           *bolt.DB
 	supportedOps []SupportedOp
-	BasePath     string
 }
-
-var upgrader = websocket.Upgrader{} // use default options
 
 // Command line arguments management
 var configFilePath string
@@ -134,13 +129,9 @@ func main() {
 	// Initialize router
 	mainRouter := mux.NewRouter().StrictSlash(true)
 	r := mainRouter
-	if len(config.BasePath) > 0 {
-		r = mainRouter.PathPrefix(config.BasePath).Subrouter()
-	}
 
 	// Backend operations
 	backendHandler := NewBackendHandler(config.MaxHistorySize, config.BackendTimeZone)
-	backendHandler.BasePath = config.BasePath
 	backendHandler.Db = db
 	for _, op := range backendHandler.supportedOps {
 		r.Handle(op.RestPath, backendHandler).Methods(op.Method)
@@ -148,7 +139,6 @@ func main() {
 
 	// User operations
 	userHandler := NewUserHandler(config.CookieDuration)
-	userHandler.BasePath = config.BasePath
 	userHandler.Db = db
 	for _, op := range userHandler.supportedOps {
 		r.Handle(op.RestPath, userHandler).Methods(op.Method)
@@ -156,14 +146,12 @@ func main() {
 
 	// Admin operations
 	adminHandler := NewAdminHandler(config.AdminToken)
-	adminHandler.BasePath = config.BasePath
 	adminHandler.Db = db
 	for _, op := range adminHandler.supportedOps {
 		r.Handle(op.RestPath, adminHandler).Methods(op.Method)
 	}
 
 	templateHandler := NewTemplateHandler()
-	adminHandler.BasePath = config.BasePath
 
 	// Swagger operations
 	if len(config.SwaggerPath) > 0 {
@@ -179,7 +167,7 @@ func main() {
 			swaggerOp := templateHandler.GetSwaggerOp()
 			r.HandleFunc(swaggerOp.RestPath, swaggerOp.handler).Methods(swaggerOp.Method)
 			r.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", http.FileServer(http.Dir(realPath))))
-			r.Handle("/swagger", http.RedirectHandler("/swagger/", 301))
+			r.Handle("/swagger", http.RedirectHandler("/swagger/", http.StatusMovedPermanently))
 
 		}
 	}
@@ -195,11 +183,9 @@ func main() {
 			log.Println(strings.Join([]string{realPath, "/index.html"}, ""), "Not found: Disabling webui capabilities")
 		} else {
 			templateHandler.setWebUIBaseDir(realPath)
-			webUIOp := templateHandler.GetWebUIOp()
-			r.HandleFunc(webUIOp.RestPath, webUIOp.handler).Methods(webUIOp.Method)
 			r.PathPrefix("/webui/").Handler(http.StripPrefix("/webui/", http.FileServer(http.Dir(realPath))))
-			r.Handle("/webui", http.RedirectHandler("/webui/", 301))
-			r.Handle("/", http.RedirectHandler("/webui/", 301))
+			r.Handle("/webui", http.RedirectHandler("/webui/", http.StatusMovedPermanently))
+			r.Handle("/", http.RedirectHandler("/webui/", http.StatusMovedPermanently))
 		}
 	}
 

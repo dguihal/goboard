@@ -1,11 +1,6 @@
 ---
-
 # Listen port of the board server
 ListenPort: 8080
-
-# BasePath of goboard URLS
-# Leave empty if URLs are relative to root PATH
-BasePath: ""
 
 # Maximum size of a backend returned by the board server
 MaxHistorySize: 50
@@ -29,10 +24,10 @@ AccessLogFile: access.log
 AccessLogFileMode: 0660
 
 # Path for swagger dist files (optional, disabled if invalid)
-SwaggerPath: ./swagger-ui
+SwaggerPath: ./web/swagger
 
 # Path for webui (optional, disabled if invalid)
-WebuiPath: ./webui
+WebuiPath: ./web/static
 
 # No minimum length is enforced, but you are strongly encouraged to set it long and complex
 AdminToken: Taiste

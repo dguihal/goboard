@@ -8,3 +8,11 @@ goboard
 debug
 *~
 tools/slipcleaner/slipcleaner
+vendor/
+web/bower_components/
+web/node_modules/
+web/static/css/ext/
+web/static/fonts/
+web/static/js/ext/
+web/static/images/emojis/
+web/swagger/

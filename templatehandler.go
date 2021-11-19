@@ -13,8 +13,6 @@ type TemplateHandler struct {
 	swaggerBaseDirSet bool
 	webuiBaseDir      http.Dir
 	webuiBaseDirSet   bool
-
-	BasePath string
 }
 
 // NewTemplateHandler creates an TemplateHandler object
@@ -46,41 +44,10 @@ func (s *TemplateHandler) setWebUIBaseDir(webuiBaseDir string) {
 	s.webuiBaseDirSet = true
 }
 
-// GetWebUIOp GET WebUI config content
-func (s *TemplateHandler) GetWebUIOp() SupportedOp {
-	return SupportedOp{"/webui/js/settings.js", "/webui/js/settings.js", "GET", s.ServeConfigJS}
-}
-
-// ServeConfigJS handles webui config.js file
-func (s *TemplateHandler) ServeConfigJS(w http.ResponseWriter, rq *http.Request) {
-	if !s.webuiBaseDirSet {
-		w.WriteHeader(http.StatusNotFound)
-	} else if f, err := s.webuiBaseDir.Open("js/settings.js"); err != nil {
-		if os.IsNotExist(err) {
-			w.WriteHeader(http.StatusNotFound)
-		} else {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-		}
-	} else {
-		defer f.Close()
-
-		tmpl := template.New("ConfigJS")
-
-		// Read swagger template data
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(f)
-		str := buf.String()
-
-		data := struct {
-			BasePath string
-		}{
-			map[bool]string{true: s.BasePath, false: "/"}[len(s.BasePath) > 0],
-		}
-
-		tmpl, _ = tmpl.Parse(str) // Parse template file.
-		tmpl.Execute(w, data)
-	}
+type swaggerParam struct {
+	Scheme     string
+	Hostname   string
+	PathPrefix string
 }
 
 // ServeSwagger handles swagger yaml data file
@@ -120,18 +87,15 @@ func (s *TemplateHandler) ServeSwagger(w http.ResponseWriter, rq *http.Request) 
 			host = rq.Header.Get("X-Forwarded-Host")
 		}
 
-		data := struct {
-			Scheme   string
-			Hostname string
-			BasePath string
-		}{
-			scheme,
-			host,
-			map[bool]string{true: s.BasePath, false: "/"}[len(s.BasePath) > 0],
+		// Try to guess original Prefix
+		prefix := "/"
+		if len(rq.Header.Get("X-Forwarded-Prefix")) > 0 {
+			prefix = rq.Header.Get("X-Forwarded-Prefix")
 		}
 
+		swP := swaggerParam{scheme, host, prefix}
+
 		tmpl, _ = tmpl.Parse(str) // Parse template file.
-		tmpl.Execute(w, data)
+		tmpl.Execute(w, swP)
 	}
-	return
 }
