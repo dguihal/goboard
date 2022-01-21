@@ -21,7 +21,7 @@ RUN go build -o /goboard
 ##
 FROM alpine:latest
 
-apk add tzdata
+RUN apk add tzdata
 
 ENV SWAGGER_PATH="/var/lib/goboard/web/swagger" \
     WEBUI_PATH="/var/lib/goboard/web/static" \
