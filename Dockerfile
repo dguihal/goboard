@@ -21,8 +21,6 @@ RUN go build -o /goboard
 ##
 FROM alpine:latest
 
-RUN apk add tzdata
-
 ENV SWAGGER_PATH="/var/lib/goboard/web/swagger" \
     WEBUI_PATH="/var/lib/goboard/web/static" \
     GOBOARD_DB_PATH="/var/lib/goboard" \
@@ -33,7 +31,8 @@ ENV SWAGGER_PATH="/var/lib/goboard/web/swagger" \
 
 WORKDIR /
 
-RUN adduser -S -h "${GOBOARD_DB_PATH}" -D goboard && \
+RUN apk add tzdata && \
+    adduser -S -h "${GOBOARD_DB_PATH}" -D goboard -u 1000 && \
     mkdir -p "${GOBOARD_CONFIG_PATH}" && \
     mkdir -p "${GOBOARD_LOG_PATH}"
 

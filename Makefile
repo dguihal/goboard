@@ -1,6 +1,8 @@
 .PHONY: all check-go clean build install web_dependencies
 
-MIN_GOVERSION = "1.14"
+MINIMUM_SUPPORTED_GO_MAJOR_VERSION = 1
+MINIMUM_SUPPORTED_GO_MINOR_VERSION = 14
+GO_VERSION_VALIDATION_ERR_MSG = Golang version is not supported, please update to at least $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION).$(MINIMUM_SUPPORTED_GO_MINOR_VERSION)
 
 EXECUTABLES = go npm
 K := $(foreach exec,$(EXECUTABLES),\
@@ -8,16 +10,23 @@ K := $(foreach exec,$(EXECUTABLES),\
 
 GO := $(shell command -v go 2> /dev/null)
 NPM := $(shell command -v npm 2> /dev/null)
-GOVERSION := $(shell $(GO) version | egrep -o '[0-9.]*' | head -1 | cut -d '.' -f 1-2)
-GOVERSION_MAX:=$(shell echo "$(GOVERSION)\n$(MIN_GOVERSION)" | sort -V | tail -1)
+GO_MAJOR_VERSION:= $(shell $(GO) version | cut -d ' ' -f 3 | cut -d '.' -f 1 | cut -c 3)
+GO_MINOR_VERSION:= $(shell $(GO) version | cut -d ' ' -f 3 | cut -d '.' -f 2)
 
-ifneq "$(GOVERSION_MAX)" "$(GOVERSION)"
-    $(error Go version >= $(MIN_GOVERSION) required, $(GOVERSION) found)
-endif
+all: web_dependencies build
 
-all: install
+validate-go-version: ## Validates the installed version of go against minimum requirement.
+	@if [ $(GO_MAJOR_VERSION) -gt $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION) ]; then \
+		exit 0 ;\
+	elif [ $(GO_MAJOR_VERSION) -lt $(MINIMUM_SUPPORTED_GO_MAJOR_VERSION) ]; then \
+		echo '$(GO_VERSION_VALIDATION_ERR_MSG)';\
+		exit 1; \
+	elif [ $(GO_MINOR_VERSION) -lt $(MINIMUM_SUPPORTED_GO_MINOR_VERSION) ] ; then \
+		echo '$(GO_VERSION_VALIDATION_ERR_MSG)';\
+		exit 1; \
+	fi
 
-build:
+build: validate-go-version
 	$(GO) build $(GOFLAGS) ./...
 
 clean:
