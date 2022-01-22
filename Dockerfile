@@ -19,7 +19,7 @@ RUN go build -o /goboard
 ##
 ## Run
 ##
-FROM alpine:latest
+FROM alpine:3
 
 ENV SWAGGER_PATH="/var/lib/goboard/web/swagger" \
     WEBUI_PATH="/var/lib/goboard/web/static" \
@@ -31,6 +31,7 @@ ENV SWAGGER_PATH="/var/lib/goboard/web/swagger" \
 
 WORKDIR /
 
+# hadolint ignore=DL3018
 RUN apk add --no-cache tzdata && \
     adduser -S -h "${GOBOARD_DB_PATH}" -D goboard -u 1000 && \
     mkdir -p "${GOBOARD_CONFIG_PATH}" && \
