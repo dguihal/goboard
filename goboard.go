@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -16,12 +19,11 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const goBoardVer = 0.02
+const goBoardVer = 0.03
 
 // Config holds the configuration of the process
 type Config struct {
 	ListenPort        string      `yaml:"ListenPort"`
-	BasePath          string      `yaml:"BasePath"`
 	BackendTimeZone   string      `yaml:"BackendTimeZone"`
 	MaxHistorySize    int         `yaml:"MaxHistorySize"`
 	CookieDuration    int         `yaml:"CookieDuration"`
@@ -49,7 +51,6 @@ type SupportedOp struct {
 type GoBoardHandler struct {
 	Db           *bolt.DB
 	supportedOps []SupportedOp
-	BasePath     string
 }
 
 // Command line arguments management
@@ -102,9 +103,13 @@ func main() {
 		if err != nil {
 			fiAccessLog, err = os.Create(config.AccessLogFile)
 			if err != nil {
-				log.Fatalf("error: %v", err)
+				log.Printf("error: %v", err)
+				log.Printf("Fallbacking to stdout")
+				fiAccessLog = os.Stdout
 			}
 		}
+	} else {
+		fiAccessLog = os.Stdout
 	}
 
 	// Set some failsafe defaults
@@ -124,14 +129,9 @@ func main() {
 	// Initialize router
 	mainRouter := mux.NewRouter().StrictSlash(true)
 	r := mainRouter
-	if len(config.BasePath) > 0 {
-		r = mainRouter.PathPrefix(config.BasePath).Subrouter()
-	}
-	//router.HandleFunc("/", Index)
 
 	// Backend operations
 	backendHandler := NewBackendHandler(config.MaxHistorySize, config.BackendTimeZone)
-	backendHandler.BasePath = config.BasePath
 	backendHandler.Db = db
 	for _, op := range backendHandler.supportedOps {
 		r.Handle(op.RestPath, backendHandler).Methods(op.Method)
@@ -139,7 +139,6 @@ func main() {
 
 	// User operations
 	userHandler := NewUserHandler(config.CookieDuration)
-	userHandler.BasePath = config.BasePath
 	userHandler.Db = db
 	for _, op := range userHandler.supportedOps {
 		r.Handle(op.RestPath, userHandler).Methods(op.Method)
@@ -147,37 +146,46 @@ func main() {
 
 	// Admin operations
 	adminHandler := NewAdminHandler(config.AdminToken)
-	adminHandler.BasePath = config.BasePath
 	adminHandler.Db = db
 	for _, op := range adminHandler.supportedOps {
 		r.Handle(op.RestPath, adminHandler).Methods(op.Method)
 	}
 
+	templateHandler := NewTemplateHandler()
+
 	// Swagger operations
 	if len(config.SwaggerPath) > 0 {
+
+		// Sanity checks before enabling swagger capability
 		realPath := os.ExpandEnv(config.SwaggerPath)
-		if _, err := os.Stat(strings.Join([]string{realPath, "/index.html"}, "")); os.IsNotExist(err) {
+		if fi, err := os.Stat(realPath); os.IsNotExist(err) || !fi.IsDir() {
+			log.Println(realPath, "Not found or not a directory: Disabling swagger capabilities")
+		} else if _, err := os.Stat(strings.Join([]string{realPath, "/index.html"}, "")); os.IsNotExist(err) {
 			log.Println(strings.Join([]string{realPath, "/index.html"}, ""), "Not found: Disabling swagger capabilities")
 		} else {
-			swaggerHandler := NewSwaggerHandler(realPath)
-			swaggerHandler.BasePath = config.BasePath
-			for _, op := range swaggerHandler.supportedOps {
-				r.Handle(op.RestPath, swaggerHandler).Methods(op.Method)
-			}
+			templateHandler.SetSwaggerBaseDir(realPath)
+			swaggerOp := templateHandler.GetSwaggerOp()
+			r.HandleFunc(swaggerOp.RestPath, swaggerOp.handler).Methods(swaggerOp.Method)
+			r.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", http.FileServer(http.Dir(realPath))))
+			r.Handle("/swagger", http.RedirectHandler("/swagger/", http.StatusMovedPermanently))
+
 		}
 	}
 
 	// Webui operations
 	if len(config.WebuiPath) > 0 {
+
+		// Sanity checks before enabling webui capability
 		realPath := os.ExpandEnv(config.WebuiPath)
-		if _, err := os.Stat(strings.Join([]string{realPath, "/index.html"}, "")); os.IsNotExist(err) {
+		if fi, err := os.Stat(realPath); os.IsNotExist(err) || !fi.IsDir() {
+			log.Println(realPath, "Not found or not a directory: Disabling webui capabilities")
+		} else if _, err := os.Stat(strings.Join([]string{realPath, "/index.html"}, "")); os.IsNotExist(err) {
 			log.Println(strings.Join([]string{realPath, "/index.html"}, ""), "Not found: Disabling webui capabilities")
 		} else {
-			webuiHandler := NewWebuiHandler(realPath)
-			webuiHandler.BasePath = config.BasePath
-			for _, op := range webuiHandler.supportedOps {
-				r.Handle(op.RestPath, webuiHandler).Methods(op.Method)
-			}
+			templateHandler.setWebUIBaseDir(realPath)
+			r.PathPrefix("/webui/").Handler(http.StripPrefix("/webui/", http.FileServer(http.Dir(realPath))))
+			r.Handle("/webui", http.RedirectHandler("/webui/", http.StatusMovedPermanently))
+			r.Handle("/", http.RedirectHandler("/webui/", http.StatusMovedPermanently))
 		}
 	}
 
@@ -189,7 +197,29 @@ func main() {
 	} else {
 		handler = mainRouter
 	}
-	log.Fatal(http.ListenAndServe(fmt.Sprint(":", config.ListenPort), handler))
+
+	server := &http.Server{Addr: fmt.Sprint(":", config.ListenPort), Handler: handler}
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	// Setting up signal capturing
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGABRT)
+
+	// Waiting for SIGNAL
+	s := <-sigs
+
+	log.Printf("Signal '%s' received, exiting with 5s graceful-timeout", s.String())
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal(err)
+	}
 }
 
 //http://thenewstack.io/make-a-restful-json-api-go/

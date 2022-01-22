@@ -10,12 +10,10 @@ import (
 	"strings"
 	"time"
 
-	goboardbackend "github.com/dguihal/goboard/backend"
-	goboardcookie "github.com/dguihal/goboard/cookie"
+	goboardbackend "github.com/dguihal/goboard/internal/backend"
+	goboardcookie "github.com/dguihal/goboard/internal/cookie"
 	"github.com/gorilla/mux"
 )
-
-const defaultFormat string = "xml"
 
 var allowedFormats = map[string]bool{
 	"xml":  true,
@@ -36,21 +34,6 @@ type BackendHandler struct {
 	GoBoardHandler
 
 	historySize int
-	tzLocation  time.Location
-}
-
-func getOffsetFromLocation(tz string) (TZShift int) {
-	offset := 0
-	if location, err := time.LoadLocation(tz); err == nil {
-		t := time.Now()
-		_, offsetBase := t.Zone()                //TZ of process
-		_, offsetTarget := t.In(location).Zone() //TZ configured
-		offset = offsetTarget - offsetBase
-		fmt.Println(offsetTarget, offsetBase, offsetTarget-offsetBase)
-	} else {
-		fmt.Println("Error : ", err, ". Falling back to UTC")
-	}
-	return offset
 }
 
 // NewBackendHandler creates an BackendHandler object
@@ -73,15 +56,13 @@ func NewBackendHandler(historySize int, frontLocation string) (b *BackendHandler
 	}
 
 	b.historySize = historySize
-	b.BasePath = ""
 	return
 }
 
 func (b *BackendHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.URL.Path)
 
 	for _, op := range b.supportedOps {
-		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, b.BasePath+op.PathBase) {
+		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, op.PathBase) {
 			// Call specific handling method
 			op.handler(w, r)
 			return
@@ -90,7 +71,6 @@ func (b *BackendHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// If we are here : not methods has been found (shouldn't happen)
 	w.WriteHeader(http.StatusNotFound)
-	return
 }
 
 func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
@@ -131,8 +111,6 @@ func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 	}
-
-	return
 }
 
 // TODO : Manage returning an original posted data for a specific id as text
@@ -193,8 +171,6 @@ func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
-
-	return
 }
 
 func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
@@ -239,8 +215,6 @@ func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Post-Id", strconv.FormatUint(postID, 10))
 		w.WriteHeader(http.StatusNoContent)
 	}
-
-	return
 }
 
 // Guess backend format to deliver based on :

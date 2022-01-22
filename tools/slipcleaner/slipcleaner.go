@@ -9,7 +9,7 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"github.com/dguihal/goboard/backend"
+	"github.com/dguihal/goboard/internal/backend"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")

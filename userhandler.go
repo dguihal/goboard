@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	goboardcookie "github.com/dguihal/goboard/cookie"
-	goboarduser "github.com/dguihal/goboard/user"
+	goboardcookie "github.com/dguihal/goboard/internal/cookie"
+	goboarduser "github.com/dguihal/goboard/internal/user"
 )
 
 // UserHandler represents the handler of user URLs
@@ -33,7 +33,6 @@ func NewUserHandler(cookieDuration int) (u *UserHandler) {
 	}
 
 	u.cookieDurationD = cookieDuration
-	u.BasePath = ""
 
 	return
 }
@@ -41,7 +40,7 @@ func NewUserHandler(cookieDuration int) (u *UserHandler) {
 func (u *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	for _, op := range u.supportedOps {
-		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, u.BasePath+op.PathBase) {
+		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, op.PathBase) {
 			// Call specific handling method
 			op.handler(w, r)
 			return
@@ -75,7 +74,7 @@ func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		if uerr, ok := err.(*goboarduser.UserError); ok {
+		if uerr, ok := err.(*goboarduser.Error); ok {
 			if uerr.ErrCode == goboarduser.UserAlreadyExistsError {
 				w.WriteHeader(http.StatusConflict)
 				w.Write([]byte("User login already exists"))
@@ -85,8 +84,6 @@ func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusInternalServerError)
 	u.logger.Println(err.Error())
-
-	return
 }
 
 func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +104,7 @@ func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
 
 	if err := goboarduser.AuthUser(u.Db, login, passwd); err != nil {
 		u.logger.Println(err.Error())
-		if uerr, ok := err.(*goboarduser.UserError); ok {
+		if uerr, ok := err.(*goboarduser.Error); ok {
 			switch uerr.ErrCode {
 			case goboarduser.AuthenticationFailed:
 				w.WriteHeader(http.StatusUnauthorized)
@@ -187,5 +184,4 @@ func (u *UserHandler) whoAmI(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusForbidden)
 	w.Write([]byte("You need to be authenticated"))
-	return
 }
