@@ -14,7 +14,7 @@
     "prestart": "npm install",
     "postinstall": "bower update --unsafe-perm",
     "build": "grunt",
-    "lint": "standard static/js/*.js",
-    "fixlint": "standard --fix static/js/*.js"
+    "lint": "standard *.js static/js/*.js",
+    "fixlint": "standard --fix *.js static/js/*.js"
   }
 }

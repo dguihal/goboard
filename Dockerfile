@@ -31,7 +31,7 @@ ENV SWAGGER_PATH="/var/lib/goboard/web/swagger" \
 
 WORKDIR /
 
-RUN apk add tzdata && \
+RUN apk add --no-cache tzdata && \
     adduser -S -h "${GOBOARD_DB_PATH}" -D goboard -u 1000 && \
     mkdir -p "${GOBOARD_CONFIG_PATH}" && \
     mkdir -p "${GOBOARD_LOG_PATH}"

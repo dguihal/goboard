@@ -78,18 +78,18 @@ export function webuiInit () {
         base: './images/emojis/',
         ext: '.png'
       }
-      $('#emojiMod').val('png')
+      $('#emoji-mode').val('png')
     } else if (emojiMode === 'svg') {
       emojiRenderSettings = {
         base: './images/emojis/',
         folder: 'svg',
         ext: '.svg'
       }
-      $('#emojiMod').val('svg')
+      $('#emoji-mode').val('svg')
     }
   }
 
-  $('#emojiMod').on({
+  $('#emoji-mode').on({
     change: function (e) {
       const emojiMode = $('option:selected', this).attr('value')
       if (emojiMode === 'png') {
@@ -169,7 +169,7 @@ export function webuiInit () {
 
   // Totoz Server
   if (typeof settings.TOTOZ_DEFAULT_SERVER === 'string') {
-    $('#totozServer')[0].placeholder = settings.TOTOZ_DEFAULT_SERVER
+    $('#totoz-server')[0].placeholder = settings.TOTOZ_DEFAULT_SERVER
   }
 
   // Backend API link
@@ -267,8 +267,8 @@ function logout () {
 }
 
 function postMsg () {
-  let postData = 'message=' + encodeURIComponent($('#palmiInput').val())
-  const customUA = $('#InfoInput').val()
+  let postData = 'message=' + encodeURIComponent($('#palmi-input').val())
+  const customUA = $('#info-input').val()
   if (customUA) {
     postData += '&info=' + encodeURIComponent(customUA)
   }
@@ -285,7 +285,7 @@ function postMsg () {
     context: $('body')
   })
     .done(function (data, textStatus, jqXHR) {
-      $('#palmiInput').val('')
+      $('#palmi-input').val('')
       // Stop pini refresh
       clearInterval(intervalID)
       updatePini()
@@ -555,7 +555,7 @@ function postClockClicked (clickedId) {
 
 // By now only appends, should take care of caret position
 function insertPalmi (string) {
-  const palmiInput = $('#palmiInput')
+  const palmiInput = $('#palmi-input')
   const caretPos = palmiInput[0].selectionStart
   const caretPosEnd = palmiInput[0].selectionEnd
   const palmiInputTxt = palmiInput.val()
@@ -577,7 +577,7 @@ function insertPalmi (string) {
     caretPos + string.length,
     caretPos + string.length
   )
-  $('#palmiInput').focus()
+  $('#palmi-input').focus()
 }
 
 function formatPostClock (date) {
