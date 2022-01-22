@@ -235,8 +235,8 @@ export function webuiInit () {
 }
 
 function login () {
-  const loginName = $('#loginInput').val()
-  const pass = $('#passwordInput').val()
+  const loginName = $('#login-input').val()
+  const pass = $('#password-input').val()
 
   $.ajax({
     method: 'POST',
