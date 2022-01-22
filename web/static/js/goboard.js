@@ -385,15 +385,7 @@ function norlogeHighlight (e) {
   }
 
   queryStrs.forEach(function (e) {
-    $('#pini')
-      .find('span[id$=' + e + ']')
-      .each(function (index) {
-        if ($(this).hasClass('clock_ref')) {
-          $(this).addClass('highlighted')
-        } else {
-          $(this).parent().addClass('highlighted')
-        }
-      })
+    highlight('span[id$=' + e + ']') // https://api.jquery.com/attribute-ends-with-selector/
   })
 }
 
@@ -408,10 +400,13 @@ function clockRefHighlight (e) {
   if (norlogeD.length > 0) {
     queryStr += norlogeD + '-'
   }
-  queryStr += 't' + norlogeT + (norlogeI ? '-i' + norlogeI : '')
+  queryStr += 'span[id*=t' + norlogeT + (norlogeI ? '-i' + norlogeI : '') + ']' // https://api.jquery.com/attribute-contains-selector/
+  highlight(queryStr)
+}
 
+function highlight (queryStr) {
   $('#pini')
-    .find('span[id*=' + queryStr + ']')
+    .find(queryStr)
     .each(function (index) {
       if ($(this).hasClass('clock_ref')) {
         $(this).addClass('highlighted')
@@ -427,11 +422,13 @@ function clearHighlight (e) {
     .each(function (index) {
       $(this).removeClass('highlighted')
     })
+    /*
   $('#pini')
     .find('.highlighted')
     .each(function (index) {
       $(this).removeClass('highlighted')
     })
+    */
 }
 
 function updatePini () {
