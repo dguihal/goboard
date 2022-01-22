@@ -54,26 +54,26 @@ a.nav-link {
 /* Pini css */
 
 #pini {
-  padding: 4.5rem 0 4.5rem 0;
+  padding: 4.5rem 0;
   z-index: 1;
 }
 
-span.post_clock {
+span.post-clock {
   display: inline-block;
   font-weight: bold;
   vertical-align: middle;
   padding-right: 5px;
 }
 
-span.post_clock::before {
+span.post-clock::before {
   content: "[";
 }
 
-span.post_clock::after {
+span.post-clock::after {
   content: "]";
 }
 
-span.post_login {
+span.post-login {
   color: brown;
   display: inline-block;
   max-width: 15%;
@@ -84,7 +84,7 @@ span.post_login {
   padding-right: 5px;
 }
 
-span.post_ua {
+span.post-ua {
   color: lightcoral;
   display: inline-block;
   max-width: 20%;
@@ -95,7 +95,7 @@ span.post_ua {
   padding-right: 5px;
 }
 
-span.post_message {
+span.post-message {
   white-space: normal;
 }
 
@@ -105,12 +105,12 @@ span.totoz {
   cursor: pointer;
 }
 
-span.clock_ref {
+span.clock-ref {
   color: #00d;
   cursor: pointer;
 }
 
-span.norloge_ref_meta {
+span.norloge-ref-meta {
   display: none;
 }
 

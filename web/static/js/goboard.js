@@ -68,7 +68,7 @@ export function webuiInit () {
         clearHighlight(e)
       }
     },
-    '.post_clock'
+    '.post-clock'
   )
 
   if (sessionStorage.getItem('emojiMode') !== null) {
@@ -160,10 +160,10 @@ export function webuiInit () {
         clearHighlight(e)
       }
     },
-    '.clock_ref'
+    '.clock-ref'
   )
 
-  $('#pini').on('mouseenter', '.clock_ref', function (e) {
+  $('#pini').on('mouseenter', '.clock-ref', function (e) {
     return false
   })
 
@@ -390,7 +390,7 @@ function norlogeHighlight (e) {
 }
 
 function clockRefHighlight (e) {
-  const meta = $('span.norloge_ref_meta', e.target)
+  const meta = $('span.norloge-ref-meta', e.target)
   const parts = meta[0].innerText.split('|')
   const norlogeD = parts[0].replace(/:/g, '_')
   const norlogeT = parts[1].replace(/:/g, '_')
@@ -408,7 +408,7 @@ function highlight (queryStr) {
   $('#pini')
     .find(queryStr)
     .each(function (index) {
-      if ($(this).hasClass('clock_ref')) {
+      if ($(this).hasClass('clock-ref')) {
         $(this).addClass('highlighted')
       } else {
         $(this).parent().addClass('highlighted')
@@ -485,20 +485,20 @@ function updatePini () {
           index++
         }
 
-        s.className = 'post_clock'
+        s.className = 'post-clock'
         s.id = idClock + '-i' + index
         s.title = item.id
         s.innerHTML = formatedClock.slice(-8)
         d.appendChild(s)
 
         s = document.createElement('span')
-        s.className = item.login.length > 0 ? 'post_login' : 'post_ua'
+        s.className = item.login.length > 0 ? 'post-login' : 'post-ua'
         s.title = item.info
         s.innerHTML = item.login.length > 0 ? item.login : item.info
         d.appendChild(s)
 
         s = document.createElement('span')
-        s.className = 'post_message'
+        s.className = 'post-message'
         let msg = totozify(item.message)
         msg = norlogify(msg)
         s.innerHTML = msg
@@ -637,12 +637,12 @@ function norlogify (message) {
             : ''
 
           return (
-            '<span class="clock_ref" id="d' +
+            '<span class="clock-ref" id="d' +
             d +
             '-t' +
             t +
             (i ? '-i' + i : '') +
-            '"><span class="norloge_ref_meta">' +
+            '"><span class="norloge-ref-meta">' +
             d +
             '|' +
             t +
