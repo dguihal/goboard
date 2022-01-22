@@ -8,11 +8,13 @@
     "grunt": "^1.4.1",
     "grunt-bowercopy": "^1.2.5",
     "load-grunt-tasks": "^5.1.0",
-    "standard": "^16.0.4"
+    "standard": "*"
   },
   "scripts": {
     "prestart": "npm install",
     "postinstall": "bower update --unsafe-perm",
-    "build": "grunt"
+    "build": "grunt",
+    "lint": "standard static/js/*.js",
+    "fixlint": "standard --fix static/js/*.js"
   }
 }

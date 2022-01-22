@@ -1,4 +1,8 @@
-function show_success (msg) {
+/* global $, sessionStorage, twemoji, emojiRenderSettings:true, totozServer, maxId:true, firstLoad:true, intervalID:true */
+/* exported webuiInit */
+import * as settings from './settings.js'
+
+function showSuccess (msg) {
   $('#success-alert').html(msg)
   $('#success-alert').alert()
   $('#success-alert')
@@ -8,7 +12,7 @@ function show_success (msg) {
     })
 }
 
-function show_error (msg) {
+function showError (msg) {
   $('#danger-alert').html(msg)
   $('#danger-alert').alert()
   $('#danger-alert')
@@ -18,7 +22,7 @@ function show_error (msg) {
     })
 }
 
-function hide_settings () {
+function hideSettings () {
   $('#left-menu').animate(
     {
       width: '0px'
@@ -30,9 +34,9 @@ function hide_settings () {
   )
 }
 
-function toggle_settings () {
+function toggleSettings () {
   if ($('#left-menu').is(':visible')) {
-    hide_settings()
+    hideSettings()
   } else {
     $('#left-menu').show()
     $('#left-menu').animate(
@@ -44,10 +48,10 @@ function toggle_settings () {
   }
 }
 
-function webui_init () {
+export function webuiInit () {
   // Palmi
   $('#palmi').submit(function (e) {
-    post_msg(e)
+    postMsg(e)
     e.preventDefault()
   })
 
@@ -112,7 +116,7 @@ function webui_init () {
         const srcElt = this
         const totozTxt = srcElt.innerText.slice(2, -1) // Surrounding "[:" & "]"
 
-        const totozSrv = totozServer || TOTOZ_DEFAULT_SERVER
+        const totozSrv = totozServer || settings.TOTOZ_DEFAULT_SERVER
 
         const popup = $('#popup')
         if (popup.is(':visible')) {
@@ -164,14 +168,14 @@ function webui_init () {
   })
 
   // Totoz Server
-  if (typeof TOTOZ_DEFAULT_SERVER === 'string') {
-    $('#totozServer')[0].placeholder = TOTOZ_DEFAULT_SERVER
+  if (typeof settings.TOTOZ_DEFAULT_SERVER === 'string') {
+    $('#totozServer')[0].placeholder = settings.TOTOZ_DEFAULT_SERVER
   }
 
   // Backend API link
-  const swagger_href = '../swagger/' + SWAGGER_FILE_NAME
+  const swaggerHref = '../swagger/' + settings.SWAGGER_FILE_NAME
   $.ajax({
-    url: swagger_href,
+    url: swaggerHref,
     type: 'GET',
     statusCode: {
       404: function () {
@@ -182,7 +186,7 @@ function webui_init () {
     .done(function (data, textStatus, request) {
       $('#backend-api-link').attr(
         'href',
-        '../swagger/?url=' + SWAGGER_FILE_NAME
+        '../swagger/?url=' + settings.SWAGGER_FILE_NAME
       )
     })
     .fail(function (jqXHR, textStatus, errorThrown) {
@@ -191,13 +195,13 @@ function webui_init () {
 
   // Settings menu
   $('#settings').on('click', function (e) {
-    toggle_settings(e)
+    toggleSettings(e)
     e.stopPropagation()
     e.preventDefault()
   })
 
   $('#toggler-btn').on('click', function (e) {
-    toggle_settings(e)
+    toggleSettings(e)
     e.preventDefault()
   })
 
@@ -209,7 +213,7 @@ function webui_init () {
       container.has(e.target).length === 0
     ) {
       // ... nor a descendant of the container
-      hide_settings()
+      hideSettings()
     }
   })
 
@@ -225,9 +229,9 @@ function webui_init () {
   })
 
   whoami()
-  update_pini()
+  updatePini()
   // Launch pini periodic refresh
-  intervalID = setInterval(update_pini, PINI_REFRESH_MS)
+  intervalID = setInterval(updatePini, settings.PINI_REFRESH_MS)
 }
 
 function login () {
@@ -244,11 +248,11 @@ function login () {
     }
   })
     .done(function (data, textStatus, request) {
-      show_success('Login successfull')
+      showSuccess('Login successfull')
       whoami()
     })
     .fail(function (jqXHR, textStatus, errorThrown) {
-      show_error('Login failed : ' + errorThrown)
+      showError('Login failed : ' + errorThrown)
     })
 }
 
@@ -262,7 +266,7 @@ function logout () {
   })
 }
 
-function post_msg () {
+function postMsg () {
   let postData = 'message=' + encodeURIComponent($('#palmiInput').val())
   const customUA = $('#InfoInput').val()
   if (customUA) {
@@ -271,7 +275,7 @@ function post_msg () {
 
   $.ajax({
     method: 'POST',
-    url: POST_URL,
+    url: settings.POST_URL,
     contentType: 'application/x-www-form-urlencoded',
     // data to be added to query string:
     data: postData,
@@ -284,9 +288,9 @@ function post_msg () {
       $('#palmiInput').val('')
       // Stop pini refresh
       clearInterval(intervalID)
-      update_pini()
+      updatePini()
       // Relaunch pini periodic refresh
-      intervalID = setInterval(update_pini, PINI_REFRESH_MS)
+      intervalID = setInterval(updatePini, settings.PINI_REFRESH_MS)
     })
     .fail(function (jqXHR, textStatus, errorThrown) {
       console.log('Ajax error : ' + textStatus)
@@ -310,9 +314,9 @@ function norlogeclicked (e) {
   let norloge = ''
 
   // Date if necessary
-  if (currDate != parts[0].slice(-10)) {
+  if (currDate !== parts[0].slice(-10)) {
     const postDate = parts[0].slice(-10)
-    if (currDate.slice(0, 4) != postDate.slice(0, 4)) {
+    if (currDate.slice(0, 4) !== postDate.slice(0, 4)) {
       norloge += parts[0].slice(-10).replace(/_/g, '/') + '#'
     } else {
       norloge += parts[0].slice(-5).replace(/_/g, '/') + '#'
@@ -354,33 +358,33 @@ function norlogeHighlight (e) {
   const norlogeDLess = 'd' // For dateless norloges
   const norlogeT = parts[1]
 
-  const query_strs = []
+  const queryStrs = []
 
   if (parts.length >= 3 && parts[2].slice(1) > 1) {
     if (norlogeD.length >= 2) {
       // Date
-      query_strs.push(norlogeD + '-' + norlogeT + '-' + parts[2])
-      query_strs.push(norlogeDShort + '-' + norlogeT + '-' + parts[2])
-      query_strs.push(norlogeDLess + '-' + norlogeT + '-' + parts[2])
+      queryStrs.push(norlogeD + '-' + norlogeT + '-' + parts[2])
+      queryStrs.push(norlogeDShort + '-' + norlogeT + '-' + parts[2])
+      queryStrs.push(norlogeDLess + '-' + norlogeT + '-' + parts[2])
     } else {
-      query_strs.push(norlogeT + '-' + parts[2])
+      queryStrs.push(norlogeT + '-' + parts[2])
     }
   } else {
     if (norlogeD.length >= 2) {
       // Date
-      query_strs.push(norlogeD + '-' + norlogeT)
-      query_strs.push(norlogeD + '-' + norlogeT + '-' + parts[2])
-      query_strs.push(norlogeDShort + '-' + norlogeT)
-      query_strs.push(norlogeDShort + '-' + norlogeT + '-' + parts[2])
-      query_strs.push(norlogeDLess + '-' + norlogeT)
-      query_strs.push(norlogeDLess + '-' + norlogeT + '-' + parts[2])
+      queryStrs.push(norlogeD + '-' + norlogeT)
+      queryStrs.push(norlogeD + '-' + norlogeT + '-' + parts[2])
+      queryStrs.push(norlogeDShort + '-' + norlogeT)
+      queryStrs.push(norlogeDShort + '-' + norlogeT + '-' + parts[2])
+      queryStrs.push(norlogeDLess + '-' + norlogeT)
+      queryStrs.push(norlogeDLess + '-' + norlogeT + '-' + parts[2])
     } else {
-      query_strs.push(norlogeT)
-      query_strs.push(norlogeT + '-i1')
+      queryStrs.push(norlogeT)
+      queryStrs.push(norlogeT + '-i1')
     }
   }
 
-  query_strs.forEach(function (e) {
+  queryStrs.forEach(function (e) {
     $('#pini')
       .find('span[id$=' + e + ']')
       .each(function (index) {
@@ -400,14 +404,14 @@ function clockRefHighlight (e) {
   const norlogeT = parts[1].replace(/:/g, '_')
   const norlogeI = parts[2]
 
-  let query_str = ''
+  let queryStr = ''
   if (norlogeD.length > 0) {
-    query_str += norlogeD + '-'
+    queryStr += norlogeD + '-'
   }
-  query_str += 't' + norlogeT + (norlogeI ? '-i' + norlogeI : '')
+  queryStr += 't' + norlogeT + (norlogeI ? '-i' + norlogeI : '')
 
   $('#pini')
-    .find('span[id*=' + query_str + ']')
+    .find('span[id*=' + queryStr + ']')
     .each(function (index) {
       if ($(this).hasClass('clock_ref')) {
         $(this).addClass('highlighted')
@@ -430,8 +434,8 @@ function clearHighlight (e) {
     })
 }
 
-function update_pini () {
-  let url = BACKEND_URL
+function updatePini () {
+  let url = settings.BACKEND_URL
   if (url.indexOf('%i')) {
     url = url.replace('%i', maxId.toString())
   }
@@ -507,7 +511,7 @@ function update_pini () {
         pini.append(d)
 
         // Purge too olds posts
-        while (pini.children().length > MAX_POSTS) {
+        while (pini.children().length > settings.MAX_POSTS) {
           pini.children(':first-child').remove()
         }
       })
@@ -544,8 +548,8 @@ function whoami () {
     })
 }
 
-function postClockClicked (clicked_id) {
-  const txt = clicked_id + ' '
+function postClockClicked (clickedId) {
+  const txt = clickedId + ' '
   insertPalmi(txt)
 }
 
@@ -556,7 +560,7 @@ function insertPalmi (string) {
   const caretPosEnd = palmiInput[0].selectionEnd
   const palmiInputTxt = palmiInput.val()
 
-  if (caretPos == caretPosEnd) {
+  if (caretPos === caretPosEnd) {
     palmiInput.val(
       palmiInputTxt.substring(0, caretPos) +
         string +
@@ -587,7 +591,7 @@ function formatPostClock (date) {
 }
 
 function totozify (message) {
-  const exp = /\[\:([^\t\)\]]+)\]/g
+  const exp = /\[:([^\t)\]]+)\]/g
   return message.replace(exp, '<span class="totoz">[:$1]</span>')
 }
 
@@ -613,13 +617,12 @@ function norlogify (message) {
 
   // Do not expand nhorloges in html links, so we need to tokenize on these tags to
   //  only apply replace outside.
-  const aReg = new RegExp('((?:<a)|(?:<\\/a\\s*>))')
-  const splits = message.split(aReg)
+  const splits = message.split(/((?:<a)|(?:<\/a\s*>))/)
   let res = ''
 
   for (let i = 0; i < splits.length; i++) {
     let tmp = splits[i]
-    if (i % 4 == 0) {
+    if (i % 4 === 0) {
       tmp = tmp.replace(
         exp,
         function (match, date, time, index, dest, offset, string) {
