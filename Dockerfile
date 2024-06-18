@@ -1,23 +1,57 @@
-FROM golang:alpine
 
-RUN apk add --no-cache bash git su-exec
+##
+## Build
+##
+FROM golang:1.14-alpine AS build
 
-WORKDIR /go/src/
+WORKDIR /goboard
 
-RUN git clone https://github.com/dguihal/goboard
+COPY go.mod ./
+COPY go.sum ./
 
-WORKDIR goboard
-COPY dockerfiles/start.sh /go/bin/
+RUN go mod download
 
-ENV GOPATH /go
-COPY goboard.yaml /go/bin/goboard.yaml.template
+COPY *.go ./
+COPY internal ./internal/
 
-RUN go mod vendor
-RUN go build
+RUN go build -o /goboard
 
-RUN cp -Rfv /go/src/goboard/webui /go/bin/webui
-RUN cp -Rfv /go/src/goboard/swagger-ui /go/bin/swaggerui
+##
+## Run
+##
+FROM alpine:3
+
+ENV SWAGGER_PATH="/var/lib/goboard/web/swagger" \
+    WEBUI_PATH="/var/lib/goboard/web/static" \
+    GOBOARD_DB_PATH="/var/lib/goboard" \
+    GOBOARD_DB_FILE="/var/lib/goboard/goboard.db" \
+    GOBOARD_CONFIG_PATH="/etc/goboard" \
+    GOBOARD_CONFIG_FILE="/etc/goboard/goboard.yaml" \
+    GOBOARD_LOG_PATH="/var/log/goboard"
+
+WORKDIR /
+
+# hadolint ignore=DL3018
+RUN apk add --no-cache tzdata && \
+    adduser -S -h "${GOBOARD_DB_PATH}" -D goboard -u 1000 && \
+    mkdir -p "${GOBOARD_CONFIG_PATH}" && \
+    mkdir -p "${GOBOARD_LOG_PATH}"
+
+COPY --from=build /goboard/goboard /
+COPY dockerfiles/entrypoint.sh /
+COPY goboard.yaml "${GOBOARD_CONFIG_FILE}"
+COPY dockerfiles/entrypoint.sh /
+COPY goboard.yaml "${GOBOARD_CONFIG_FILE}"
+COPY web/swagger/ "${SWAGGER_PATH}"
+COPY api/swagger.yaml "${SWAGGER_PATH}"
+COPY web/static/ "${WEBUI_PATH}"
+
+RUN chown goboard: "${GOBOARD_CONFIG_PATH}" && \
+    chown goboard: "${GOBOARD_LOG_PATH}" && \
+    chmod +x /entrypoint.sh && \
+    chmod +x /goboard
 
 EXPOSE 8080
 
-ENTRYPOINT ["/go/bin/start.sh"]
+USER goboard
+ENTRYPOINT ["/entrypoint.sh"]

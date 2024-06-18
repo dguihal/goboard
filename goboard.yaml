@@ -1,11 +1,6 @@
 ---
-
 # Listen port of the board server
 ListenPort: 8080
-
-# BasePath of goboard URLS
-# Leave empty if URLs are relative to root PATH
-BasePath: ""
 
 # Maximum size of a backend returned by the board server
 MaxHistorySize: 50
@@ -16,23 +11,23 @@ BackendTimeZone: "Europe/Paris"
 # Cookies duration in days
 CookieDuration: 365
 
-#Leave empty or remove if you don't want access log file
+# Location of db file
 GoBoardDBFile: goboard.db
 
-#GoBoard DB File permissions (octal notation)
+# GoBoard DB File permissions (octal notation)
 GoBoardDBFileMode: 0600
 
-#Leave empty or remove if you don't want access log file
+# Leave empty or remove if you don't want access log file
 AccessLogFile: access.log
 
-#Access Log File permissions (octal notation)
+# Access Log File permissions (octal notation)
 AccessLogFileMode: 0660
 
-#Path for swagger dist files (optional, disabled if invalid)
-SwaggerPath: $HOME/swagger-ui
+# Path for swagger dist files (optional, disabled if invalid)
+SwaggerPath: ./web/swagger
 
-#Path for webui (optional, disabled if invalid)
-WebuiPath: $HOME/webui
+# Path for webui (optional, disabled if invalid)
+WebuiPath: ./web/static
 
-#No minimum length is enforced, but you are strongly encouraged to set it long and complex
+# No minimum length is enforced, but you are strongly encouraged to set it long and complex
 AdminToken: Taiste

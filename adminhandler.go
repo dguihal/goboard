@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	goboardbackend "github.com/dguihal/goboard/backend"
-	goboardcookie "github.com/dguihal/goboard/cookie"
-	goboarduser "github.com/dguihal/goboard/user"
+	goboardbackend "github.com/dguihal/goboard/internal/backend"
+	goboardcookie "github.com/dguihal/goboard/internal/cookie"
+	goboarduser "github.com/dguihal/goboard/internal/user"
 	"github.com/gorilla/mux"
 )
 
@@ -40,7 +40,6 @@ func NewAdminHandler(adminToken string) (a *AdminHandler) {
 		log.Println("Admin token len <", tokenWarnLen, ": Come on I'm sure you can do a lot better")
 	}
 	a.adminToken = adminToken
-	a.BasePath = ""
 	return
 }
 
@@ -53,7 +52,7 @@ func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, op := range a.supportedOps {
-		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, a.BasePath+op.PathBase) {
+		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, op.PathBase) {
 			// Call specific handling method
 			op.handler(w, r)
 			return
@@ -62,7 +61,6 @@ func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// If we are here : no methods has been found (shouldn't happen)
 	w.WriteHeader(http.StatusNotFound)
-	return
 }
 
 func (a *AdminHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +68,7 @@ func (a *AdminHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	login := (mux.Vars(r))["login"]
 
 	if err := goboarduser.DeleteUser(a.Db, login); err != nil {
-		if uerr, ok := err.(*goboarduser.UserError); ok {
+		if uerr, ok := err.(*goboarduser.Error); ok {
 			if uerr.ErrCode == goboarduser.UserDoesNotExistsError {
 				w.WriteHeader(http.StatusNotFound)
 				w.Write([]byte(fmt.Sprintf("User %s Not found", login)))
@@ -91,8 +89,6 @@ func (a *AdminHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	return
-
 }
 
 func (a *AdminHandler) deletePost(w http.ResponseWriter, rq *http.Request) {
@@ -112,8 +108,6 @@ func (a *AdminHandler) deletePost(w http.ResponseWriter, rq *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	return
-
 }
 
 func (a *AdminHandler) getUser(w http.ResponseWriter, r *http.Request) {
