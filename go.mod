@@ -1,6 +1,6 @@
 module github.com/dguihal/goboard
 
-go 1.14
+go 1.21.11
 
 require (
 	github.com/boltdb/bolt v1.3.1
