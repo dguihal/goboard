@@ -27,10 +27,10 @@ validate-go-version: ## Validates the installed version of go against minimum re
 	fi
 
 build: validate-go-version
-	$(GO) build $(GOFLAGS) ./...
+	$(GO) build $(GOFLAGS)
 
 clean:
-	$(GO) clean $(GOFLAGS) -i ./...
+	$(GO) clean $(GOFLAGS)
 	cd web ; $(NPM) run-script clean
 
 web_dependencies:
