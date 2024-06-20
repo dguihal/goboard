@@ -5,8 +5,8 @@ import (
 	"encoding/xml"
 	"time"
 
-	"github.com/boltdb/bolt"
 	goboardutils "github.com/dguihal/goboard/internal/utils"
+	bolt "go.etcd.io/bbolt"
 )
 
 const backendBucketName string = "Backend"

@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -13,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/boltdb/bolt"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	bolt "go.etcd.io/bbolt"
 	"gopkg.in/yaml.v2"
 )
 
@@ -82,7 +81,7 @@ func main() {
 
 	log.Printf("Using %s as config file\n", configFilePath)
 
-	configData, err := ioutil.ReadFile(configFilePath)
+	configData, err := os.ReadFile(configFilePath)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}

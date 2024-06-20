@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/boltdb/bolt"
 	"github.com/dchest/uniuri"
+	bolt "go.etcd.io/bbolt"
 )
 
 const goboardCookieName string = "goboard_id"
