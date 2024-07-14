@@ -4,7 +4,7 @@
   "private": true,
   "devDependencies": {
     "bower": "^1.8.14",
-    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-airbnb-base": "^15.0.0",
     "grunt": "^1.6.1",
     "grunt-bowercopy": "^1.2.5",
     "load-grunt-tasks": "^5.1.0",
