@@ -8,12 +8,12 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/hishboy/gocommons v0.0.0-20160108023425-89887b2ade6d
 	go.etcd.io/bbolt v1.3.10
-	golang.org/x/crypto v0.24.0
-	golang.org/x/net v0.26.0
+	golang.org/x/crypto v0.25.0
+	golang.org/x/net v0.27.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
 	github.com/felixge/httpsnoop v1.0.3 // indirect
-	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/sys v0.22.0 // indirect
 )
