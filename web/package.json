@@ -3,7 +3,7 @@
   "version": "0.0.3",
   "private": true,
   "devDependencies": {
-    "bower": "^1.8.12",
+    "bower": "^1.8.14",
     "eslint-config-airbnb-base": "^14.2.1",
     "grunt": "^1.4.1",
     "grunt-bowercopy": "^1.2.5",
