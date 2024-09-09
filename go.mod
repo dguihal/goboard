@@ -10,6 +10,7 @@ require (
 	go.etcd.io/bbolt v1.3.10
 	golang.org/x/crypto v0.27.0
 	golang.org/x/net v0.27.0
+	golang.org/x/net v0.29.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
