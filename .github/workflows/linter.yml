@@ -20,6 +20,7 @@ on:
     # Remove the line above to run when pushing to master
   pull_request:
     branches: [master, main]
+  workflow_dispatch:
 
 ###############
 # Set the Job #
@@ -35,6 +36,16 @@ jobs:
     # Load all steps #
     ##################
     steps:
+      - name: Set variables
+        id: setvars
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]
+          then
+            echo "VALIDATE_ALL_CODEBASE=true" >> $GITHUB_STATE
+          else
+            echo "VALIDATE_ALL_CODEBASE=false" >> $GITHUB_STATE
+          fi
+
       ##########################
       # Checkout the code base #
       ##########################
@@ -50,7 +61,6 @@ jobs:
       - name: Lint Code Base
         uses: github/super-linter@v6
         env:
-          VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_GO: false
