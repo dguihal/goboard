@@ -1,6 +1,7 @@
 module github.com/dguihal/goboard
 
-go 1.21.11
+go 1.22
+
 toolchain go1.22.5
 
 require (
