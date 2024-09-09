@@ -41,9 +41,9 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]
           then
-            echo "VALIDATE_ALL_CODEBASE=true" >> $GITHUB_STATE
+            echo "VALIDATE_ALL_CODEBASE=true" >> "$GITHUB_STATE"
           else
-            echo "VALIDATE_ALL_CODEBASE=false" >> $GITHUB_STATE
+            echo "VALIDATE_ALL_CODEBASE=false" >> "$GITHUB_STATE"
           fi
 
       ##########################
