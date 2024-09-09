@@ -16,11 +16,12 @@ name: Lint Code Base
 #############################
 on:
   push:
-    branches-ignore: [master, main]
-    # Remove the line above to run when pushing to master
+    branches: [master, main]
   pull_request:
     branches: [master, main]
   workflow_dispatch:
+
+permissions: read-all
 
 ###############
 # Set the Job #
@@ -31,6 +32,8 @@ jobs:
     name: Lint Code Base
     # Set the agent to run on
     runs-on: ubuntu-latest
+    permissions:
+      statuses: write
 
     ##################
     # Load all steps #
@@ -41,10 +44,11 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]
           then
-            echo "VALIDATE_ALL_CODEBASE=true" >> $GITHUB_STATE
+            echo "VALIDATE_ALL_CODEBASE=true" >> "$GITHUB_ENV"
           else
-            echo "VALIDATE_ALL_CODEBASE=false" >> $GITHUB_STATE
+            echo "VALIDATE_ALL_CODEBASE=false" >> "$GITHUB_ENV"
           fi
+          cat "$GITHUB_ENV"
 
       ##########################
       # Checkout the code base #

@@ -77,7 +77,10 @@ func GetBackend(db *bolt.DB, historySize int, last uint64) (posts []Post, err er
 
 		for k, v := c.Last(); k != nil && count < historySize; k, v = c.Prev() {
 			var p Post
-			json.Unmarshal(v, &p)
+			err = json.Unmarshal(v, &p)
+			if err != nil {
+				return err
+			}
 
 			if p.ID <= last {
 				break
@@ -105,7 +108,10 @@ func GetPost(db *bolt.DB, id uint64) (post Post, err error) {
 
 		v := b.Get(goboardutils.IToB(id))
 		if v != nil {
-			json.Unmarshal(v, &post)
+			err := json.Unmarshal(v, &post)
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -122,7 +128,11 @@ func PostMessage(db *bolt.DB, post Post) (postID uint64, err error) {
 			return err
 		}
 
-		id, _ := b.NextSequence()
+		id, err := b.NextSequence()
+		if err != nil {
+			return err
+		}
+
 		postID = uint64(id)
 		post.ID = postID
 
@@ -131,7 +141,7 @@ func PostMessage(db *bolt.DB, post Post) (postID uint64, err error) {
 			return err
 		}
 
-		err = b.Put(goboardutils.IToB(post.ID), buf)
+		_ = b.Put(goboardutils.IToB(post.ID), buf)
 
 		return nil
 	})
