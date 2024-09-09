@@ -8,16 +8,17 @@ on:
     tags:
       - v*
   workflow_dispatch:
-  
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+
+permissions: read-all
 
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       packages: write
 
     steps:
@@ -48,6 +49,7 @@ jobs:
           tags: |
             # set latest tag for master branch
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
+
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6.0.0
