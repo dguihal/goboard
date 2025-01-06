@@ -2,6 +2,8 @@
 /* exported webuiInit */
 import * as settings from './settings.js'
 
+$(document).ready(function() {webuiInit();})
+
 function showSuccess (msg) {
   $('#success-alert').html(msg)
   $('#success-alert').alert()
