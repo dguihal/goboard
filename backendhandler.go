@@ -266,6 +266,10 @@ func guessFormat(formatAttr string, acceptHeader string) (format string) {
 
 func postsToXML(posts []goboardbackend.Post, backendLocation string) []byte {
 	var b = goboardbackend.Board{}
+	var outputBuffer bytes.Buffer
+
+	outputBuffer.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+
 	if (len(backendLocation)) > 0 {
 		b.Site = "http://" + backendLocation
 	} else {
@@ -287,7 +291,9 @@ func postsToXML(posts []goboardbackend.Post, backendLocation string) []byte {
 	if err != nil {
 		return []byte(err.Error())
 	}
-	return s
+	outputBuffer.Write(s)
+
+	return outputBuffer.Bytes()
 }
 
 func postsToJSON(posts []goboardbackend.Post) []byte {

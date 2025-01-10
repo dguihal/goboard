@@ -18,7 +18,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const goBoardVer = 0.03
+const goBoardVer = "0.0.4"
 
 // Config holds the configuration of the process
 type Config struct {
@@ -213,7 +213,7 @@ func main() {
 	// Initialize router
 	mainRouter := setupRouter(db, config)
 
-	fmt.Println("GoBoard version ", goBoardVer, " starting on port", config.ListenPort)
+	fmt.Println("GoBoard version", goBoardVer, "starting on port", config.ListenPort)
 
 	handler := handlers.LoggingHandler(fiAccessLog, mainRouter)
 
