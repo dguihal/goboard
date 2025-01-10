@@ -114,7 +114,8 @@ func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
 }
 
 // TODO : Manage returning an original posted data for a specific id as text
-//        Maybe consider allowing this only for admins (not sure it is relevant)
+//
+//	Maybe consider allowing this only for admins (not sure it is relevant)
 func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
@@ -258,6 +259,10 @@ func guessFormat(formatAttr string, acceptHeader string) (format string) {
 
 func postsToXML(posts []goboardbackend.Post, backendLocation string) []byte {
 	var b = goboardbackend.Board{}
+	var outputBuffer bytes.Buffer
+
+	outputBuffer.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+
 	if (len(backendLocation)) > 0 {
 		b.Site = "http://" + backendLocation
 	} else {
@@ -279,7 +284,9 @@ func postsToXML(posts []goboardbackend.Post, backendLocation string) []byte {
 	if err != nil {
 		return []byte(err.Error())
 	}
-	return s
+	outputBuffer.Write(s)
+
+	return outputBuffer.Bytes()
 }
 
 func postsToJSON(posts []goboardbackend.Post) []byte {
