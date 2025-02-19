@@ -18,7 +18,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const goBoardVer = 0.03
+const goBoardVer = "0.0.4"
 
 // Config holds the configuration of the process
 type Config struct {
@@ -188,7 +188,7 @@ func main() {
 		}
 	}
 
-	fmt.Println("GoBoard version ", goBoardVer, " starting on port", config.ListenPort)
+	fmt.Println("GoBoard version", goBoardVer, "starting on port", config.ListenPort)
 
 	var handler http.Handler
 	if fiAccessLog != nil {
