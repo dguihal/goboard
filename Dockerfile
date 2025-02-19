@@ -40,8 +40,6 @@ RUN apk add --no-cache tzdata && \
 COPY --from=build /goboard/goboard /
 COPY dockerfiles/entrypoint.sh /
 COPY goboard.yaml "${GOBOARD_CONFIG_FILE}"
-COPY dockerfiles/entrypoint.sh /
-COPY goboard.yaml "${GOBOARD_CONFIG_FILE}"
 COPY web/swagger/ "${SWAGGER_PATH}"
 COPY api/swagger.yaml "${SWAGGER_PATH}"
 COPY web/static/ "${WEBUI_PATH}"
