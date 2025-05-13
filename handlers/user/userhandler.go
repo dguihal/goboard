@@ -67,6 +67,7 @@ func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+<<<<<<< HEAD
 	if err := goboarduser.AddUser(u.Db, login, passwd); err != nil {
 		if uerr, ok := err.(*goboarduser.Error); ok {
 			if uerr.ErrCode == goboarduser.UserAlreadyExistsError {
@@ -125,6 +126,7 @@ func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+<<<<<<< HEAD
 	userJSON, err := json.Marshal(user)
 	if err != nil {
 		u.logger.Printf("Failed to marshal user data for %s: %v", login, err)

@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	bolt "go.etcd.io/bbolt"
+	"go.etcd.io/bbolt"
 )
 
 // RESTEndpointHandler defines a handler function for a REST Endpoint
@@ -19,6 +19,6 @@ type SupportedOp struct {
 
 // GoBoardHandler Base Class for endpoint handlers
 type GoBoardHandler struct {
-	Db           *bolt.DB
+	Db           *bbolt.DB
 	SupportedOps []SupportedOp
 }

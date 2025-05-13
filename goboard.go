@@ -14,7 +14,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	bolt "go.etcd.io/bbolt"
+	"go.etcd.io/bbolt"
 	"gopkg.in/yaml.v2"
 
 	admin "github.com/dguihal/goboard/handlers/admin"
@@ -244,7 +244,7 @@ func main() {
 //https://github.com/golang/go/wiki/LearnServerProgramming
 //https://astaxie.gitbooks.io/build-web-application-with-golang/
 
-//https://github.com/boltdb/bolt : Backend
-//https://github.com/skyec/boltdb-server/blob/master/server.go
+//https://github.com/etcd-io/bbolt : Backend
+//https://github.com/skyec/boltdb-server : Example
 
 //https://blog.golang.org/error-handling-and-go

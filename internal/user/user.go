@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	bolt "go.etcd.io/bbolt"
+	"go.etcd.io/bbolt"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -33,9 +33,10 @@ type User struct {
 	HashedPassword []byte `json:"HashedPassword,omitempty"`
 }
 
-func AddUser(db *bolt.DB, login string, password string) (uerr error) {
+func AddUser(db *bbolt.DB, login string, password string) (uerr error) {
 
-	uerr = db.Batch(func(tx *bolt.Tx) error {
+<<<<<<< HEAD
+	uerr = db.Batch(func(tx *bbolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(usersBucketName))
 		if err != nil {
 			uerr = &Error{error: err, ErrCode: DatabaseError}
@@ -75,9 +76,10 @@ func AddUser(db *bolt.DB, login string, password string) (uerr error) {
 	return
 }
 
-func AuthUser(db *bolt.DB, login string, password string) (uerr error) {
+func AuthUser(db *bbolt.DB, login string, password string) (uerr error) {
 
-	uerr = db.View(func(tx *bolt.Tx) error {
+<<<<<<< HEAD
+	uerr = db.View(func(tx *bbolt.Tx) error {
 
 		b := tx.Bucket([]byte(usersBucketName))
 		var v []byte
@@ -110,9 +112,10 @@ func AuthUser(db *bolt.DB, login string, password string) (uerr error) {
 	return
 }
 
-func DeleteUser(db *bolt.DB, login string) (uerr error) {
+func DeleteUser(db *bbolt.DB, login string) (uerr error) {
 
-	uerr = db.Batch(func(tx *bolt.Tx) error {
+<<<<<<< HEAD
+	uerr = db.Batch(func(tx *bbolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(usersBucketName))
 		if err != nil {
 			uerr = &Error{error: err, ErrCode: DatabaseError}
@@ -137,9 +140,10 @@ func DeleteUser(db *bolt.DB, login string) (uerr error) {
 	return
 }
 
-func GetUser(db *bolt.DB, login string) (user User, uerr error) {
+func GetUser(db *bbolt.DB, login string) (user User, uerr error) {
 
-	uerr = db.View(func(tx *bolt.Tx) error {
+<<<<<<< HEAD
+	uerr = db.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(usersBucketName))
 		var v []byte
 
