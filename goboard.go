@@ -16,6 +16,11 @@ import (
 	"github.com/gorilla/mux"
 	bolt "go.etcd.io/bbolt"
 	"gopkg.in/yaml.v2"
+
+	admin "github.com/dguihal/goboard/handlers/admin"
+	backend "github.com/dguihal/goboard/handlers/backend"
+	template "github.com/dguihal/goboard/handlers/template"
+	user "github.com/dguihal/goboard/handlers/user"
 )
 
 const goBoardVer = "0.0.4"
@@ -33,23 +38,6 @@ type Config struct {
 	SwaggerPath       string      `yaml:"SwaggerPath"`
 	WebuiPath         string      `yaml:"WebuiPath"`
 	AdminToken        string      `yaml:"AdminToken"`
-}
-
-// RESTEndpointHandler defines a handler function for a REST Endpoint
-type RESTEndpointHandler func(http.ResponseWriter, *http.Request)
-
-// SupportedOp Defines a REST endpoint with its path, method and endpoint
-type SupportedOp struct {
-	PathBase string
-	RestPath string
-	Method   string
-	handler  RESTEndpointHandler
-}
-
-// GoBoardHandler Base Class for endpoint handlers
-type GoBoardHandler struct {
-	Db           *bolt.DB
-	supportedOps []SupportedOp
 }
 
 // Command line arguments management
@@ -115,7 +103,7 @@ func setupLogging(logFile string, mode os.FileMode) *os.File {
 	return fiAccessLog
 }
 
-func setupSwagger(r *mux.Router, templateHandler *TemplateHandler, swaggerPath string) {
+func setupSwagger(r *mux.Router, templateHandler *template.TemplateHandler, swaggerPath string) {
 	if len(swaggerPath) == 0 {
 		return
 	}
@@ -128,13 +116,13 @@ func setupSwagger(r *mux.Router, templateHandler *TemplateHandler, swaggerPath s
 	} else {
 		templateHandler.SetSwaggerBaseDir(realPath)
 		swaggerOp := templateHandler.GetSwaggerOp()
-		r.HandleFunc(swaggerOp.RestPath, swaggerOp.handler).Methods(swaggerOp.Method)
+		r.HandleFunc(swaggerOp.RestPath, swaggerOp.Handler).Methods(swaggerOp.Method)
 		r.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", http.FileServer(http.Dir(realPath))))
 		r.Handle("/swagger", http.RedirectHandler("/swagger/", http.StatusMovedPermanently))
 	}
 }
 
-func setupWebui(r *mux.Router, templateHandler *TemplateHandler, webuiPath string) {
+func setupWebui(r *mux.Router, templateHandler *template.TemplateHandler, webuiPath string) {
 	if len(webuiPath) == 0 {
 		return
 	}
@@ -145,7 +133,7 @@ func setupWebui(r *mux.Router, templateHandler *TemplateHandler, webuiPath strin
 	} else if _, err := os.Stat(strings.Join([]string{realPath, "/index.html"}, "")); os.IsNotExist(err) {
 		log.Println(strings.Join([]string{realPath, "/index.html"}, ""), "Not found: Disabling webui capabilities")
 	} else {
-		templateHandler.setWebUIBaseDir(realPath)
+		templateHandler.SetWebUIBaseDir(realPath)
 		r.PathPrefix("/webui/").Handler(http.StripPrefix("/webui/", http.FileServer(http.Dir(realPath))))
 		r.Handle("/webui", http.RedirectHandler("/webui/", http.StatusMovedPermanently))
 		r.Handle("/", http.RedirectHandler("/webui/", http.StatusMovedPermanently))
@@ -157,27 +145,27 @@ func setupRouter(db *bolt.DB, config *Config) *mux.Router {
 	r := mainRouter
 
 	// Backend operations
-	backendHandler := NewBackendHandler(config.MaxHistorySize, config.BackendTimeZone)
+	backendHandler := backend.NewBackendHandler(config.MaxHistorySize, config.BackendTimeZone)
 	backendHandler.Db = db
-	for _, op := range backendHandler.supportedOps {
+	for _, op := range backendHandler.SupportedOps {
 		r.Handle(op.RestPath, backendHandler).Methods(op.Method)
 	}
 
 	// User operations
-	userHandler := NewUserHandler(config.CookieDuration)
+	userHandler := user.NewUserHandler(config.CookieDuration)
 	userHandler.Db = db
-	for _, op := range userHandler.supportedOps {
+	for _, op := range userHandler.SupportedOps {
 		r.Handle(op.RestPath, userHandler).Methods(op.Method)
 	}
 
 	// Admin operations
-	adminHandler := NewAdminHandler(config.AdminToken)
+	adminHandler := admin.NewAdminHandler(config.AdminToken)
 	adminHandler.Db = db
-	for _, op := range adminHandler.supportedOps {
+	for _, op := range adminHandler.SupportedOps {
 		r.Handle(op.RestPath, adminHandler).Methods(op.Method)
 	}
 
-	templateHandler := NewTemplateHandler()
+	templateHandler := template.NewTemplateHandler()
 	setupSwagger(r, templateHandler, config.SwaggerPath)
 	setupWebui(r, templateHandler, config.WebuiPath)
 
