@@ -1,4 +1,4 @@
-package main
+package user
 
 import (
 	"encoding/json"
@@ -7,13 +7,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/dguihal/goboard/handlers"
 	goboardcookie "github.com/dguihal/goboard/internal/cookie"
 	goboarduser "github.com/dguihal/goboard/internal/user"
 )
 
 // UserHandler represents the handler of user URLs
 type UserHandler struct {
-	GoBoardHandler
+	handlers.GoBoardHandler
 
 	cookieDurationD int
 	logger          *log.Logger
@@ -25,11 +26,11 @@ func NewUserHandler(cookieDuration int) (u *UserHandler) {
 
 	u.logger = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
 
-	u.supportedOps = []SupportedOp{
-		{"/user/add", "/user/add", "POST", u.addUser},         // Add a user
-		{"/user/login", "/user/login", "POST", u.authUser},    // Authenticate a user
-		{"/user/logout", "/user/logout", "GET", u.unAuthUser}, // Unauthenticate a user
-		{"/user/whoami", "/user/whoami", "GET", u.whoAmI},     // Get self account infos
+	u.SupportedOps = []handlers.SupportedOp{
+		{PathBase: "/user/add", RestPath: "/user/add", Method: "POST", Handler: u.addUser},         // Add a user
+		{PathBase: "/user/login", RestPath: "/user/login", Method: "POST", Handler: u.authUser},    // Authenticate a user
+		{PathBase: "/user/logout", RestPath: "/user/logout", Method: "GET", Handler: u.unAuthUser}, // Unauthenticate a user
+		{PathBase: "/user/whoami", RestPath: "/user/whoami", Method: "GET", Handler: u.whoAmI},     // Get self account infos
 	}
 
 	u.cookieDurationD = cookieDuration
@@ -39,10 +40,10 @@ func NewUserHandler(cookieDuration int) (u *UserHandler) {
 
 func (u *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	for _, op := range u.supportedOps {
+	for _, op := range u.SupportedOps {
 		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, op.PathBase) {
 			// Call specific handling method
-			op.handler(w, r)
+			op.Handler(w, r)
 			return
 		}
 	}
@@ -70,7 +71,7 @@ func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 		// User created : Send him a cookie
 		if cookie, err := goboardcookie.ForUser(u.Db, login, u.cookieDurationD); err == nil {
 			http.SetCookie(w, &cookie)
-			w.WriteHeader(http.StatusOK)
+			w.WriteHeader(http.StatusCreated)
 			return
 		}
 	} else {
@@ -129,8 +130,6 @@ func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		u.logger.Println(cookie)
-		u.logger.Println(err)
 		if err == nil {
 			http.SetCookie(w, &cookie)
 			w.WriteHeader(http.StatusOK)
