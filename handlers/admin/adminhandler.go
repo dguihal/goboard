@@ -1,4 +1,4 @@
-package main
+package admin
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/dguihal/goboard/handlers"
 	goboardbackend "github.com/dguihal/goboard/internal/backend"
 	goboardcookie "github.com/dguihal/goboard/internal/cookie"
 	goboarduser "github.com/dguihal/goboard/internal/user"
@@ -19,7 +20,7 @@ const tokenWarnLen int = 12
 
 // AdminHandler represents the handler of admin URLs
 type AdminHandler struct {
-	GoBoardHandler
+	handlers.GoBoardHandler
 
 	adminToken string
 }
@@ -28,10 +29,10 @@ type AdminHandler struct {
 func NewAdminHandler(adminToken string) (a *AdminHandler) {
 	a = &AdminHandler{}
 
-	a.supportedOps = []SupportedOp{
-		{"/admin/user/", "/admin/user/{login}", "DELETE", a.deleteUser}, // Delete a user
-		{"/admin/user/", "/admin/user/{login}", "GET", a.getUser},       // Get a user info
-		{"/admin/post/", "/admin/post/{id}", "DELETE", a.deletePost},    // Delete a post
+	a.SupportedOps = []handlers.SupportedOp{
+		{PathBase: "/admin/user/", RestPath: "/admin/user/{login}", Method: "DELETE", Handler: a.deleteUser}, // Delete a user
+		{PathBase: "/admin/user/", RestPath: "/admin/user/{login}", Method: "GET", Handler: a.getUser},       // Get a user info
+		{PathBase: "/admin/post/", RestPath: "/admin/post/{id}", Method: "DELETE", Handler: a.deletePost},    // Delete a post
 	}
 
 	if len(adminToken) <= tokenMinLen {
@@ -51,10 +52,10 @@ func (a *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, op := range a.supportedOps {
+	for _, op := range a.SupportedOps {
 		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, op.PathBase) {
 			// Call specific handling method
-			op.handler(w, r)
+			op.Handler(w, r)
 			return
 		}
 	}

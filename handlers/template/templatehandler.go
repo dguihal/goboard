@@ -1,10 +1,12 @@
-package main
+package template
 
 import (
 	"bytes"
 	"html/template"
 	"net/http"
 	"os"
+
+	"github.com/dguihal/goboard/handlers"
 )
 
 // TemplateHandler represents the handler of swagger URLs
@@ -33,12 +35,12 @@ func (s *TemplateHandler) SetSwaggerBaseDir(swaggerBaseDir string) {
 }
 
 // GetSwaggerOp GET swagger content
-func (s *TemplateHandler) GetSwaggerOp() SupportedOp {
-	return SupportedOp{"/swagger/swagger.yaml", "/swagger/swagger.yaml", "GET", s.ServeSwagger}
+func (s *TemplateHandler) GetSwaggerOp() handlers.SupportedOp {
+	return handlers.SupportedOp{PathBase: "/swagger/swagger.yaml", RestPath: "/swagger/swagger.yaml", Method: "GET", Handler: s.ServeSwagger}
 }
 
 // SetSwaggerBaseDir configures webui base dir
-func (s *TemplateHandler) setWebUIBaseDir(webuiBaseDir string) {
+func (s *TemplateHandler) SetWebUIBaseDir(webuiBaseDir string) {
 	s.webuiBaseDir = http.Dir(webuiBaseDir)
 
 	s.webuiBaseDirSet = true

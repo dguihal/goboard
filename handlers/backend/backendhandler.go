@@ -1,4 +1,4 @@
-package main
+package backend
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dguihal/goboard/handlers"
 	goboardbackend "github.com/dguihal/goboard/internal/backend"
 	goboardcookie "github.com/dguihal/goboard/internal/cookie"
 	"github.com/gorilla/mux"
@@ -31,7 +32,7 @@ var knownHeaders = map[string]string{
 
 // BackendHandler represents the handler of backend URLs
 type BackendHandler struct {
-	GoBoardHandler
+	handlers.GoBoardHandler
 
 	historySize int
 }
@@ -40,12 +41,12 @@ type BackendHandler struct {
 func NewBackendHandler(historySize int, frontLocation string) (b *BackendHandler) {
 	b = &BackendHandler{}
 
-	b.supportedOps = []SupportedOp{
-		{"/backend", "/backend", "GET", b.getBackend},          // Get backend (in xml)
-		{"/backend", "/backend/{format}", "GET", b.getBackend}, // Get backend (in specific format)
-		{"/post", "/post", "POST", b.post},                     // Post new message
-		{"/post/", "/post/{id}", "GET", b.getPost},             // Get a specific message (in xml)
-		{"/post/", "/post/{id}/{format}", "GET", b.getPost},    // Get a specific message (in specific format)
+	b.SupportedOps = []handlers.SupportedOp{
+		{PathBase: "/backend", RestPath: "/backend", Method: "GET", Handler: b.getBackend},          // Get backend (in xml)
+		{PathBase: "/backend", RestPath: "/backend/{format}", Method: "GET", Handler: b.getBackend}, // Get backend (in specific format)
+		{PathBase: "/post", RestPath: "/post", Method: "POST", Handler: b.post},                     // Post new message
+		{PathBase: "/post/", RestPath: "/post/{id}", Method: "GET", Handler: b.getPost},             // Get a specific message (in xml)
+		{PathBase: "/post/", RestPath: "/post/{id}/{format}", Method: "GET", Handler: b.getPost},    // Get a specific message (in specific format)
 	}
 
 	if location, err := time.LoadLocation(frontLocation); err == nil {
@@ -61,10 +62,10 @@ func NewBackendHandler(historySize int, frontLocation string) (b *BackendHandler
 
 func (b *BackendHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	for _, op := range b.supportedOps {
+	for _, op := range b.SupportedOps {
 		if r.Method == op.Method && strings.HasPrefix(r.URL.Path, op.PathBase) {
 			// Call specific handling method
-			op.handler(w, r)
+			op.Handler(w, r)
 			return
 		}
 	}
