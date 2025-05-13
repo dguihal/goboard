@@ -71,7 +71,7 @@ func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 		// User created : Send him a cookie
 		if cookie, err := goboardcookie.ForUser(u.Db, login, u.cookieDurationD); err == nil {
 			http.SetCookie(w, &cookie)
-			w.WriteHeader(http.StatusOK)
+			w.WriteHeader(http.StatusCreated)
 			return
 		}
 	} else {
@@ -130,8 +130,6 @@ func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		u.logger.Println(cookie)
-		u.logger.Println(err)
 		if err == nil {
 			http.SetCookie(w, &cookie)
 			w.WriteHeader(http.StatusOK)

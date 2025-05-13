@@ -6,7 +6,7 @@ import (
 	"time"
 
 	goboardutils "github.com/dguihal/goboard/internal/utils"
-	bolt "go.etcd.io/bbolt"
+	"go.etcd.io/bbolt"
 )
 
 const backendBucketName string = "Backend"
@@ -47,9 +47,9 @@ type Board struct {
 }
 
 // DeletePost is a method for deleting a post from the history
-func DeletePost(db *bolt.DB, id uint64) (err error) {
+func DeletePost(db *bbolt.DB, id uint64) (err error) {
 
-	err = db.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bbolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(backendBucketName))
 		if err != nil {
 			return err
@@ -61,11 +61,11 @@ func DeletePost(db *bolt.DB, id uint64) (err error) {
 }
 
 // GetBackend returns the last posts from the history
-func GetBackend(db *bolt.DB, historySize int, last uint64) (posts []Post, err error) {
+func GetBackend(db *bbolt.DB, historySize int, last uint64) (posts []Post, err error) {
 
 	posts = make([]Post, historySize)
 
-	err = db.View(func(tx *bolt.Tx) error {
+	err = db.View(func(tx *bbolt.Tx) error {
 
 		b := tx.Bucket([]byte(backendBucketName))
 		if b == nil {
@@ -95,11 +95,11 @@ func GetBackend(db *bolt.DB, historySize int, last uint64) (posts []Post, err er
 }
 
 // GetPost returns a post from its id
-func GetPost(db *bolt.DB, id uint64) (post Post, err error) {
+func GetPost(db *bbolt.DB, id uint64) (post Post, err error) {
 
 	post = Post{}
 
-	err = db.View(func(tx *bolt.Tx) error {
+	err = db.View(func(tx *bbolt.Tx) error {
 
 		b := tx.Bucket([]byte(backendBucketName))
 		if b == nil {
@@ -120,9 +120,9 @@ func GetPost(db *bolt.DB, id uint64) (post Post, err error) {
 }
 
 // PostMessage adds a new message to the history
-func PostMessage(db *bolt.DB, post Post) (postID uint64, err error) {
+func PostMessage(db *bbolt.DB, post Post) (postID uint64, err error) {
 
-	err = db.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bbolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(backendBucketName))
 		if err != nil {
 			return err
