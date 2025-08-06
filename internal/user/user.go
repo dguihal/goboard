@@ -121,11 +121,10 @@ func DeleteUser(db *bbolt.DB, login string) (uerr error) {
 		if v == nil { // User does not exists
 			uerr = &Error{error: fmt.Errorf("User does not exists"), ErrCode: UserDoesNotExistsError}
 			return uerr
-		} else {
-			if err = b.Delete([]byte(login)); err != nil {
-				uerr = &Error{error: err, ErrCode: DatabaseError}
-				return err
-			}
+		}
+		if err = b.Delete([]byte(login)); err != nil {
+			uerr = &Error{error: err, ErrCode: DatabaseError}
+			return err
 		}
 
 		return nil
