@@ -14,7 +14,6 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"go.etcd.io/bbolt"
 	"gopkg.in/yaml.v2"
 
 	admin "github.com/dguihal/goboard/handlers/admin"
