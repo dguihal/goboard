@@ -52,13 +52,14 @@ func (u *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
-	var login, passwd string = "", ""
+	var login string
 	if login = r.FormValue("login"); len(login) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Login can't be empty"))
 		return
 	}
 
+	var passwd string
 	if passwd = r.FormValue("password"); len(passwd) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Password can't be empty"))
@@ -69,7 +70,8 @@ func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		// User created : Send him a cookie
-		if cookie, err := goboardcookie.ForUser(u.Db, login, u.cookieDurationD); err == nil {
+		var cookie http.Cookie
+		if cookie, err = goboardcookie.ForUser(u.Db, login, u.cookieDurationD); err == nil {
 			http.SetCookie(w, &cookie)
 			w.WriteHeader(http.StatusCreated)
 			return
@@ -90,13 +92,14 @@ func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
-	var login, passwd string = "", ""
+	var login string
 	if login = r.FormValue("login"); len(login) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Login can't be empty"))
 		return
 	}
 
+	var passwd string
 	if passwd = r.FormValue("password"); len(passwd) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Password can't be empty"))
