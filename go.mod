@@ -9,7 +9,7 @@ require (
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/hishboy/gocommons v0.0.0-20160108023425-89887b2ade6d
-	go.etcd.io/bbolt v1.4.1
+	go.etcd.io/bbolt v1.4.3
 	golang.org/x/crypto v0.42.0
 	golang.org/x/net v0.43.0
 	gopkg.in/yaml.v2 v2.4.0
