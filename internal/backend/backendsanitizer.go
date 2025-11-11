@@ -84,10 +84,10 @@ L:
 	for {
 		tt := z.Next()
 
-		switch {
-		case tt == html.ErrorToken:
+		switch tt {
+		case html.ErrorToken:
 			break L
-		case tt == html.StartTagToken:
+		case html.StartTagToken:
 			tn, hasAttrs := z.TagName()
 			tnStr := string(tn)
 
@@ -122,7 +122,7 @@ L:
 					txt:       sanitizeChars(string(z.Raw())),
 					tokenType: html.TextToken})
 			}
-		case tt == html.EndTagToken:
+		case html.EndTagToken:
 			tn, _ := z.TagName()
 			tnStr := string(tn)
 

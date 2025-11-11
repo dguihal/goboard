@@ -13,6 +13,7 @@ RUN go mod download
 
 COPY *.go ./
 COPY internal ./internal/
+COPY handlers ./handlers/
 
 RUN go build -o /goboard
 
