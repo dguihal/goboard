@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 )
@@ -55,47 +56,59 @@ func (s *TemplateHandler) ServeSwagger(w http.ResponseWriter, rq *http.Request) 
 
 	if !s.swaggerBaseDirSet {
 		w.WriteHeader(http.StatusNotFound)
-	} else if f, err := s.swaggerBaseDir.Open("swagger.yaml"); err != nil {
+		return
+	}
+
+	f, err := s.swaggerBaseDir.Open("swagger.yaml")
+	if err != nil {
 		if os.IsNotExist(err) {
 			w.WriteHeader(http.StatusNotFound)
 		} else {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-	} else {
-		defer f.Close()
+		return
+	}
+	defer f.Close()
 
-		tmpl := template.New("Swagger")
+	tmpl := template.New("Swagger")
 
-		// Read swagger template data
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(f)
-		str := buf.String()
+	// Read swagger template data
+	buf := new(bytes.Buffer)
+	if _, err := buf.ReadFrom(f); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	str := buf.String()
 
-		// Try to guess original Scheme
-		scheme := rq.URL.Scheme
-		if len(rq.Header.Get("X-Forwarded-Proto")) > 0 {
-			scheme = rq.Header.Get("X-Forwarded-Proto")
-		}
-		if len(scheme) == 0 {
-			scheme = "http" // Default value
-		}
+	// Try to guess original Scheme
+	scheme := rq.URL.Scheme
+	if len(rq.Header.Get("X-Forwarded-Proto")) > 0 {
+		scheme = rq.Header.Get("X-Forwarded-Proto")
+	}
+	if len(scheme) == 0 {
+		scheme = "http" // Default value
+	}
 
-		// Try to guess original Host
-		host := rq.Host
-		if len(rq.Header.Get("X-Forwarded-Host")) > 0 {
-			host = rq.Header.Get("X-Forwarded-Host")
-		}
+	// Try to guess original Host
+	host := rq.Host
+	if len(rq.Header.Get("X-Forwarded-Host")) > 0 {
+		host = rq.Header.Get("X-Forwarded-Host")
+	}
 
-		// Try to guess original Prefix
-		prefix := "/"
-		if len(rq.Header.Get("X-Forwarded-Prefix")) > 0 {
-			prefix = rq.Header.Get("X-Forwarded-Prefix")
-		}
+	// Try to guess original Prefix
+	prefix := "/"
+	if len(rq.Header.Get("X-Forwarded-Prefix")) > 0 {
+		prefix = rq.Header.Get("X-Forwarded-Prefix")
+	}
 
-		swP := swaggerParam{scheme, host, prefix}
+	swP := swaggerParam{scheme, host, prefix}
 
-		tmpl, _ = tmpl.Parse(str) // Parse template file.
-		tmpl.Execute(w, swP)
+	tmpl, err = tmpl.Parse(str) // Parse template file.
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err := tmpl.Execute(w, swP); err != nil {
+		log.Printf("Error executing swagger template: %v", err)
 	}
 }

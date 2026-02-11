@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -51,7 +52,7 @@ func NewBackendHandler(historySize int, frontLocation string) (b *BackendHandler
 	if location, err := time.LoadLocation(frontLocation); err == nil {
 		goboardbackend.TZLocation = location
 	} else {
-		//Falls back to current Location
+		// Falls back to current Location
 		goboardbackend.TZLocation = time.Now().Location()
 	}
 
@@ -92,29 +93,34 @@ func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
 
 			var data []byte
 
-			if format == "" || format == "xml" {
-				data = postsToXML(posts, r.Header.Get("Location"))
-				w.Header().Set("Content-Type", "application/xml")
-			} else if format == "json" {
+			switch format {
+			case "json":
 				data = postsToJSON(posts)
 				w.Header().Set("Content-Type", "application/json")
-			} else if format == "tsv" {
+			case "tsv":
 				data = postsToTsv(posts)
 				w.Header().Set("Content-Type", "text/tab-separated-values")
+			default: // "xml" or ""
+				data = postsToXML(posts, r.Header.Get("Location"))
+				w.Header().Set("Content-Type", "application/xml")
 			}
 
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(data))
-			w.Write([]byte("\n"))
+			if _, err := w.Write(data); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
+			if _, err := w.Write([]byte("\n")); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
 		}
 	} else {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 // TODO : Manage returning an original posted data for a specific id as text
-//        Maybe consider allowing this only for admins (not sure it is relevant)
+//
+//	Maybe consider allowing this only for admins (not sure it is relevant)
 func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
@@ -123,8 +129,7 @@ func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseUint(idStr, 10, 64)
 
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Missing required post id as unsigned int PATH variable"))
+		http.Error(w, "Missing required post id as unsigned int PATH variable", http.StatusBadRequest)
 		return
 	}
 
@@ -170,17 +175,21 @@ func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(data)
+	if _, err := w.Write(data); err != nil {
+		log.Printf("Error writing response: %v", err)
+	}
 }
 
 func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	message, err := goboardbackend.SanitizeAndValidate(r.FormValue("message"))
 	// Validation failed
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -192,8 +201,8 @@ func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
 	login := ""
 
 	for _, c := range r.Cookies() {
-		login, _ = goboardcookie.LoginForCookie(b.Db, c)
-		if len(login) > 0 {
+		var err error
+		if login, err = goboardcookie.LoginForCookie(b.Db, c); err == nil && len(login) > 0 {
 			break
 		}
 	}
@@ -209,8 +218,7 @@ func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
 
 	// Try to store it
 	if postID, err := goboardbackend.PostMessage(b.Db, p); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
 		w.Header().Set("X-Post-Id", strconv.FormatUint(postID, 10))
 		w.WriteHeader(http.StatusNoContent)
@@ -324,7 +332,10 @@ func postsToTsv(posts []goboardbackend.Post) []byte {
 			break
 		}
 
-		timeText, _ = p.Time.MarshalText()
+		var err error
+		if timeText, err = p.Time.MarshalText(); err != nil {
+			timeText = []byte("")
+		}
 		fmt.Fprintf(&b, "%d\t%s\t%s\t%s\t%s\n",
 			p.ID, timeText, p.Info, p.Login, p.Message)
 	}

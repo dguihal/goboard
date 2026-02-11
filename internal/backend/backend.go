@@ -141,9 +141,7 @@ func PostMessage(db *bolt.DB, post Post) (postID uint64, err error) {
 			return err
 		}
 
-		_ = b.Put(goboardutils.IToB(post.ID), buf)
-
-		return nil
+		return b.Put(goboardutils.IToB(post.ID), buf)
 	})
 
 	return
