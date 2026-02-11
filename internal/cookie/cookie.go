@@ -4,6 +4,7 @@ package cookie
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -109,7 +110,11 @@ func DeleteCookiesForUser(db *bolt.DB, login string) (err error) {
 		userCookie := UserCookie{}
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			json.Unmarshal(v, &userCookie)
+			if err := json.Unmarshal(v, &userCookie); err != nil {
+				// Log and skip corrupted data
+				log.Printf("could not unmarshal cookie, skipping: %v", err)
+				continue
+			}
 
 			if userCookie.Login == login {
 				if err = b.Delete(k); err != nil {
@@ -142,12 +147,17 @@ func fetchCookieForUser(db *bolt.DB, login string) (cookie http.Cookie, err erro
 		userCookie := UserCookie{}
 		cookieFound := false
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			json.Unmarshal(v, &userCookie)
+			if err := json.Unmarshal(v, &userCookie); err != nil {
+				log.Printf("Could not unmarshal cookie data, skipping: %v", err)
+				continue
+			}
 
 			if userCookie.Login == login {
 				if userCookie.Cookie.Expires.Before(time.Now()) {
 					// Delete expired cookie
-					b.Delete(k)
+					if err := b.Delete(k); err != nil {
+						return &UserCookieError{error: err, ErrCode: DatabaseError}
+					}
 				} else {
 					if !cookieFound {
 						// Pick up valid cookie
@@ -155,9 +165,10 @@ func fetchCookieForUser(db *bolt.DB, login string) (cookie http.Cookie, err erro
 						cookieFound = true
 					} else {
 						// Remove duplicates
-						b.Delete(k)
+						if err := b.Delete(k); err != nil {
+							return &UserCookieError{error: err, ErrCode: DatabaseError}
+						}
 					}
-					return nil
 				}
 			}
 		}
@@ -207,9 +218,7 @@ func LoginForCookie(db *bolt.DB, cookie *http.Cookie) (login string, err error) 
 					return nil
 				}
 
-				b.Delete([]byte(cookie.Value))
-
-				return nil
+				return b.Delete([]byte(cookie.Value))
 			})
 		}
 	}
