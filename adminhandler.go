@@ -71,7 +71,9 @@ func (a *AdminHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		if uerr, ok := err.(*goboarduser.Error); ok {
 			if uerr.ErrCode == goboarduser.UserDoesNotExistsError {
 				w.WriteHeader(http.StatusNotFound)
-				w.Write([]byte(fmt.Sprintf("User %s Not found", login)))
+				if _, err := w.Write([]byte(fmt.Sprintf("User %s Not found", login))); err != nil {
+					log.Printf("Error writing response: %v", err)
+				}
 				return
 			}
 			w.WriteHeader(http.StatusInternalServerError)
@@ -98,7 +100,10 @@ func (a *AdminHandler) deletePost(w http.ResponseWriter, rq *http.Request) {
 	id, err := strconv.ParseUint(postID, 10, 64)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		if _, wErr := w.Write([]byte(err.Error())); wErr != nil {
+			log.Printf("Error writing response: %v", wErr)
+		}
+		return
 	}
 
 	if err := goboardbackend.DeletePost(a.Db, id); err != nil {
@@ -123,7 +128,9 @@ func (a *AdminHandler) getUser(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err.Error())
 		} else {
 			w.WriteHeader(http.StatusOK)
-			w.Write(data)
+			if _, err := w.Write(data); err != nil {
+				log.Printf("Error writing response: %v", err)
+			}
 		}
 	}
 }

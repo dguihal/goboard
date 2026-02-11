@@ -114,7 +114,8 @@ func (b *BackendHandler) getBackend(w http.ResponseWriter, r *http.Request) {
 }
 
 // TODO : Manage returning an original posted data for a specific id as text
-//        Maybe consider allowing this only for admins (not sure it is relevant)
+//
+//	Maybe consider allowing this only for admins (not sure it is relevant)
 func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
@@ -174,7 +175,10 @@ func (b *BackendHandler) getPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	message, err := goboardbackend.SanitizeAndValidate(r.FormValue("message"))
 	// Validation failed
@@ -192,8 +196,8 @@ func (b *BackendHandler) post(w http.ResponseWriter, r *http.Request) {
 	login := ""
 
 	for _, c := range r.Cookies() {
-		login, _ = goboardcookie.LoginForCookie(b.Db, c)
-		if len(login) > 0 {
+		var err error
+		if login, err = goboardcookie.LoginForCookie(b.Db, c); err == nil && len(login) > 0 {
 			break
 		}
 	}
@@ -324,7 +328,10 @@ func postsToTsv(posts []goboardbackend.Post) []byte {
 			break
 		}
 
-		timeText, _ = p.Time.MarshalText()
+		var err error
+		if timeText, err = p.Time.MarshalText(); err != nil {
+			timeText = []byte("")
+		}
 		fmt.Fprintf(&b, "%d\t%s\t%s\t%s\t%s\n",
 			p.ID, timeText, p.Info, p.Login, p.Message)
 	}
