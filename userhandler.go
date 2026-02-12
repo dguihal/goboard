@@ -49,96 +49,100 @@ func (u *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-
-	var login, passwd string = "", ""
-	if login = r.FormValue("login"); len(login) == 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Login can't be empty"))
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
 	}
 
-	if passwd = r.FormValue("password"); len(passwd) == 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Password can't be empty"))
+	login := r.FormValue("login")
+	if len(login) == 0 {
+		http.Error(w, "Login can't be empty", http.StatusBadRequest)
 		return
 	}
 
-	err := goboarduser.AddUser(u.Db, login, passwd)
+	passwd := r.FormValue("password")
+	if len(passwd) == 0 {
+		http.Error(w, "Password can't be empty", http.StatusBadRequest)
+		return
+	}
 
-	if err == nil {
-		// User created : Send him a cookie
-		if cookie, err := goboardcookie.ForUser(u.Db, login, u.cookieDurationD); err == nil {
-			http.SetCookie(w, &cookie)
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-	} else {
+	if err := goboarduser.AddUser(u.Db, login, passwd); err != nil {
 		if uerr, ok := err.(*goboarduser.Error); ok {
 			if uerr.ErrCode == goboarduser.UserAlreadyExistsError {
-				w.WriteHeader(http.StatusConflict)
-				w.Write([]byte("User login already exists"))
+				http.Error(w, "User login already exists", http.StatusConflict)
 				return
 			}
 		}
-	}
-	w.WriteHeader(http.StatusInternalServerError)
-	u.logger.Println(err.Error())
-}
-
-func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-
-	var login, passwd string = "", ""
-	if login = r.FormValue("login"); len(login) == 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Login can't be empty"))
+		u.logger.Println(err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	if passwd = r.FormValue("password"); len(passwd) == 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Password can't be empty"))
+	// User created: Send him a cookie
+	if cookie, err := goboardcookie.ForUser(u.Db, login, u.cookieDurationD); err == nil {
+		http.SetCookie(w, &cookie)
+		w.WriteHeader(http.StatusOK)
+	} else {
+		u.logger.Printf("User created, but failed to create cookie for %s: %v", login, err)
+		http.Error(w, "User created, but failed to generate session", http.StatusInternalServerError)
+	}
+}
+
+func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+
+	login := r.FormValue("login")
+	if len(login) == 0 {
+		http.Error(w, "Login can't be empty", http.StatusBadRequest)
+		return
+	}
+
+	passwd := r.FormValue("password")
+	if len(passwd) == 0 {
+		http.Error(w, "Password can't be empty", http.StatusBadRequest)
 		return
 	}
 
 	if err := goboarduser.AuthUser(u.Db, login, passwd); err != nil {
 		u.logger.Println(err.Error())
-		if uerr, ok := err.(*goboarduser.Error); ok {
-			switch uerr.ErrCode {
-			case goboarduser.AuthenticationFailed:
-				w.WriteHeader(http.StatusUnauthorized)
-			case goboarduser.DatabaseError:
-				w.WriteHeader(http.StatusInternalServerError)
-				u.logger.Println(err.Error())
-			}
+		if uerr, ok := err.(*goboarduser.Error); ok && uerr.ErrCode == goboarduser.AuthenticationFailed {
+			http.Error(w, "Authentication failed", http.StatusUnauthorized)
 		} else {
-			w.WriteHeader(http.StatusInternalServerError)
-			u.logger.Println(err.Error())
+			http.Error(w, "Internal server error during authentication", http.StatusInternalServerError)
 		}
-	} else {
-		var cookie http.Cookie
-		var user goboarduser.User
-		var userJSON []byte
-		var err error
+		return
+	}
 
-		// User authenticated : Send him a cookie
-		if cookie, err = goboardcookie.ForUser(u.Db, login, u.cookieDurationD); err == nil {
-			if user, err = goboarduser.GetUser(u.Db, login); err == nil {
-				userJSON, err = json.Marshal(user)
-			}
-		}
+	// User authenticated: Get user data, cookie, and marshal to JSON
+	user, err := goboarduser.GetUser(u.Db, login)
+	if err != nil {
+		u.logger.Printf("Auth successful, but failed to get user %s: %v", login, err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
-		u.logger.Println(cookie)
-		u.logger.Println(err)
-		if err == nil {
-			http.SetCookie(w, &cookie)
-			w.WriteHeader(http.StatusOK)
-			w.Write(userJSON)
-		} else {
-			w.WriteHeader(http.StatusInternalServerError)
-			u.logger.Println(err.Error())
-		}
+	userJSON, err := json.Marshal(user)
+	if err != nil {
+		u.logger.Printf("Failed to marshal user data for %s: %v", login, err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	cookie, err := goboardcookie.ForUser(u.Db, login, u.cookieDurationD)
+	if err != nil {
+		u.logger.Printf("Failed to create cookie for user %s: %v", login, err)
+		http.Error(w, "Failed to generate session", http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, &cookie)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(userJSON); err != nil {
+		u.logger.Printf("Failed to write user JSON response: %v", err)
 	}
 }
 
@@ -154,34 +158,38 @@ func (u *UserHandler) unAuthUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserHandler) whoAmI(w http.ResponseWriter, r *http.Request) {
-	var login = ""
-
+	var login string
 	for _, c := range r.Cookies() {
-		login, _ = goboardcookie.LoginForCookie(u.Db, c)
-		if len(login) > 0 {
+		// Check for a valid login from any of the cookies
+		l, err := goboardcookie.LoginForCookie(u.Db, c)
+		if err == nil && len(l) > 0 {
+			login = l
 			break
 		}
 	}
 
-	if len(login) > 0 {
-		var err error
-		var user goboarduser.User
-
-		if user, err = goboarduser.GetUser(u.Db, login); err == nil {
-			var data []byte
-
-			if data, err = json.Marshal(user); err == nil {
-				w.WriteHeader(http.StatusOK)
-				w.Write(data)
-				return
-			}
-		}
-
-		w.WriteHeader(http.StatusInternalServerError)
-		u.logger.Println(err.Error())
+	if len(login) == 0 {
+		http.Error(w, "You need to be authenticated", http.StatusForbidden)
 		return
 	}
 
-	w.WriteHeader(http.StatusForbidden)
-	w.Write([]byte("You need to be authenticated"))
+	user, err := goboarduser.GetUser(u.Db, login)
+	if err != nil {
+		u.logger.Printf("Could not get user data for authenticated user %s: %v", login, err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	data, err := json.Marshal(user)
+	if err != nil {
+		u.logger.Printf("Could not marshal user data for %s: %v", login, err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		u.logger.Printf("Failed to write whoAmI response: %v", err)
+	}
 }
