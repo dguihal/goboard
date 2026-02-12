@@ -110,9 +110,9 @@ func DeleteCookiesForUser(db *bolt.DB, login string) (err error) {
 		userCookie := UserCookie{}
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			if err := json.Unmarshal(v, &userCookie); err != nil {
+			if uErr := json.Unmarshal(v, &userCookie); uErr != nil {
 				// Log and skip corrupted data
-				log.Printf("could not unmarshal cookie, skipping: %v", err)
+				log.Printf("could not unmarshal cookie, skipping: %v", uErr)
 				continue
 			}
 
@@ -203,7 +203,7 @@ func LoginForCookie(db *bolt.DB, cookie *http.Cookie) (login string, err error) 
 
 		v := b.Get([]byte(cookie.Value))
 		if v != nil {
-			json.Unmarshal(v, &uc)
+			return json.Unmarshal(v, &uc)
 		}
 		return nil
 	})
