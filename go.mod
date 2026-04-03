@@ -9,7 +9,7 @@ require (
 	github.com/hishboy/gocommons v0.0.0-20160108023425-89887b2ade6d
 	go.etcd.io/bbolt v1.4.3
 	golang.org/x/crypto v0.49.0
-	golang.org/x/net v0.51.0
+	golang.org/x/net v0.52.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
