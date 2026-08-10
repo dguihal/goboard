@@ -66,8 +66,6 @@ func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Password can't be empty", http.StatusBadRequest)
 		return
 	}
-
-<<<<<<< HEAD
 	if err := goboarduser.AddUser(u.Db, login, passwd); err != nil {
 		if uerr, ok := err.(*goboarduser.Error); ok {
 			if uerr.ErrCode == goboarduser.UserAlreadyExistsError {
@@ -83,7 +81,7 @@ func (u *UserHandler) addUser(w http.ResponseWriter, r *http.Request) {
 	// User created: Send him a cookie
 	if cookie, err := goboardcookie.ForUser(u.Db, login, u.cookieDurationD); err == nil {
 		http.SetCookie(w, &cookie)
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusCreated)
 	} else {
 		u.logger.Printf("User created, but failed to create cookie for %s: %v", login, err)
 		http.Error(w, "User created, but failed to generate session", http.StatusInternalServerError)
@@ -125,8 +123,6 @@ func (u *UserHandler) authUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-
-<<<<<<< HEAD
 	userJSON, err := json.Marshal(user)
 	if err != nil {
 		u.logger.Printf("Failed to marshal user data for %s: %v", login, err)
@@ -172,7 +168,8 @@ func (u *UserHandler) whoAmI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(login) == 0 {
-		http.Error(w, "You need to be authenticated", http.StatusForbidden)
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte("You need to be authenticated"))
 		return
 	}
 

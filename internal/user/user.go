@@ -35,7 +35,6 @@ type User struct {
 
 func AddUser(db *bbolt.DB, login string, password string) (uerr error) {
 
-<<<<<<< HEAD
 	uerr = db.Batch(func(tx *bbolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(usersBucketName))
 		if err != nil {
@@ -78,7 +77,6 @@ func AddUser(db *bbolt.DB, login string, password string) (uerr error) {
 
 func AuthUser(db *bbolt.DB, login string, password string) (uerr error) {
 
-<<<<<<< HEAD
 	uerr = db.View(func(tx *bbolt.Tx) error {
 
 		b := tx.Bucket([]byte(usersBucketName))
@@ -114,7 +112,6 @@ func AuthUser(db *bbolt.DB, login string, password string) (uerr error) {
 
 func DeleteUser(db *bbolt.DB, login string) (uerr error) {
 
-<<<<<<< HEAD
 	uerr = db.Batch(func(tx *bbolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(usersBucketName))
 		if err != nil {
@@ -142,7 +139,6 @@ func DeleteUser(db *bbolt.DB, login string) (uerr error) {
 
 func GetUser(db *bbolt.DB, login string) (user User, uerr error) {
 
-<<<<<<< HEAD
 	uerr = db.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(usersBucketName))
 		var v []byte
