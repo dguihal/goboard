@@ -34,7 +34,7 @@ jobs:
       - run: npm run-script build
         working-directory: web
 
-            - name: Log in to the Container registry
+      - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
