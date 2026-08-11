@@ -173,5 +173,3 @@ func TestDeletePost_InvalidID(t *testing.T) {
 		t.Errorf("expected 400, got %d", rr.Code)
 	}
 }
-
-
