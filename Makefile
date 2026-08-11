@@ -56,8 +56,8 @@ docker_image: web_dependencies ## Build the Docker image
 test: validate-go-version ## Run all Go unit tests
 	$(GO) test -v ./...
 
-test-backend: validate-go-version ## Run backend package unit tests only
-	$(GO) test -v ./internal/backend/... ./handlers/backend/...
+test-backend: validate-go-version ## Run all internal and handler unit tests
+	$(GO) test -v ./internal/... ./handlers/...
 
 help: ## Show this help message
 	@echo "Usage: make [target]"
