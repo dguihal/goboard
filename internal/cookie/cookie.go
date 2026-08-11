@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/dchest/uniuri"
-	bolt "go.etcd.io/bbolt"
+	"go.etcd.io/bbolt"
 )
 
 const goboardCookieName string = "goboard_id"
@@ -37,7 +37,7 @@ type UserCookieError struct {
 func (e *UserCookieError) Error() string { return e.error.Error() }
 
 // ForUser returns a valid cookie (already existing or new) for a user
-func ForUser(db *bolt.DB, login string, cookieDurationD int) (cookie http.Cookie, err error) {
+func ForUser(db *bbolt.DB, login string, cookieDurationD int) (cookie http.Cookie, err error) {
 
 	if cookie, err = fetchCookieForUser(db, login); err != nil {
 		if ucerr, ok := err.(*UserCookieError); ok {
@@ -52,7 +52,7 @@ func ForUser(db *bolt.DB, login string, cookieDurationD int) (cookie http.Cookie
 }
 
 // createAndStoreCookie creates a new cookie and stores it in database
-func createAndStoreCookie(db *bolt.DB, login string, cookieDurationD int) (cookie http.Cookie, err error) {
+func createAndStoreCookie(db *bbolt.DB, login string, cookieDurationD int) (cookie http.Cookie, err error) {
 
 	expiration := time.Now().Add(time.Duration(cookieDurationD) * 24 * time.Hour)
 	cookie = http.Cookie{
@@ -73,7 +73,7 @@ func createAndStoreCookie(db *bolt.DB, login string, cookieDurationD int) (cooki
 		return cookie, ucerr
 	}
 
-	err = db.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bbolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(usersCookieBucketName))
 		if err != nil {
 			ucerr := &UserCookieError{error: err, ErrCode: DatabaseError}
@@ -97,9 +97,9 @@ func createAndStoreCookie(db *bolt.DB, login string, cookieDurationD int) (cooki
 }
 
 // DeleteCookiesForUser delete stored cookies for user
-func DeleteCookiesForUser(db *bolt.DB, login string) (err error) {
+func DeleteCookiesForUser(db *bbolt.DB, login string) (err error) {
 
-	err = db.Batch(func(tx *bolt.Tx) error {
+	err = db.Batch(func(tx *bbolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(usersCookieBucketName))
 		if err != nil {
 			uerr := &UserCookieError{error: err, ErrCode: DatabaseError}
@@ -131,11 +131,11 @@ func DeleteCookiesForUser(db *bolt.DB, login string) (err error) {
 }
 
 // fetchCookieForUser retreive a valid stored cookie for a user (if any in database)
-func fetchCookieForUser(db *bolt.DB, login string) (cookie http.Cookie, err error) {
+func fetchCookieForUser(db *bbolt.DB, login string) (cookie http.Cookie, err error) {
 
 	cookie = http.Cookie{}
 
-	err = db.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bbolt.Tx) error {
 		// Find if non expired cookie already exists
 		b, err := tx.CreateBucketIfNotExists([]byte(usersCookieBucketName))
 		if err != nil {
@@ -185,7 +185,7 @@ func fetchCookieForUser(db *bolt.DB, login string) (cookie http.Cookie, err erro
 }
 
 // LoginForCookie get the user associated with a cookie
-func LoginForCookie(db *bolt.DB, cookie *http.Cookie) (login string, err error) {
+func LoginForCookie(db *bbolt.DB, cookie *http.Cookie) (login string, err error) {
 	var uc = UserCookie{}
 	login = ""
 
@@ -193,7 +193,7 @@ func LoginForCookie(db *bolt.DB, cookie *http.Cookie) (login string, err error) 
 		return
 	}
 
-	err = db.View(func(tx *bolt.Tx) error {
+	err = db.View(func(tx *bbolt.Tx) error {
 
 		b := tx.Bucket([]byte(usersCookieBucketName))
 
@@ -212,7 +212,7 @@ func LoginForCookie(db *bolt.DB, cookie *http.Cookie) (login string, err error) 
 		login = uc.Login
 
 		if err == nil && uc.Cookie.Expires.Before(time.Now()) {
-			err = db.Update(func(tx *bolt.Tx) error {
+			err = db.Update(func(tx *bbolt.Tx) error {
 				b := tx.Bucket([]byte(usersCookieBucketName))
 				if b == nil {
 					return nil
