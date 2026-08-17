@@ -8,8 +8,8 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/hishboy/gocommons v0.0.0-20160108023425-89887b2ade6d
 	go.etcd.io/bbolt v1.5.0
-	golang.org/x/crypto v0.54.0
-	golang.org/x/net v0.57.0
+	golang.org/x/crypto v0.55.0
+	golang.org/x/net v0.58.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
