@@ -1,6 +1,6 @@
 module github.com/dguihal/goboard
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/dchest/uniuri v1.2.0
@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/hishboy/gocommons v0.0.0-20160108023425-89887b2ade6d
 	go.etcd.io/bbolt v1.5.0
-	golang.org/x/crypto v0.54.0
+	golang.org/x/crypto v0.56.0
 	golang.org/x/net v0.57.0
 	gopkg.in/yaml.v2 v2.4.0
 )
