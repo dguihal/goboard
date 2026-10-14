@@ -1,0 +1,3 @@
+[tools]
+# Pin Node.js so npm is consistently available for the web workspace.
+node = "24.19.0"

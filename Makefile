@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: all build clean install web_dependencies docker_image validate-go-version help
+.PHONY: all build clean install web_dependencies docker_image validate-go-version test test-backend help
 
 # Build flags can be overridden from the command line.
 # e.g. make build GOFLAGS="-ldflags=-s"
@@ -52,6 +52,12 @@ web_dependencies: ## Install and build web assets
 
 docker_image: web_dependencies ## Build the Docker image
 	docker build .
+
+test: validate-go-version ## Run all Go unit tests
+	$(GO) test -v ./...
+
+test-backend: validate-go-version ## Run all internal and handler unit tests
+	$(GO) test -v ./internal/... ./handlers/...
 
 help: ## Show this help message
 	@echo "Usage: make [target]"

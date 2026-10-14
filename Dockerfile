@@ -2,7 +2,7 @@
 ##
 ## Build
 ##
-FROM golang:1.24-alpine AS build
+FROM golang:1.25-alpine AS build
 
 WORKDIR /goboard
 
@@ -13,6 +13,7 @@ RUN go mod download
 
 COPY *.go ./
 COPY internal ./internal/
+COPY handlers ./handlers/
 
 RUN go build -o /goboard
 
@@ -38,8 +39,6 @@ RUN apk add --no-cache tzdata && \
     mkdir -p "${GOBOARD_LOG_PATH}"
 
 COPY --from=build /goboard/goboard /
-COPY dockerfiles/entrypoint.sh /
-COPY goboard.yaml "${GOBOARD_CONFIG_FILE}"
 COPY dockerfiles/entrypoint.sh /
 COPY goboard.yaml "${GOBOARD_CONFIG_FILE}"
 COPY web/swagger/ "${SWAGGER_PATH}"
